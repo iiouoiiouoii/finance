@@ -61,7 +61,14 @@
         #view-assets .fc19-single{grid-template-columns:minmax(0,1fr) !important}
         .fc19-single #asset-items-list,.fc19-single #investment-items-list,.fc19-single #liability-items-list,.fc19-single #realestate-items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:.75rem;align-items:start}
         .fc19-single #asset-items-list>*,.fc19-single #investment-items-list>*,.fc19-single #liability-items-list>*,.fc19-single #realestate-items-grid>*{margin:0 !important}
-    </style>
+            .transactions-table th { white-space: nowrap; }
+        .txn-toolbar { flex-wrap: wrap; justify-content: flex-start !important; gap: .75rem; }
+        .txn-toolbar-filters, .txn-toolbar-actions { flex-wrap: wrap; align-items: center; min-width: 0; gap: .75rem; }
+        .txn-toolbar-filters { flex: 1 1 680px; }
+        .txn-toolbar-actions { flex: 1 1 480px; justify-content: flex-end; }
+        .txn-toolbar-filters > *, .txn-toolbar-actions > * { flex: 0 0 auto; }
+        .txn-toolbar #txn-sum18, .txn-toolbar #txn-count { white-space: nowrap; }
+</style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
 
@@ -296,8 +303,8 @@
 
             <!-- 2. 수입 및 지출 내역 뷰 -->
             <section id="view-transactions" class="space-y-6 hidden">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                    <div class="flex items-center gap-3">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between txn-toolbar">
+                    <div class="flex items-center gap-3 txn-toolbar-filters">
                         <select id="filter-type" onchange="renderTransactions()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg p-2.5">
                             <option value="ALL">전체 구분 (수입/지출/이체)</option>
                             <option value="INCOME">수입</option>
@@ -310,7 +317,7 @@
                         </select>
                     </div>
 
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-4 txn-toolbar-actions">
                         <span class="text-xs text-slate-500">조회된 내역 <strong id="txn-count" class="text-slate-800">0</strong> 건</span>
                         <label class="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer select-none" title="켜면 지출 탭을 열 때마다 키워드 규칙으로 자동 재분류합니다">
                             <input type="checkbox" id="auto-reclass-toggle" onchange="setAutoReclassify(this.checked)" class="accent-emerald-600"> 자동 적용
@@ -326,7 +333,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse transactions-table">
                         <thead>
                             <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                 <th class="p-4">날짜</th>
