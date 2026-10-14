@@ -2,9 +2,13 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="가계부">
     <!-- Financial Core v15 : 할부 엔진 + 카테고리 재분류 엔진 (2026-10-12) -->
-<title>파이낸셜 코어 v20 - 부부 통합 가계부 & 자산 관리</title>
+<title>파이낸셜 코어 v25 - 부부 통합 가계부 & 자산 관리</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -44,31 +48,142 @@
     
         /* v18 : 반응형 + 접근성 보강 */
         #fc18-overlay{display:none}
-        @media (max-width:1023px){
-            aside{position:fixed;top:0;bottom:0;left:0;z-index:40;transform:translateX(-100%);transition:transform .2s}
-            body.nav-open aside{transform:none}
-            body.nav-open #fc18-overlay{display:block;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:30}
-            header{padding-left:1rem !important;padding-right:1rem !important;overflow-x:auto}
-            main > div.overflow-y-auto{padding:1rem !important}
-            #view-dashboard .grid-cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
-            .grid-cols-12 > [class*="col-span-"]{grid-column:span 12 / span 12}
-            #header-goal-badge,#current-month-display{display:none !important}
-            table{display:block;overflow-x:auto;white-space:nowrap}
-        }
+        
+        body.fc-m aside{position:fixed;top:0;bottom:0;left:0;z-index:40;transform:translateX(-100%);transition:transform .2s}
+        body.fc-m.nav-open aside{transform:none}
+        body.fc-m.nav-open #fc18-overlay{display:block;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:30}
+        body.fc-m header{padding-left:1rem !important;padding-right:1rem !important;overflow-x:auto}
+        body.fc-m main > div.overflow-y-auto{padding:1rem !important}
+        body.fc-m #view-dashboard .grid-cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+        body.fc-m .grid-cols-12 > [class*="col-span-"]{grid-column:span 12 / span 12}
+        body.fc-m #header-goal-badge, body.fc-m #current-month-display{display:none !important}
+        body.fc-m table{display:block;overflow-x:auto;white-space:nowrap}
+
         button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #2E6F40;outline-offset:2px}
     
         /* v19 : 자산 탭 단일 보기 */
         #view-assets .fc19-single{grid-template-columns:minmax(0,1fr) !important}
         .fc19-single #asset-items-list,.fc19-single #investment-items-list,.fc19-single #liability-items-list,.fc19-single #realestate-items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:.75rem;align-items:start}
         .fc19-single #asset-items-list>*,.fc19-single #investment-items-list>*,.fc19-single #liability-items-list>*,.fc19-single #realestate-items-grid>*{margin:0 !important}
-            .transactions-table th { white-space: nowrap; }
-        .txn-toolbar { flex-wrap: wrap; justify-content: flex-start !important; gap: .75rem; }
-        .txn-toolbar-filters, .txn-toolbar-actions { flex-wrap: wrap; align-items: center; min-width: 0; gap: .75rem; }
-        .txn-toolbar-filters { flex: 1 1 680px; }
-        .txn-toolbar-actions { flex: 1 1 480px; justify-content: flex-end; }
-        .txn-toolbar-filters > *, .txn-toolbar-actions > * { flex: 0 0 auto; }
-        .txn-toolbar #txn-sum18, .txn-toolbar #txn-count { white-space: nowrap; }
-</style>
+    
+        /* v21 : 모바일 대응 보강 */
+        body:not(.fc-m) #fc21-bar,body:not(.fc-m) #fc18-burger{display:none !important}
+        body.fc-m #fc18-burger{display:flex !important}
+        
+        body.fc-m #fc21-bar{display:grid}
+        body.fc-m.h-screen{height:100vh;height:100dvh}
+        body.fc-m main > div.overflow-y-auto{padding-bottom:6rem !important}
+        body.fc-m aside{overflow-y:auto}
+        body.fc-m header{height:auto !important;min-height:3.5rem;gap:.5rem;padding-top:.4rem;padding-bottom:.4rem}
+        body.fc-m header h1, body.fc-m header h2{font-size:1rem !important}
+        body.fc-m #view-dashboard .grid-cols-3, body.fc-m #view-assets .grid-cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}
+        body.fc-m #view-assets .grid-cols-4{grid-template-columns:minmax(0,1fr)}
+        body.fc-m #fc19-bulk select, body.fc-m #fc19-bulk input{max-width:44vw}
+        body.fc-m .fc19-ck, body.fc-m #fc19-all{width:18px;height:18px}
+
+        
+        body.fc-m .fixed.inset-0[id$="-modal"] > div{width:calc(100vw - 1rem) !important;max-width:none !important;max-height:92vh;max-height:92dvh;overflow-y:auto}
+        body.fc-m .fixed.inset-0[id$="-modal"]{align-items:flex-end;padding-bottom:0}
+        body.fc-m .fixed.inset-0[id$="-modal"] > div{border-bottom-left-radius:0;border-bottom-right-radius:0}
+        body.fc-m input:not([type=checkbox]):not([type=radio]), body.fc-m select, body.fc-m textarea{font-size:16px !important}
+        body.fc-m #view-dashboard .grid-cols-4, body.fc-m #view-dashboard .grid-cols-2{grid-template-columns:minmax(0,1fr)}
+        body.fc-m #fc18-health .grid-cols-2{grid-template-columns:minmax(0,1fr)}
+        body.fc-m #fc19-atabs button{flex:1 1 45%}
+
+    
+        /* v22 : 모바일 줄바꿈 개선 */
+        body{word-break:keep-all;overflow-wrap:break-word;line-break:strict}
+        
+        body.fc-m header{flex-wrap:wrap;row-gap:.35rem;padding-left:.75rem !important;padding-right:.75rem !important;overflow:visible}
+        body.fc-m header > div:first-child{flex:1 1 100%;min-width:0;gap:.5rem}
+        body.fc-m header > div:last-child{flex:1 1 100%;justify-content:space-between;gap:.3rem}
+        body.fc-m #page-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:1rem}
+        body.fc-m #global-month-picker{flex:1 1 auto;min-width:0;max-width:11rem;padding:.4rem .5rem}
+        body.fc-m header button[onclick^="openNewTxnModal"]{display:none}
+        body.fc-m header button[onclick^="openSmartPasteModal"]{font-size:0;padding:.5rem .65rem}
+        body.fc-m header button[onclick^="openSmartPasteModal"] i{font-size:14px}
+        body.fc-m .p-8{padding:.75rem !important}
+        body.fc-m .p-6{padding:1rem !important}
+        body.fc-m .p-5{padding:.875rem !important}
+        body.fc-m .gap-5, body.fc-m .gap-6{gap:.75rem !important}
+        body.fc-m .space-y-6>:not([hidden])~:not([hidden]){margin-top:1rem !important}
+        body.fc-m .text-2xl, body.fc-m .text-3xl, body.fc-m .text-xl, body.fc-m .rounded-full, body.fc-m th, body.fc-m button{white-space:nowrap}
+        body.fc-m .z-\[9999\] button, body.fc-m #fc19-bulk, body.fc-m #fc20-modal button, body.fc-m #fc21-box button{white-space:normal}
+        body.fc-m .text-2xl{font-size:1.2rem !important}
+        body.fc-m .flex.justify-between{flex-wrap:wrap;column-gap:.5rem}
+        body.fc-m .uppercase{text-transform:none;letter-spacing:0}
+
+        
+        body.fc-m #view-dashboard .grid-cols-4{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+        body.fc-m #view-dashboard .grid-cols-4 > div{padding:.75rem !important;min-width:0}
+        body.fc-m #view-dashboard .grid-cols-4 .text-2xl{font-size:1.05rem !important}
+
+    
+        /* v23 : 모바일 모드 전용 배치 */
+        body.fc-m #fc23-sw button{padding:.4rem .55rem}
+        body.fc-m #view-transactions table,body.fc-m #view-transactions tbody{display:block;white-space:normal;overflow:visible}
+        body.fc-m #view-transactions thead tr{display:flex;padding:.5rem .75rem}
+        body.fc-m #view-transactions thead th{display:none}
+        body.fc-m #view-transactions thead th:first-child{display:block;padding:0 !important}
+        body.fc-m #view-transactions thead th:first-child::after{content:" 화면 전체 선택";font-size:11px;font-weight:600;color:#64748b;text-transform:none;letter-spacing:0}
+        body.fc-m #txn-table-body tr{display:flex;flex-wrap:wrap;align-items:center;gap:.2rem .6rem;padding:.7rem .75rem;border-bottom:1px solid #e2e8f0}
+        body.fc-m #txn-table-body tr::after{content:"";order:4;flex:0 0 100%;height:0}
+        body.fc-m #txn-table-body td{display:block;padding:0 !important;border:0;white-space:normal;font-size:11px;color:#64748b}
+        body.fc-m #txn-table-body td:nth-child(1){order:1;flex:0 0 22px}
+        body.fc-m #txn-table-body td:nth-child(7){order:2;flex:1 1 0;min-width:0;font-size:13px;font-weight:600;color:#1e293b}
+        body.fc-m #txn-table-body td:nth-child(8){order:3;flex:0 0 auto;font-size:14px;font-weight:700;white-space:nowrap;text-align:right}
+        body.fc-m #txn-table-body td:nth-child(2){order:5} body.fc-m #txn-table-body td:nth-child(3){order:6}
+        body.fc-m #txn-table-body td:nth-child(4){order:7} body.fc-m #txn-table-body td:nth-child(5){order:8}
+        body.fc-m #txn-table-body td:nth-child(6){order:9}
+        body.fc-m #txn-table-body td:nth-child(9){order:10;margin-left:auto}
+        body.fc-m #txn-table-body td button{padding:.45rem .6rem}
+        body.fc-m #txn-table-body td[colspan]{order:0;flex:1 1 100%;text-align:center;padding:1.5rem 0 !important}
+        body.fc-m #txn-table-body tr.bg-emerald-50{background:#ecfdf5}
+        body.fc-m select,body.fc-m input:not([type=checkbox]):not([type=radio]){min-height:40px}
+        @media (min-width:900px){
+            body.fc-m{max-width:520px;margin-left:auto;margin-right:auto;box-shadow:0 0 0 1px #e2e8f0}
+            body.fc-m #fc21-bar{left:50%;right:auto;width:520px;transform:translateX(-50%)}
+            body.fc-m .lg\:grid-cols-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+        }
+    
+        /* v24 : 내역 화면 필터 바 */
+        #fc24-bar .fc24-r1,#fc24-bar .fc24-r2{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+        #fc24-bar .fc24-r2{justify-content:space-between;padding-top:.75rem;border-top:1px solid #f1f5f9}
+        #fc24-bar .fc24-in{height:2.5rem;padding:0 .75rem;font-size:.8rem;border:1px solid #cbd5e1;border-radius:.6rem;background:#f8fafc;color:#334155;min-width:0}
+        #fc24-bar select.fc24-in{min-width:11rem}
+        #fc24-bar .fc24-search{position:relative;flex:1 1 15rem;min-width:12rem}
+        #fc24-bar .fc24-search i{position:absolute;left:.8rem;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:.75rem;pointer-events:none}
+        #fc24-bar .fc24-search input{width:100%;padding-left:2.1rem}
+        #fc24-bar .fc24-btn{height:2.5rem;padding:0 .9rem;border-radius:.6rem;border:1px solid #cbd5e1;background:#fff;color:#475569;font-size:.8rem;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:.4rem}
+        #fc24-bar .fc24-btn:hover{background:#f1f5f9}
+        #fc24-bar .fc24-dark{background:#1e293b;border-color:#1e293b;color:#fff}#fc24-bar .fc24-dark:hover{background:#0f172a}
+        #fc24-bar .fc24-green{background:#059669;border-color:#059669;color:#fff}#fc24-bar .fc24-green:hover{background:#047857}
+        #fc24-bar .fc24-sm{height:2.1rem;padding:0 .75rem;font-size:.75rem}
+        #fc24-bar .fc24-chips{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
+        #fc24-bar .fc24-chip{background:#f1f5f9;border-radius:999px;padding:.3rem .8rem;font-size:.75rem;color:#475569;white-space:nowrap}
+        #fc24-bar .fc24-tools{display:flex;align-items:center;gap:.6rem}
+        #fc24-bar .fc24-auto{display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:#64748b;white-space:nowrap}
+        body.fc-m #fc24-bar{padding:.75rem}
+        body.fc-m #fc24-bar select.fc24-in{flex:1 1 calc(50% - .25rem)}
+        body.fc-m #fc24-bar .fc24-search{flex:1 1 100%}
+        body.fc-m #fc24-bar .fc24-r1 > .fc24-btn{flex:1 1 calc(50% - .25rem)}
+        body.fc-m #fc24-bar .fc24-r2{flex-direction:column;align-items:stretch;gap:.6rem}
+        body.fc-m #fc24-bar .fc24-tools{justify-content:space-between}
+        body.fc-m #fc24-bar .fc24-chip{padding:.3rem .6rem}
+    
+        /* v25 : 모바일 아이콘 중앙 정렬 · 전체 선택 줄 배경 통일 */
+        body.fc-m #fc18-burger{display:flex !important;align-items:center;justify-content:center}
+        body.fc-m header button,body.fc-m #fc23-sw button{display:inline-flex;align-items:center;justify-content:center}
+        body.fc-m header button[onclick^="openSmartPasteModal"]{justify-content:center;gap:0}
+        body.fc-m #view-transactions thead{display:block}
+        body.fc-m #view-transactions thead tr{background:#f8fafc !important;border-bottom:1px solid #e2e8f0;align-items:center;width:100%}
+        body.fc-m #view-transactions thead th{background:transparent !important}
+        body.fc-m #view-transactions thead th:first-child{display:flex;align-items:center;gap:.5rem;width:100%}
+        body.fc-m #view-transactions thead th:first-child::after{margin:0}
+        body.fc-m #fc25-persons{grid-template-columns:minmax(0,1fr)}
+        #fc25-tax details > summary{list-style:none} #fc25-tax details > summary::-webkit-details-marker{display:none}
+        #fc25-tax details > summary::before{content:"▸ ";color:#94a3b8} #fc25-tax details[open] > summary::before{content:"▾ "}
+    </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
 
@@ -303,8 +418,8 @@
 
             <!-- 2. 수입 및 지출 내역 뷰 -->
             <section id="view-transactions" class="space-y-6 hidden">
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between txn-toolbar">
-                    <div class="flex items-center gap-3 txn-toolbar-filters">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div class="flex items-center gap-3">
                         <select id="filter-type" onchange="renderTransactions()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg p-2.5">
                             <option value="ALL">전체 구분 (수입/지출/이체)</option>
                             <option value="INCOME">수입</option>
@@ -317,7 +432,7 @@
                         </select>
                     </div>
 
-                    <div class="flex items-center gap-4 txn-toolbar-actions">
+                    <div class="flex items-center gap-4">
                         <span class="text-xs text-slate-500">조회된 내역 <strong id="txn-count" class="text-slate-800">0</strong> 건</span>
                         <label class="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer select-none" title="켜면 지출 탭을 열 때마다 키워드 규칙으로 자동 재분류합니다">
                             <input type="checkbox" id="auto-reclass-toggle" onchange="setAutoReclassify(this.checked)" class="accent-emerald-600"> 자동 적용
@@ -333,7 +448,7 @@
                 </div>
 
                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <table class="w-full text-left border-collapse transactions-table">
+                    <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                                 <th class="p-4">날짜</th>
@@ -6704,6 +6819,291 @@
   document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - lastCheck > 30000) check(); });
   setSt(cfg().repo ? (cfg().mode === 'ro' ? 'ro' : 'ok') : 'off');
   if (ready()) setTimeout(check, 1200); else if (cfg().repo && !cfg().pass) setTimeout(function () { toast('동기화를 쓰려면 ☁ 버튼에서 암호를 다시 입력하세요.', 'warning'); }, 2500);
+})();
+
+</script>
+<script>
+/* ===== Financial Core v21 : 설정 코드로 기기 연결 + 모바일 하단 내비게이션 ===== */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var toast = function (m, t) { if (window.showToast) showToast(m, t); };
+
+  /* --- 1) 설정 코드: 저장소·토큰·암호·역할을 문자열 하나로 --- */
+  function readFields() {
+    return { r: $('fc20-repo').value.trim(), p: $('fc20-path').value.trim(), t: $('fc20-token').value.trim(), w: $('fc20-pass').value, m: $('fc20-mode').value };
+  }
+  function makeCode() {
+    var o = readFields();
+    if (!o.r || !o.t || !o.w) { toast('저장소·토큰·암호를 먼저 입력하고 연결을 저장해 주세요.', 'warning'); return null; }
+    return 'FCS1.' + btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function parseCode(s) {
+    s = String(s || '').trim(); var i = s.indexOf('FCS1.'); if (i < 0) throw new Error('설정 코드 형식이 아닙니다.');
+    var b = s.slice(i + 5).replace(/[^\w\-]/g, '').replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
+    var o = JSON.parse(decodeURIComponent(escape(atob(b)))); if (!o.r || !o.t || !o.w) throw new Error('설정 코드에 필요한 정보가 없습니다.');
+    return o;
+  }
+  function copy(text, msg) {
+    var done = function () { toast(msg); };
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    function fallback() { var t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) { prompt('아래 내용을 복사하세요', text); } t.remove(); }
+  }
+  async function applyCode(s) {
+    var o; try { o = parseCode(s); } catch (e) { return toast(e.message, 'error'); }
+    FC20.open();
+    $('fc20-repo').value = o.r; $('fc20-path').value = o.p || 'finance-data.enc.json'; $('fc20-token').value = o.t; $('fc20-pass').value = o.w; $('fc20-mode').value = o.m === 'ro' ? 'ro' : 'rw'; $('fc20-remember').checked = true;
+    await FC20.save();
+  }
+  function injectBox() {
+    var m = $('fc20-modal'); if (!m || $('fc21-box')) return;
+    m.firstElementChild.insertAdjacentHTML('beforeend', '<div id="fc21-box" class="border-t border-slate-200 pt-4 space-y-2"><div class="font-bold text-slate-700"><i class="fa-solid fa-mobile-screen mr-1.5"></i>다른 기기에 연결하기</div>'
+      + '<p class="text-slate-500 leading-relaxed">연결을 저장한 기기에서 코드를 복사해 새 기기에 붙여넣으면 입력이 끝납니다. 코드에는 <b>토큰과 암호가 들어 있으니</b> 나와의 채팅·비밀번호 관리자로만 옮기고, 다 쓰면 지우세요.</p>'
+      + '<div class="flex flex-wrap gap-2"><button onclick="FC21.copyCode()" class="border border-slate-300 px-3.5 py-2 rounded-lg">설정 코드 복사</button><button onclick="FC21.copyLink()" class="border border-slate-300 px-3.5 py-2 rounded-lg">설정 링크 복사</button></div>'
+      + '<textarea id="fc21-code" rows="2" placeholder="이 기기에 적용할 설정 코드를 붙여넣으세요 (FCS1.…)" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 text-[11px]"></textarea><button onclick="FC21.apply()" class="bg-slate-800 text-white px-3.5 py-2 rounded-lg font-semibold">코드 적용하고 연결</button></div>');
+  }
+  var _open = FC20.open;
+  FC20.open = function () { var r = _open.apply(this, arguments); injectBox(); return r; };
+  window.FC21 = {
+    copyCode: function () { var c = makeCode(); if (c) copy(c, '설정 코드를 복사했습니다.'); },
+    copyLink: function () { var c = makeCode(); if (c) copy(location.origin + location.pathname + '#fcs=' + c, '설정 링크를 복사했습니다. 새 기기 브라우저에서 열면 자동 연결됩니다.'); },
+    apply: function () { applyCode($('fc21-code').value); }
+  };
+  /* 링크(#fcs=코드)로 열면 자동 적용 후 주소창에서 코드 제거 */
+  if (/^#fcs=/.test(location.hash)) { var h = location.hash.slice(5); try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} setTimeout(function () { applyCode(h); }, 800); }
+
+  /* --- 2) 모바일 : 하단 탭바 + 빠른 입력(+) 버튼 --- */
+  var tabs = [['dashboard', '홈', 'fa-house'], ['transactions', '내역', 'fa-list-ul'], ['+'], ['assets', '자산', 'fa-wallet'], ['menu', '더보기', 'fa-bars']];
+  document.body.insertAdjacentHTML('beforeend', '<nav id="fc21-bar" class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 grid grid-cols-5 items-end" style="padding-bottom:env(safe-area-inset-bottom,0px)">'
+    + tabs.map(function (t) {
+      if (t[0] === '+') return '<button onclick="openNewTxnModal()" aria-label="거래 등록" class="mx-auto -mt-5 mb-1 w-14 h-14 rounded-full bg-accent text-white text-xl shadow-lg flex items-center justify-center"><i class="fa-solid fa-plus"></i></button>';
+      return '<button data-t="' + t[0] + '" onclick="' + (t[0] === 'menu' ? "document.body.classList.toggle('nav-open')" : "switchTab('" + t[0] + "')") + '" class="py-2 flex flex-col items-center gap-0.5 text-slate-400"><i class="fa-solid ' + t[2] + ' text-lg"></i><span class="text-[10px] font-semibold">' + t[1] + '</span></button>';
+    }).join('') + '</nav>');
+  var _sw = window.switchTab;
+  window.switchTab = function (t) {
+    var r = _sw.apply(this, arguments);
+    document.querySelectorAll('#fc21-bar [data-t]').forEach(function (b) { var on = b.dataset.t === t; b.classList.toggle('text-accent', on); b.classList.toggle('text-slate-400', !on); });
+    var sc = document.querySelector('main > div.overflow-y-auto'); if (sc) sc.scrollTop = 0;
+    return r;
+  };
+  document.querySelector('#fc21-bar [data-t="dashboard"]').classList.replace('text-slate-400', 'text-accent');
+})();
+
+</script>
+<script>
+/* ===== Financial Core v23 : 화면 모드(자동/PC/모바일) 전환 ===== */
+(function () {
+  'use strict';
+  var KEY = 'FC23_VIEW', mq = window.matchMedia ? window.matchMedia('(max-width:1023px)') : { matches: window.innerWidth < 1024 }, $ = function (id) { return document.getElementById(id); };
+  var VP = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+  var mode = function () { var m = localStorage.getItem(KEY); return m === 'pc' || m === 'm' ? m : 'auto'; };
+  function apply() {
+    var m = mode(), mobile = m === 'm' || (m === 'auto' && mq.matches), b = document.body;
+    b.classList.toggle('fc-m', mobile); b.classList.remove('nav-open');
+    var vp = document.querySelector('meta[name=viewport]');
+    if (vp) vp.setAttribute('content', m === 'pc' && screen.width < 1024 ? 'width=1280' : VP);
+    document.querySelectorAll('#fc23-sw button').forEach(function (x) { var on = x.dataset.m === m; x.classList.toggle('bg-accent', on); x.classList.toggle('text-white', on); x.classList.toggle('text-slate-500', !on); });
+    window.dispatchEvent(new Event('resize'));
+  }
+  window.FC23 = { set: function (m) { try { localStorage.setItem(KEY, m); } catch (e) {} apply(); if (window.showToast) showToast({ auto: '화면 모드: 자동 (기기에 맞춤)', pc: 'PC 화면으로 표시합니다.', m: '모바일 화면으로 표시합니다.' }[m]); } };
+  var pk = $('global-month-picker');
+  if (pk) pk.parentNode.insertAdjacentHTML('afterbegin', '<div id="fc23-sw" class="flex rounded-lg border border-slate-300 overflow-hidden bg-white shrink-0">'
+    + [['auto', 'fa-wand-magic-sparkles', '자동'], ['pc', 'fa-desktop', 'PC 화면'], ['m', 'fa-mobile-screen', '모바일 화면']].map(function (t) { return '<button data-m="' + t[0] + '" onclick="FC23.set(\'' + t[0] + '\')" title="' + t[2] + '" aria-label="' + t[2] + '" class="px-2.5 py-1.5 text-xs text-slate-500"><i class="fa-solid ' + t[1] + '"></i></button>'; }).join('') + '</div>');
+  if (mq.addEventListener) mq.addEventListener('change', function () { if (mode() === 'auto') apply(); }); else if (mq.addListener) mq.addListener(apply);
+  apply();
+})();
+
+</script>
+<script>
+/* ===== Financial Core v24 : 내역 화면 상단 필터 바 재배치 ===== */
+(function () {
+  'use strict';
+  try {
+    var $ = function (id) { return document.getElementById(id); };
+    var bar = document.querySelector('#view-transactions > div:first-child'); if (!bar || $('fc24-bar')) return;
+    var by = function (re) { return [].slice.call(bar.querySelectorAll('button')).filter(function (b) { return re.test(b.getAttribute('onclick') || ''); })[0]; };
+    var ft = $('filter-type'), fp = $('filter-payment'), se = $('txn-search'), sum = $('txn-sum18'), cnt = $('txn-count') && $('txn-count').parentNode,
+      au = $('auto-reclass-toggle') && $('auto-reclass-toggle').closest('label'), csv = by(/exportCSV/), re = by(/openReclassModal/), un = by(/undoReclass/), pa = by(/openSmartPasteModal/);
+    if (![ft, fp, se, sum, cnt, au, csv, re, un, pa].every(Boolean)) return;
+    var mk = function (c) { var d = document.createElement('div'); d.className = c; return d; };
+    var r1 = mk('fc24-r1'), r2 = mk('fc24-r2'), sw = mk('fc24-search'), chips = mk('fc24-chips'), tools = mk('fc24-tools');
+    sw.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i>'; sw.appendChild(se);
+    ft.className = fp.className = se.className = 'fc24-in';
+    csv.className = 'fc24-btn'; csv.innerHTML = '<i class="fa-solid fa-file-csv"></i> CSV';
+    pa.className = 'fc24-btn fc24-dark'; re.className = 'fc24-btn fc24-sm fc24-green'; un.className = 'fc24-btn fc24-sm'; au.className = 'fc24-auto';
+    cnt.className = sum.className = 'fc24-chip';
+    r1.append(ft, fp, sw, csv, pa); chips.append(cnt, sum); tools.append(au, re, un); r2.append(chips, tools);
+    bar.innerHTML = ''; bar.id = 'fc24-bar'; bar.className = 'bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3'; bar.append(r1, r2);
+    if (typeof applyTxFilter === 'function') applyTxFilter();
+  } catch (e) { console.error('[v24]', e); }
+})();
+
+</script>
+<script>
+/* ===== Financial Core v25 : 2026 귀속 연말정산(2027년 정산) 상세 계산기 ===== */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var N = function (v) { return Math.max(0, parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0); };
+  var K = function (n) { return formatKRW(Math.round(n || 0)); };
+  var esc = function (s) { return escapeHTML(String(s)); };
+  var min = Math.min, max = Math.max;
+  var save = function () { try { localStorage.setItem('FINANCIAL_CORE_DB', JSON.stringify(db)); } catch (e) {} };
+  var mon = function (n) { return '<span class="' + (n < 0 ? 'text-emerald-600' : n > 0 ? 'text-red-600' : 'text-slate-500') + ' font-bold">' + (n < 0 ? '환급 ' + K(-n) : n > 0 ? '추가납부 ' + K(n) : '0원') + '</span>'; };
+
+  /* ---- 입력 항목 정의: [key, label, flag] flag: n=인원수, T=교원 전용 ---- */
+  var GR = [
+    ['소득·비과세', true, [['pay', '연간 급여총액 (세전, 비과세 포함)'], ['meal', '식대 비과세 (연 지급액 · 월 20만원 한도)'], ['research', '연구보조비 (연 지급액 · 월 20만원 한도)', 'T'], ['child6', '6세 이하 보육수당 (연 지급액)'], ['nt_etc', '기타 비과세'], ['paid', '기납부 소득세 (원천징수 합계 · 지방소득세 제외)']]],
+    ['보험·연금 (전액 소득공제)', true, [['pub', '공적연금 기여금 (공무원·사학·국민연금)'], ['health', '건강보험료 + 노인장기요양'], ['emp', '고용보험료 (공무원은 해당 없음)']]],
+    ['카드 등 사용액 (2026.1~12)', false, [['credit', '신용카드'], ['debit', '체크카드·직불'], ['cash', '현금영수증'], ['market', '전통시장'], ['transit', '대중교통'], ['culture', '문화체육 (도서·공연·영화·수영장·헬스)']]],
+    ['주택', false, [['sub', '주택청약저축 납입액'], ['lease', '주택임차차입금 원리금상환액'], ['mort', '장기주택저당차입금 이자상환액'], ['mort_lim', '└ 이자 공제 한도 (600만~2,000만원)'], ['rent', '월세 지급액 (연)']]],
+    ['연금계좌·보험료', false, [['pens', '연금저축 납입액'], ['irp', 'IRP·퇴직연금 추가납입액'], ['ins', '보장성보험료'], ['insd', '장애인전용 보장성보험료']]],
+    ['의료비', false, [['med_s', '본인·65세↑·장애인·6세 이하 의료비'], ['med_g', '그 밖 부양가족 의료비'], ['med_p', '산후조리원 (200만원 한도)']]],
+    ['교육비', false, [['edu_self', '본인 (대학원 포함)'], ['edu_pre', '취학 전 자녀 (1인 300만원)'], ['n_pre', '└ 인원수', 'n'], ['edu_k12', '초·중·고 자녀 (1인 300만원)'], ['n_k12', '└ 인원수', 'n'], ['edu_uni', '대학 자녀 (1인 900만원)'], ['n_uni', '└ 인원수', 'n']]],
+    ['기부금', false, [['d_pol', '정치자금'], ['d_hts', '고향사랑기부금'], ['d_leg', '법정기부금'], ['d_des', '지정기부금 (교원단체·직장협의회 회비 등)'], ['d_rel', '종교단체 기부금']]],
+    ['기타', false, [['xded', '기타 소득공제 (직접 입력)']]]
+  ];
+  var SH = [['kids', '기본공제 자녀 수'], ['kidsTc', '자녀세액공제 대상 수 (연령 기준 확인)'], ['kids6', '6세 이하 자녀 수'], ['b1', '2026 출생·입양 첫째'], ['b2', '2026 출생·입양 둘째'], ['b3', '2026 출생·입양 셋째 이상'], ['par', '기본공제 직계존속 수'], ['par70', '└ 70세 이상 수'], ['dis', '└ 장애인 수 (부모 공제자에 합산)']];
+
+  function data() {
+    var s = db.settings || {};
+    if (!db.tax26) db.tax26 = { A: { teacher: false, marry: false, nohouse: true, f: {} }, B: { teacher: false, marry: false, nohouse: true, f: {} }, S: { ck: 'auto', cp: 'auto' } };
+    var t = db.tax26; if (t.A.f.pay == null) t.A.f.pay = N(s.husbandAnnual); if (t.B.f.pay == null) t.B.f.pay = N(s.wifeAnnual);
+    t.A.name = s.husbandName || '남편'; t.B.name = s.wifeName || '아내'; return t;
+  }
+
+  /* ---- 세법 계산 (2026 귀속 · 근사) ---- */
+  function bracket(b) { return b <= 14e6 ? b * .06 : b <= 5e7 ? b * .15 - 1.26e6 : b <= 8.8e7 ? b * .24 - 5.76e6 : b <= 1.5e8 ? b * .35 - 15.44e6 : b <= 3e8 ? b * .38 - 19.94e6 : b <= 5e8 ? b * .4 - 25.94e6 : b <= 1e9 ? b * .42 - 35.94e6 : b * .45 - 65.94e6; }
+  function deps(sh, who, ck, cp) {
+    var d = { n: 0, n70: 0, dis: 0, nk: 0, tc: 0, b: [0, 0, 0] };
+    if (ck === who) { d.n += N(sh.kids); d.nk = N(sh.kids); d.tc = N(sh.kidsTc); d.b = [N(sh.b1), N(sh.b2), N(sh.b3)]; }
+    if (cp === who) { d.n += N(sh.par); d.n70 = N(sh.par70); d.dis = N(sh.dis); }
+    return d;
+  }
+  function calc(P, sh, d) {
+    var f = function (k) { return N(P.f[k]); }, r = {};
+    var nt = min(f('meal'), 2.4e6) + (P.teacher ? min(f('research'), 2.4e6) : 0) + min(f('child6'), 2.4e6 * N(sh.kids6)) + f('nt_etc');
+    var pay = max(0, f('pay') - nt); r.nt = nt; r.pay = pay;
+    var cd = pay <= 5e6 ? pay * .7 : pay <= 15e6 ? 3.5e6 + (pay - 5e6) * .4 : pay <= 45e6 ? 7.5e6 + (pay - 15e6) * .15 : pay <= 1e8 ? 12e6 + (pay - 45e6) * .05 : 14.75e6 + (pay - 1e8) * .02;
+    r.cd = min(cd, 2e7); r.inc = max(0, pay - r.cd);
+    r.person = 1.5e6 * (1 + d.n) + 1e6 * d.n70 + 2e6 * d.dis; r.ins4 = f('pub') + f('health') + f('emp');
+    /* 카드: 25% 문턱 → 신용 → 직불·현금 → 문화체육 → 전통시장 → 대중교통 순으로 차감 */
+    var low = pay <= 7e7, cu = f('culture'), cr = f('credit') + (low ? 0 : cu), cl = low ? cu : 0, rem = pay * .25;
+    var take = function (x) { var t = min(x, rem); rem -= t; return x - t; };
+    r.cardTh = pay * .25; r.cardUse = f('credit') + f('debit') + f('cash') + cu + f('market') + f('transit');
+    var c1 = take(cr), c2 = take(f('debit') + f('cash')), c3 = take(cl), c4 = take(f('market')), c5 = take(f('transit'));
+    var baseLim = (pay <= 7e7 ? 3e6 : pay <= 1.2e8 ? 2.5e6 : 2e6) + (pay <= 7e7 ? 5e5 : 2.5e5) * min(d.nk, 2);
+    r.cardLim = baseLim; r.card = min(c1 * .15 + c2 * .3, baseLim) + min(c3 * .3, 1e6) + min(c4 * .4, 1e6) + min(c5 * .4, 1e6);
+    var sub = (pay <= 7e7 && P.nohouse) ? min(f('sub'), 3e6) * .4 : 0, lease = P.nohouse ? min(f('lease') * .4, 4e6) : 0;
+    r.hs = min(sub + lease, 4e6); r.spec = min(r.card + r.hs + f('xded'), 2.5e7);
+    r.mort = min(f('mort'), f('mort_lim') || 18e6);
+    r.tb = max(0, r.inc - r.person - r.ins4 - r.spec - r.mort); r.tax = bracket(r.tb);
+    var ei = r.tax <= 1.3e6 ? r.tax * .55 : 715000 + (r.tax - 1.3e6) * .3;
+    var lim = pay <= 3.3e7 ? 7.4e5 : pay <= 7e7 ? max(6.6e5, 7.4e5 - (pay - 3.3e7) * .008) : pay <= 1.2e8 ? max(5e5, 6.6e5 - (pay - 7e7) * .5) : max(2e5, 5e5 - (pay - 1.2e8) * .5);
+    var cr_ = {}; cr_['근로소득세액공제'] = min(ei, lim);
+    var n = d.tc; cr_['자녀세액공제'] = (n <= 0 ? 0 : n === 1 ? 25e4 : 55e4 + max(0, n - 2) * 40e4) + d.b[0] * 30e4 + d.b[1] * 50e4 + d.b[2] * 70e4;
+    cr_['혼인세액공제'] = P.marry ? 5e5 : 0;
+    r.pRate = pay <= 5.5e7 ? .15 : .12; r.pRoom = max(0, 9e6 - min(min(f('pens'), 6e6) + f('irp'), 9e6));
+    cr_['연금계좌'] = min(min(f('pens'), 6e6) + f('irp'), 9e6) * r.pRate;
+    var ins = min(f('ins'), 1e6) * .12 + min(f('insd'), 1e6) * .15;
+    var thr = pay * .03, sp = f('med_s') + min(f('med_p'), 2e6), gen = f('med_g');
+    if (gen >= thr) gen -= thr; else { sp = max(0, sp - (thr - gen)); gen = 0; }
+    var med = (sp + min(gen, 7e6)) * .15, edu = (f('edu_self') + min(f('edu_pre'), 3e6 * f('n_pre')) + min(f('edu_k12'), 3e6 * f('n_k12')) + min(f('edu_uni'), 9e6 * f('n_uni'))) * .15;
+    var leg = min(f('d_leg'), r.inc), ds = min(f('d_des'), max(0, r.inc - leg) * .3) + min(f('d_rel'), max(0, r.inc - leg) * .1), g = leg + ds;
+    var don = min(g, 1e7) * .15 + max(0, g - 1e7) * .3;
+    var rent = (P.nohouse && pay <= 8e7) ? min(f('rent'), 1e7) * (pay <= 5.5e7 ? .17 : .15) : 0;
+    var special = ins + med + edu + don, std = !(rent > 0 || r.hs > 0 || r.mort > 0);
+    cr_['보장성보험'] = std ? 0 : ins; cr_['의료비'] = std ? 0 : med; cr_['교육비'] = std ? 0 : edu; cr_['기부금(법정·지정)'] = std ? 0 : don;
+    if (std) cr_['특별·표준세액공제'] = max(special, 13e4);
+    cr_['월세'] = rent; var pol = f('d_pol'), hts = f('d_hts');
+    cr_['정치자금·고향사랑'] = min(pol, 1e5) * 100 / 110 + (pol > 1e5 ? (min(pol, 3e7) - 1e5) * .15 : 0) + min(hts, 1e5) * 100 / 110 + max(0, min(hts, 2e7) - 1e5) * .165;
+    r.cr = cr_; r.crSum = 0; for (var k in cr_) r.crSum += cr_[k];
+    r.det = max(0, r.tax - r.crSum); r.paid = f('paid'); r.diff = r.det - r.paid; r.local = r.det * .1 - r.paid * .1; r.std = std; r.med = med; r.thr = thr;
+    return r;
+  }
+  function solve(t) {
+    var A = t.A, B = t.B, S = t.S, best = null, rows = [];
+    ['A', 'B'].forEach(function (ck) { ['A', 'B'].forEach(function (cp) {
+      if ((S.ck !== 'auto' && S.ck !== ck) || (S.cp !== 'auto' && S.cp !== cp)) return;
+      var a = calc(A, S, deps(S, 'A', ck, cp)), b = calc(B, S, deps(S, 'B', ck, cp)), tot = a.det + b.det;
+      rows.push({ ck: ck, cp: cp, tot: tot }); if (!best || tot < best.tot - 1) best = { ck: ck, cp: cp, tot: tot, a: a, b: b };
+    }); });
+    best.rows = rows; return best;
+  }
+
+  /* ---- 화면 ---- */
+  function fieldHtml(p, f, P) {
+    if (f[2] === 'T' && !P.teacher) return '';
+    var v = P.f[f[0]]; var isN = f[2] === 'n';
+    return '<label class="flex items-center justify-between gap-2 text-[11px] text-slate-600"><span class="flex-1 min-w-0">' + f[1] + '</span><input data-p="' + p + '" data-k="' + f[0] + '" inputmode="numeric" value="' + (v ? (+v).toLocaleString('ko-KR') : '') + '" placeholder="0" onfocus="this.select()" onchange="FC25.chg(this)" class="w-32 shrink-0 border border-slate-300 rounded-lg px-2 py-1.5 text-right ' + (isN ? '' : '') + '"></label>';
+  }
+  function personHtml(p, P) {
+    var chk = function (k, t) { return '<label class="flex items-center gap-1.5 text-[11px] text-slate-600"><input type="checkbox" data-p="' + p + '" data-c="' + k + '" ' + (P[k] ? 'checked' : '') + ' onchange="FC25.chk(this)"> ' + t + '</label>'; };
+    return '<div class="border border-slate-200 rounded-xl p-4 space-y-3 bg-white"><div class="flex items-center justify-between"><b class="text-slate-800">' + esc(P.name) + '</b><span class="text-[11px] text-slate-400">' + (P.teacher ? '교원' : '') + '</span></div><div class="flex flex-wrap gap-x-4 gap-y-1">' + chk('teacher', '교원 (교사)') + chk('marry', '2026년 혼인신고 (생애 1회)') + chk('nohouse', '무주택 세대주·세대원') + '</div>'
+      + GR.map(function (g) { return '<details ' + (g[1] ? 'open' : '') + ' class="border-t border-slate-100 pt-2"><summary class="text-xs font-bold text-slate-700 cursor-pointer">' + g[0] + '</summary><div class="space-y-1.5 mt-2" data-grp="' + p + g[0] + '">' + g[2].map(function (f) { return fieldHtml(p, f, P); }).join('') + '</div></details>'; }).join('') + '</div>';
+  }
+  function build() {
+    var host = $('view-tax'); if (!host || $('fc25-tax')) return;
+    var t = data(), old = document.createElement('details'); old.className = 'bg-white rounded-xl border border-slate-200 p-4';
+    old.innerHTML = '<summary class="text-xs font-bold text-slate-600 cursor-pointer">간이 시뮬레이터 · 카드 전략 (기존 기능)</summary>'; var kids = [].slice.call(host.children), wrap = document.createElement('div'); wrap.className = 'space-y-6 mt-4'; kids.forEach(function (k) { wrap.appendChild(k); }); old.appendChild(wrap);
+    var box = document.createElement('div'); box.id = 'fc25-tax'; box.className = 'space-y-5';
+    box.innerHTML = '<div class="bg-slate-900 text-white rounded-2xl p-5 space-y-1"><div class="font-bold text-base"><i class="fa-solid fa-file-invoice text-amber-300 mr-2"></i>2026 귀속 연말정산 상세 계산기 <span class="text-xs text-slate-300 font-normal">(2027년 2월 정산)</span></div><p class="text-[11px] text-slate-300 leading-relaxed">부부 각자 소득·공제를 입력하면 결정세액과 환급액을 계산하고, 자녀·부모 공제를 누구에게 올릴지 비교합니다. 2026 귀속 개정(자녀세액공제 25/55만원+40만원, 월세 한도 1,000만원, 카드한도 자녀 가산 등)을 반영한 <b>추정치</b>이며, 확정 안내(국세청·NEIS)가 나오면 달라질 수 있습니다.</p></div>'
+      + '<div class="bg-white rounded-xl border border-slate-200 p-4 space-y-3"><div class="text-xs font-bold text-slate-700">공통 · 부양가족</div><div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">' + SH.map(function (f) { return '<label class="flex items-center justify-between gap-2 text-[11px] text-slate-600"><span class="flex-1">' + f[1] + '</span><input data-s="' + f[0] + '" inputmode="numeric" value="' + (t.S[f[0]] || '') + '" placeholder="0" onfocus="this.select()" onchange="FC25.chg(this)" class="w-20 border border-slate-300 rounded-lg px-2 py-1.5 text-right"></label>'; }).join('') + '</div>'
+      + '<div class="flex flex-wrap gap-3 text-[11px] text-slate-600 items-center"><span>자녀 공제자</span><select id="fc25-ck" onchange="FC25.chg(this)" class="border border-slate-300 rounded-lg px-2 py-1.5"><option value="auto">자동 (세금 최소)</option><option value="A">' + esc(t.A.name) + '</option><option value="B">' + esc(t.B.name) + '</option></select><span>부모 공제자</span><select id="fc25-cp" onchange="FC25.chg(this)" class="border border-slate-300 rounded-lg px-2 py-1.5"><option value="auto">자동 (세금 최소)</option><option value="A">' + esc(t.A.name) + '</option><option value="B">' + esc(t.B.name) + '</option></select><button onclick="FC25.imp()" class="ml-auto border border-slate-300 rounded-lg px-3 py-1.5 font-semibold hover:bg-slate-50">가계부에서 카드 사용액 가져오기</button></div></div>'
+      + '<div id="fc25-teach" class="hidden bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-[11px] leading-relaxed space-y-0.5"></div>'
+      + '<div id="fc25-persons" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div><div id="fc25-out" class="space-y-4"></div>';
+    host.appendChild(box); host.appendChild(old); $('fc25-ck').value = t.S.ck || 'auto'; $('fc25-cp').value = t.S.cp || 'auto'; draw(true);
+  }
+  function draw(full) {
+    var t = data(); if (full) $('fc25-persons').innerHTML = personHtml('A', t.A) + personHtml('B', t.B);
+    var tc = [t.A, t.B].filter(function (p) { return p.teacher; }), th = $('fc25-teach'); th.classList.toggle('hidden', !tc.length);
+    if (tc.length) th.innerHTML = '<b>교원 반영 안내</b><br>· 연구보조비(활동비)는 월 20만원 이내 비과세 → 연 240만원까지 입력 가능 (입력란이 열렸습니다)<br>· 공무원연금·사학연금 기여금은 공적연금 전액 소득공제 → "공적연금 기여금"에 연간 합계 입력 (고용보험은 공무원 해당 없음)<br>· 식대 월 20만원 이내 비과세 · 6세 이하 보육수당은 자녀 1인당 월 20만원 비과세<br>· 교원단체·공무원직장협의회 회비는 지정기부금 항목(15%)에 입력 (노조 회비는 소속 확인 필요)<br>· NEIS 급여명세의 "연구활동비/비과세 수당" 합계와 맞춰 입력하세요.';
+    var R = solve(t), a = R.a, b = R.b, row = function (l, x, y, cls) { return '<tr class="border-t border-slate-100 ' + (cls || '') + '"><td class="p-2">' + l + '</td><td class="p-2 text-right">' + x + '</td><td class="p-2 text-right">' + y + '</td></tr>'; };
+    var neg = function (v) { return v ? '-' + K(v) : '0원'; }, rows = '';
+    rows += row('총급여 (비과세 ' + K(a.nt) + ' / ' + K(b.nt) + ' 제외)', K(a.pay), K(b.pay)) + row('근로소득공제', neg(a.cd), neg(b.cd)) + row('<b>근로소득금액</b>', K(a.inc), K(b.inc));
+    rows += row('인적공제', neg(a.person), neg(b.person)) + row('4대보험·공적연금', neg(a.ins4), neg(b.ins4)) + row('카드 소득공제 (25% 문턱 ' + K(a.cardTh) + ' / ' + K(b.cardTh) + ')', neg(a.card), neg(b.card)) + row('주택자금·기타 소득공제', neg(a.spec - a.card + a.mort), neg(b.spec - b.card + b.mort));
+    rows += row('<b>과세표준</b>', K(a.tb), K(b.tb)) + row('<b>산출세액</b>', K(a.tax), K(b.tax));
+    Object.keys(a.cr).forEach(function (k) { if (a.cr[k] || b.cr[k]) rows += row('세액공제 · ' + k, neg(a.cr[k]), neg(b.cr[k])); });
+    rows += row('<b>결정세액</b>', '<b>' + K(a.det) + '</b>', '<b>' + K(b.det) + '</b>', 'bg-slate-50') + row('기납부 소득세', K(a.paid), K(b.paid)) + row('<b>차감징수(소득세)</b>', mon(a.diff), mon(b.diff), 'bg-slate-50') + row('지방소득세 포함 정산', mon(a.diff * 1.1), mon(b.diff * 1.1));
+    var tot = (a.diff + b.diff) * 1.1, nm = { A: t.A.name, B: t.B.name };
+    var worst = max.apply(null, R.rows.map(function (x) { return x.tot; })), tips = [];
+    [['A', a, t.A], ['B', b, t.B]].forEach(function (x) {
+      var r = x[1], P = x[2];
+      if (r.pay > 0 && r.cardUse < r.cardTh) tips.push(P.name + ': 카드 사용액이 25% 문턱까지 ' + K(r.cardTh - r.cardUse) + ' 남음 (아직 공제 없음). 지출을 이쪽 명의로 몰아주면 유리합니다.');
+      else if (r.pay > 0) tips.push(P.name + ': 카드 공제 ' + K(r.card) + ' (기본한도 ' + K(r.cardLim) + '). 문턱 초과분은 체크카드·현금영수증(30%)이 신용카드(15%)보다 공제율이 높습니다.');
+      if (r.pRoom > 0 && r.pay > 0) tips.push(P.name + ': 연금계좌 세액공제 한도(900만원)가 ' + K(r.pRoom) + ' 남았습니다. 채우면 약 ' + K(r.pRoom * r.pRate * 1.1) + ' 절세 (지방소득세 포함).');
+      if (P.teacher && N(P.f.research) < 2.4e6) tips.push(P.name + ' (교원): 연구보조비 비과세는 연 240만원까지입니다. 급여명세에 해당 수당이 있으면 입력하세요.');
+    });
+    if (a.pay && b.pay) tips.push('의료비는 총급여가 낮은 쪽(' + (a.pay <= b.pay ? t.A.name : t.B.name) + ')의 3% 문턱이 더 낮아 그쪽 명의로 몰아주는 편이 유리합니다 (본인·부모 의료비 등 요건 확인).');
+    $('fc25-out').innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div class="bg-white border border-slate-200 rounded-xl p-4"><div class="text-[11px] text-slate-400">부부 합산 (지방소득세 포함)</div><div class="text-lg">' + mon(tot) + '</div></div><div class="bg-white border border-slate-200 rounded-xl p-4"><div class="text-[11px] text-slate-400">부양가족 공제 배분</div><div class="text-sm font-bold text-slate-800">자녀 → ' + nm[R.ck] + ' · 부모 → ' + nm[R.cp] + '</div><div class="text-[11px] text-slate-400">' + (R.rows.length > 1 ? '다른 배분 대비 최대 ' + K(worst - R.tot) + ' 절감' : '직접 지정') + '</div></div><div class="bg-white border border-slate-200 rounded-xl p-4"><div class="text-[11px] text-slate-400">결정세액 합계</div><div class="text-lg font-extrabold text-slate-800">' + K(a.det + b.det) + '</div></div></div>'
+      + '<div class="bg-white border border-slate-200 rounded-xl p-4 overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">항목</th><th class="p-2 text-right">' + esc(t.A.name) + '</th><th class="p-2 text-right">' + esc(t.B.name) + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+      + (tips.length ? '<div class="bg-sky-50 border border-sky-200 text-sky-900 rounded-xl p-4 text-[11px] leading-relaxed space-y-1"><b class="text-xs">절세 포인트</b>' + tips.map(function (x) { return '<div>· ' + esc(x) + '</div>'; }).join('') + '</div>' : '')
+      + '<div class="text-[11px] text-slate-400 leading-relaxed">※ 추정치입니다. 카드 추가공제 한도·주택자금 합산한도·기부금 한도·의료비 특례(난임 등)는 단순화했고, 간소화 자료·회사 공제신고서·NEIS 계산과 다를 수 있습니다. 2027년 1월 초 국세청 안내와 대조하세요.</div>';
+  }
+  function chg(el) {
+    var t = data(), v = el.value;
+    if (el.dataset.p) { t[el.dataset.p].f[el.dataset.k] = N(v); el.value = N(v) ? N(v).toLocaleString('ko-KR') : ''; }
+    else if (el.dataset.s) { t.S[el.dataset.s] = N(v); el.value = N(v) || ''; }
+    else if (el.id === 'fc25-ck') t.S.ck = v; else if (el.id === 'fc25-cp') t.S.cp = v;
+    save(); draw(false);
+  }
+  function chk(el) { var t = data(); t[el.dataset.p][el.dataset.c] = el.checked; save(); draw(true);  }
+  function imp() {
+    var t = data(), yr = '2026', sum = { A: {}, B: {} }, ex = /주거|금융|보험|세금|자산이동/;
+    ['credit', 'debit', 'cash', 'market', 'transit', 'culture'].forEach(function (k) { sum.A[k] = 0; sum.B[k] = 0; });
+    var n = 0;
+    db.transactions.forEach(function (x) {
+      if (x.type !== 'EXPENSE' || !x.date || x.date.slice(0, 4) !== yr || ex.test(x.category || '')) return;
+      var card = db.cards.filter(function (c) { return String(x.payment || '').indexOf(c.name) >= 0; })[0], who = card ? (/아내|영희/.test(card.owner) || card.owner === (db.settings || {}).wifeName ? 'B' : 'A') : null, hay = [x.category, x.subcategory, x.memo].join(' ');
+      if (!card && !/현금/.test(x.payment || '')) return; if (!who) return;
+      var k = /대중교통|지하철|버스|택시/.test(hay) ? 'transit' : /전통시장/.test(hay) ? 'market' : /도서|공연|영화|박물관|미술관|수영|헬스|체육/.test(hay) ? 'culture' : card.type === '체크카드' ? 'debit' : 'credit';
+      sum[who][k] += x.amount; n++;
+    });
+    ['A', 'B'].forEach(function (p) { for (var k in sum[p]) t[p].f[k] = sum[p][k]; });
+    save(); draw(true); showToast('2026년 카드 지출 ' + n + '건을 가져왔습니다. (현금 결제는 소유자를 알 수 없어 제외 — 직접 입력)');
+  }
+  window.FC25 = { chg: chg, chk: chk, imp: imp };
+  build();
 })();
 
 </script>
