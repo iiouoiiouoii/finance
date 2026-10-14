@@ -3273,7 +3273,18 @@
       i.total = Math.max(0, i.total || 0);
       delete i.remains;
     });
-    db.transactions.forEach(function (t) { if (typeof t.lockCategory !== 'boolean') t.lockCategory = false; });
+    var seenTxnIds = Object.create(null);
+    db.transactions.forEach(function (t, index) {
+      if (typeof t.lockCategory !== 'boolean') t.lockCategory = false;
+      var key = t.id == null ? '' : String(t.id);
+      if (!key || seenTxnIds[key]) {
+        var nextId = Date.now() * 1000 + index;
+        while (seenTxnIds[String(nextId)]) nextId++;
+        t.id = nextId;
+        key = String(nextId);
+      }
+      seenTxnIds[key] = true;
+    });
     if (!db.ui) db.ui = {};
     if (typeof db.ui.autoReclassify !== 'boolean') db.ui.autoReclassify = false;
   }
@@ -4075,19 +4086,22 @@
           delete db.budgets[oldName];
         }
       }
-      if (oldSubNames.length === newSubNames.length) {
-        var map = {};
-        oldSubNames.forEach(function (o, k) { if (o !== newSubNames[k]) map[o] = newSubNames[k]; });
-        db.transactions.forEach(function (t) {
-          if (t.category === name && map[t.subcategory]) { t.subcategory = map[t.subcategory]; moved++; }
-        });
-      } else {
-        db.transactions.forEach(function (t) {
-          if (t.category === name && t.subcategory && newSubNames.indexOf(t.subcategory) === -1) {
-            t.subcategory = newSubNames[0]; moved++;
-          }
-        });
-      }
+      var subMap = {};
+      oldSubNames.forEach(function (oldSub, k) {
+        if (newSubNames.indexOf(oldSub) >= 0) return;
+        // 이름이 유지된 소분류를 우선 보존하고, 변경된 항목은 같은 위치의 새 이름에 연결합니다.
+        if (newSubNames[k]) subMap[oldSub] = newSubNames[k];
+      });
+      db.transactions.forEach(function (t) {
+        if (t.category !== name || !t.subcategory) return;
+        if (subMap[t.subcategory]) { t.subcategory = subMap[t.subcategory]; moved++; }
+        else if (newSubNames.indexOf(t.subcategory) === -1) { t.subcategory = newSubNames[0]; moved++; }
+      });
+      (db.installments || []).forEach(function (i) {
+        if (i.category !== name || !i.subcategory) return;
+        if (subMap[i.subcategory]) i.subcategory = subMap[i.subcategory];
+        else if (newSubNames.indexOf(i.subcategory) === -1) i.subcategory = newSubNames[0];
+      });
     } else {
       db.categories.push({ name: name, color: color, subcategories: newSubs });
       if (!db.budgets) db.budgets = {};
