@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="가계부">
     <!-- Financial Core v15 : 할부 엔진 + 카테고리 재분류 엔진 (2026-10-12) -->
-<title>파이낸셜 코어 v25 - 부부 통합 가계부 & 자산 관리</title>
+<title>파이낸셜 코어 v26 -부부 통합 가계부 & 자산 관리</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -170,19 +170,6 @@
         body.fc-m #fc24-bar .fc24-r2{flex-direction:column;align-items:stretch;gap:.6rem}
         body.fc-m #fc24-bar .fc24-tools{justify-content:space-between}
         body.fc-m #fc24-bar .fc24-chip{padding:.3rem .6rem}
-    
-        /* v25 : 모바일 아이콘 중앙 정렬 · 전체 선택 줄 배경 통일 */
-        body.fc-m #fc18-burger{display:flex !important;align-items:center;justify-content:center}
-        body.fc-m header button,body.fc-m #fc23-sw button{display:inline-flex;align-items:center;justify-content:center}
-        body.fc-m header button[onclick^="openSmartPasteModal"]{justify-content:center;gap:0}
-        body.fc-m #view-transactions thead{display:block}
-        body.fc-m #view-transactions thead tr{background:#f8fafc !important;border-bottom:1px solid #e2e8f0;align-items:center;width:100%}
-        body.fc-m #view-transactions thead th{background:transparent !important}
-        body.fc-m #view-transactions thead th:first-child{display:flex;align-items:center;gap:.5rem;width:100%}
-        body.fc-m #view-transactions thead th:first-child::after{margin:0}
-        body.fc-m #fc25-persons{grid-template-columns:minmax(0,1fr)}
-        #fc25-tax details > summary{list-style:none} #fc25-tax details > summary::-webkit-details-marker{display:none}
-        #fc25-tax details > summary::before{content:"▸ ";color:#94a3b8} #fc25-tax details[open] > summary::before{content:"▾ "}
     </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
@@ -3273,18 +3260,7 @@
       i.total = Math.max(0, i.total || 0);
       delete i.remains;
     });
-    var seenTxnIds = Object.create(null);
-    db.transactions.forEach(function (t, index) {
-      if (typeof t.lockCategory !== 'boolean') t.lockCategory = false;
-      var key = t.id == null ? '' : String(t.id);
-      if (!key || seenTxnIds[key]) {
-        var nextId = Date.now() * 1000 + index;
-        while (seenTxnIds[String(nextId)]) nextId++;
-        t.id = nextId;
-        key = String(nextId);
-      }
-      seenTxnIds[key] = true;
-    });
+    db.transactions.forEach(function (t) { if (typeof t.lockCategory !== 'boolean') t.lockCategory = false; });
     if (!db.ui) db.ui = {};
     if (typeof db.ui.autoReclassify !== 'boolean') db.ui.autoReclassify = false;
   }
@@ -4086,22 +4062,19 @@
           delete db.budgets[oldName];
         }
       }
-      var subMap = {};
-      oldSubNames.forEach(function (oldSub, k) {
-        if (newSubNames.indexOf(oldSub) >= 0) return;
-        // 이름이 유지된 소분류를 우선 보존하고, 변경된 항목은 같은 위치의 새 이름에 연결합니다.
-        if (newSubNames[k]) subMap[oldSub] = newSubNames[k];
-      });
-      db.transactions.forEach(function (t) {
-        if (t.category !== name || !t.subcategory) return;
-        if (subMap[t.subcategory]) { t.subcategory = subMap[t.subcategory]; moved++; }
-        else if (newSubNames.indexOf(t.subcategory) === -1) { t.subcategory = newSubNames[0]; moved++; }
-      });
-      (db.installments || []).forEach(function (i) {
-        if (i.category !== name || !i.subcategory) return;
-        if (subMap[i.subcategory]) i.subcategory = subMap[i.subcategory];
-        else if (newSubNames.indexOf(i.subcategory) === -1) i.subcategory = newSubNames[0];
-      });
+      if (oldSubNames.length === newSubNames.length) {
+        var map = {};
+        oldSubNames.forEach(function (o, k) { if (o !== newSubNames[k]) map[o] = newSubNames[k]; });
+        db.transactions.forEach(function (t) {
+          if (t.category === name && map[t.subcategory]) { t.subcategory = map[t.subcategory]; moved++; }
+        });
+      } else {
+        db.transactions.forEach(function (t) {
+          if (t.category === name && t.subcategory && newSubNames.indexOf(t.subcategory) === -1) {
+            t.subcategory = newSubNames[0]; moved++;
+          }
+        });
+      }
     } else {
       db.categories.push({ name: name, color: color, subcategories: newSubs });
       if (!db.budgets) db.budgets = {};
@@ -6954,172 +6927,1198 @@
 
 </script>
 <script>
-/* ===== Financial Core v25 : 2026 귀속 연말정산(2027년 정산) 상세 계산기 ===== */
+/* ===== Financial Core v25 : 부부 재무설계 (명의·용돈·분담 · 선저축/목표 · 연금/보증금 · 부부 은퇴 · 공제 배분) ===== */
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var N = function (v) { return Math.max(0, parseFloat(String(v == null ? '' : v).replace(/,/g, '')) || 0); };
   var K = function (n) { return formatKRW(Math.round(n || 0)); };
-  var esc = function (s) { return escapeHTML(String(s)); };
-  var min = Math.min, max = Math.max;
+  var esc = function (s) { return escapeHTML(s); };
+  var P = function (v) { return parseCurrencyValue(v); };
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var nowM = function () { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+  var today = function () { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  var addM = function (m, k) { var p = m.split('-').map(Number), t = p[0] * 12 + p[1] - 1 + k; return Math.floor(t / 12) + '-' + pad(t % 12 + 1); };
+  var mIdx = function (m) { var p = String(m).split('-').map(Number); return p[0] * 12 + p[1] - 1; };
+  var sum = function (a, f) { return (a || []).reduce(function (s, x) { return s + (Number(f(x)) || 0); }, 0); };
   var save = function () { try { localStorage.setItem('FINANCIAL_CORE_DB', JSON.stringify(db)); } catch (e) {} };
-  var mon = function (n) { return '<span class="' + (n < 0 ? 'text-emerald-600' : n > 0 ? 'text-red-600' : 'text-slate-500') + ' font-bold">' + (n < 0 ? '환급 ' + K(-n) : n > 0 ? '추가납부 ' + K(n) : '0원') + '</span>'; };
+  var safe = function (tag, fn) { return function () { try { return fn.apply(this, arguments); } catch (e) { console.error('[v25 ' + tag + ']', e); } }; };
+  var st = function () { return db.settings || (db.settings = {}); };
+  var INACT = 'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition font-medium text-left';
+  var ACT = INACT.replace('text-slate-400', 'text-slate-300') + ' bg-slate-800 text-white';
+  var IN = 'w-full border border-slate-300 rounded-lg px-2.5 py-2 text-xs';
+  var fld = function (id, label, money, extra) {
+    return '<div data-k="' + id + '"><label class="block font-semibold text-slate-600 mb-1 text-xs">' + label + '</label><input id="' + id + '" type="' + ((extra && extra.type) || 'text') + '"'
+      + (money ? ' oninput="formatCurrencyInput(this)"' : '') + (extra && extra.on ? ' onchange="' + extra.on + '"' : '') + (extra && extra.ph ? ' placeholder="' + extra.ph + '"' : '') + ' class="' + IN + (money ? ' text-right' : '') + '"></div>';
+  };
+  var setMoney = function (id, v) { if ($(id)) $(id).value = v ? Math.round(v).toLocaleString('ko-KR') : ''; };
+  var bar = function (p, cls) { return '<div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1"><div class="h-full ' + cls + '" style="width:' + Math.max(0, Math.min(100, p || 0)) + '%"></div></div>'; };
 
-  /* ---- 입력 항목 정의: [key, label, flag] flag: n=인원수, T=교원 전용 ---- */
-  var GR = [
-    ['소득·비과세', true, [['pay', '연간 급여총액 (세전, 비과세 포함)'], ['meal', '식대 비과세 (연 지급액 · 월 20만원 한도)'], ['research', '연구보조비 (연 지급액 · 월 20만원 한도)', 'T'], ['child6', '6세 이하 보육수당 (연 지급액)'], ['nt_etc', '기타 비과세'], ['paid', '기납부 소득세 (원천징수 합계 · 지방소득세 제외)']]],
-    ['보험·연금 (전액 소득공제)', true, [['pub', '공적연금 기여금 (공무원·사학·국민연금)'], ['health', '건강보험료 + 노인장기요양'], ['emp', '고용보험료 (공무원은 해당 없음)']]],
-    ['카드 등 사용액 (2026.1~12)', false, [['credit', '신용카드'], ['debit', '체크카드·직불'], ['cash', '현금영수증'], ['market', '전통시장'], ['transit', '대중교통'], ['culture', '문화체육 (도서·공연·영화·수영장·헬스)']]],
-    ['주택', false, [['sub', '주택청약저축 납입액'], ['lease', '주택임차차입금 원리금상환액'], ['mort', '장기주택저당차입금 이자상환액'], ['mort_lim', '└ 이자 공제 한도 (600만~2,000만원)'], ['rent', '월세 지급액 (연)']]],
-    ['연금계좌·보험료', false, [['pens', '연금저축 납입액'], ['irp', 'IRP·퇴직연금 추가납입액'], ['ins', '보장성보험료'], ['insd', '장애인전용 보장성보험료']]],
-    ['의료비', false, [['med_s', '본인·65세↑·장애인·6세 이하 의료비'], ['med_g', '그 밖 부양가족 의료비'], ['med_p', '산후조리원 (200만원 한도)']]],
-    ['교육비', false, [['edu_self', '본인 (대학원 포함)'], ['edu_pre', '취학 전 자녀 (1인 300만원)'], ['n_pre', '└ 인원수', 'n'], ['edu_k12', '초·중·고 자녀 (1인 300만원)'], ['n_k12', '└ 인원수', 'n'], ['edu_uni', '대학 자녀 (1인 900만원)'], ['n_uni', '└ 인원수', 'n']]],
-    ['기부금', false, [['d_pol', '정치자금'], ['d_hts', '고향사랑기부금'], ['d_leg', '법정기부금'], ['d_des', '지정기부금 (교원단체·직장협의회 회비 등)'], ['d_rel', '종교단체 기부금']]],
-    ['기타', false, [['xded', '기타 소득공제 (직접 입력)']]]
-  ];
-  var SH = [['kids', '기본공제 자녀 수'], ['kidsTc', '자녀세액공제 대상 수 (연령 기준 확인)'], ['kids6', '6세 이하 자녀 수'], ['b1', '2026 출생·입양 첫째'], ['b2', '2026 출생·입양 둘째'], ['b3', '2026 출생·입양 셋째 이상'], ['par', '기본공제 직계존속 수'], ['par70', '└ 70세 이상 수'], ['dis', '└ 장애인 수 (부모 공제자에 합산)']];
-
-  function data() {
-    var s = db.settings || {};
-    if (!db.tax26) db.tax26 = { A: { teacher: false, marry: false, nohouse: true, f: {} }, B: { teacher: false, marry: false, nohouse: true, f: {} }, S: { ck: 'auto', cp: 'auto' } };
-    var t = db.tax26; if (t.A.f.pay == null) t.A.f.pay = N(s.husbandAnnual); if (t.B.f.pay == null) t.B.f.pay = N(s.wifeAnnual);
-    t.A.name = s.husbandName || '남편'; t.B.name = s.wifeName || '아내'; return t;
+  /* =================================================================
+     1. 명의 · 사용자 (거래·자산·부채) + 용돈 + 생활비 분담
+     ================================================================= */
+  var OW = ['J', 'H', 'W'];
+  var BC = { J: 'bg-slate-100 text-slate-600 border-slate-300', H: 'bg-sky-50 text-sky-700 border-sky-300', W: 'bg-rose-50 text-rose-700 border-rose-300' };
+  function baseName(s) { return String(s || '').replace(/\s*\(.*?\)\s*/g, '').trim(); }
+  function nm(c) { return c === 'H' ? (st().husbandName || '남편') : c === 'W' ? (st().wifeName || '아내') : '공동'; }
+  function short(c) { return c === 'J' ? '공동' : (baseName(nm(c)) || nm(c)); }
+  function codeOfName(s) {
+    s = String(s || '').trim(); if (!s) return null;
+    if (s === '공동') return 'J';
+    var h = st().husbandName || '남편', w = st().wifeName || '아내';
+    if (s === h || s === baseName(h) || s === '남편' || s === '본인') return 'H';
+    if (s === w || s === baseName(w) || s === '아내' || s === '배우자') return 'W';
+    if (s.indexOf('남편') === 0) return 'H';
+    if (s.indexOf('아내') === 0) return 'W';
+    return null;
+  }
+  function cardOwner(payment) {
+    var p = String(payment || ''), c = (db.cards || []).filter(function (x) { return x.name && p.indexOf(x.name) >= 0; })[0];
+    if (c) { var k = codeOfName(c.owner); if (k) return k; }
+    var m = p.match(/\(([^()]+)\)\s*$/); return m ? codeOfName(m[1]) : null;
+  }
+  function tokens(c) {
+    var n = nm(c), inner = (n.match(/\(([^)]+)\)/) || [])[1];
+    return [c === 'H' ? '남편' : '아내', baseName(n), inner].filter(function (x) { return x && x.length >= 2; });
+  }
+  function memoOwner(memo) {
+    memo = String(memo || '');
+    var h = tokens('H').some(function (k) { return memo.indexOf(k) >= 0; }), w = tokens('W').some(function (k) { return memo.indexOf(k) >= 0; });
+    return h && !w ? 'H' : (w && !h ? 'W' : null);
+  }
+  /* 귀속(누구 몫) : 지정값 우선. 미지정 지출은 공동 생활비로 보고, 카드 소유자는 '누가 냈나(분담)'에만 쓴다.
+     미지정 수입은 메모의 이름 → 카드 소유자 순으로 추정 */
+  function ownerOf(t) { return t.owner || (t.type === 'INCOME' ? memoOwner(t.memo) || cardOwner(t.payment) : null) || 'J'; }
+  function badge(c, inferred) {
+    c = BC[c] ? c : 'J';
+    return '<span class="fc25-own inline-block align-middle text-[10px] font-bold px-1.5 py-0.5 rounded border ' + BC[c] + '"'
+      + (inferred ? ' style="border-style:dashed" title="지정하지 않은 값입니다 (지출은 공동, 수입은 메모의 이름으로 추정). 수정 화면에서 지정할 수 있습니다."' : '') + '>' + esc(short(c)) + '</span>';
   }
 
-  /* ---- 세법 계산 (2026 귀속 · 근사) ---- */
-  function bracket(b) { return b <= 14e6 ? b * .06 : b <= 5e7 ? b * .15 - 1.26e6 : b <= 8.8e7 ? b * .24 - 5.76e6 : b <= 1.5e8 ? b * .35 - 15.44e6 : b <= 3e8 ? b * .38 - 19.94e6 : b <= 5e8 ? b * .4 - 25.94e6 : b <= 1e9 ? b * .42 - 35.94e6 : b * .45 - 65.94e6; }
-  function deps(sh, who, ck, cp) {
-    var d = { n: 0, n70: 0, dis: 0, nk: 0, tc: 0, b: [0, 0, 0] };
-    if (ck === who) { d.n += N(sh.kids); d.nk = N(sh.kids); d.tc = N(sh.kidsTc); d.b = [N(sh.b1), N(sh.b2), N(sh.b3)]; }
-    if (cp === who) { d.n += N(sh.par); d.n70 = N(sh.par70); d.dis = N(sh.dis); }
-    return d;
+  var OWN = {
+    'transaction-modal': { list: 'transactions', idf: 'edit-txn-id', label: '사용자 (누구의 수입·지출인가)' },
+    'asset-modal': { list: 'assets', idf: 'asset-edit-id', label: '명의' },
+    'realestate-modal': { list: 'realEstates', idf: 're-edit-id', label: '명의 (공동명의는 공동)' },
+    'liability-modal': { list: 'liabilities', idf: 'debt-edit-id', label: '명의 (차주)' },
+    'investment-modal': { list: 'investments', idf: 'inv-edit-id', label: '명의 (계좌 소유자)' }
+  };
+  function ownerOptions(isTxn) {
+    return OW.map(function (c) { return '<option value="' + c + '">' + esc(c === 'J' ? (isTxn ? '공동 생활비' : '공동 (부부 공동)') : nm(c) + (isTxn ? ' 개인 (용돈)' : '')) + '</option>'; }).join('');
   }
-  function calc(P, sh, d) {
-    var f = function (k) { return N(P.f[k]); }, r = {};
-    var nt = min(f('meal'), 2.4e6) + (P.teacher ? min(f('research'), 2.4e6) : 0) + min(f('child6'), 2.4e6 * N(sh.kids6)) + f('nt_etc');
-    var pay = max(0, f('pay') - nt); r.nt = nt; r.pay = pay;
-    var cd = pay <= 5e6 ? pay * .7 : pay <= 15e6 ? 3.5e6 + (pay - 5e6) * .4 : pay <= 45e6 ? 7.5e6 + (pay - 15e6) * .15 : pay <= 1e8 ? 12e6 + (pay - 45e6) * .05 : 14.75e6 + (pay - 1e8) * .02;
-    r.cd = min(cd, 2e7); r.inc = max(0, pay - r.cd);
-    r.person = 1.5e6 * (1 + d.n) + 1e6 * d.n70 + 2e6 * d.dis; r.ins4 = f('pub') + f('health') + f('emp');
-    /* 카드: 25% 문턱 → 신용 → 직불·현금 → 문화체육 → 전통시장 → 대중교통 순으로 차감 */
-    var low = pay <= 7e7, cu = f('culture'), cr = f('credit') + (low ? 0 : cu), cl = low ? cu : 0, rem = pay * .25;
-    var take = function (x) { var t = min(x, rem); rem -= t; return x - t; };
-    r.cardTh = pay * .25; r.cardUse = f('credit') + f('debit') + f('cash') + cu + f('market') + f('transit');
-    var c1 = take(cr), c2 = take(f('debit') + f('cash')), c3 = take(cl), c4 = take(f('market')), c5 = take(f('transit'));
-    var baseLim = (pay <= 7e7 ? 3e6 : pay <= 1.2e8 ? 2.5e6 : 2e6) + (pay <= 7e7 ? 5e5 : 2.5e5) * min(d.nk, 2);
-    r.cardLim = baseLim; r.card = min(c1 * .15 + c2 * .3, baseLim) + min(c3 * .3, 1e6) + min(c4 * .4, 1e6) + min(c5 * .4, 1e6);
-    var sub = (pay <= 7e7 && P.nohouse) ? min(f('sub'), 3e6) * .4 : 0, lease = P.nohouse ? min(f('lease') * .4, 4e6) : 0;
-    r.hs = min(sub + lease, 4e6); r.spec = min(r.card + r.hs + f('xded'), 2.5e7);
-    r.mort = min(f('mort'), f('mort_lim') || 18e6);
-    r.tb = max(0, r.inc - r.person - r.ins4 - r.spec - r.mort); r.tax = bracket(r.tb);
-    var ei = r.tax <= 1.3e6 ? r.tax * .55 : 715000 + (r.tax - 1.3e6) * .3;
-    var lim = pay <= 3.3e7 ? 7.4e5 : pay <= 7e7 ? max(6.6e5, 7.4e5 - (pay - 3.3e7) * .008) : pay <= 1.2e8 ? max(5e5, 6.6e5 - (pay - 7e7) * .5) : max(2e5, 5e5 - (pay - 1.2e8) * .5);
-    var cr_ = {}; cr_['근로소득세액공제'] = min(ei, lim);
-    var n = d.tc; cr_['자녀세액공제'] = (n <= 0 ? 0 : n === 1 ? 25e4 : 55e4 + max(0, n - 2) * 40e4) + d.b[0] * 30e4 + d.b[1] * 50e4 + d.b[2] * 70e4;
-    cr_['혼인세액공제'] = P.marry ? 5e5 : 0;
-    r.pRate = pay <= 5.5e7 ? .15 : .12; r.pRoom = max(0, 9e6 - min(min(f('pens'), 6e6) + f('irp'), 9e6));
-    cr_['연금계좌'] = min(min(f('pens'), 6e6) + f('irp'), 9e6) * r.pRate;
-    var ins = min(f('ins'), 1e6) * .12 + min(f('insd'), 1e6) * .15;
-    var thr = pay * .03, sp = f('med_s') + min(f('med_p'), 2e6), gen = f('med_g');
-    if (gen >= thr) gen -= thr; else { sp = max(0, sp - (thr - gen)); gen = 0; }
-    var med = (sp + min(gen, 7e6)) * .15, edu = (f('edu_self') + min(f('edu_pre'), 3e6 * f('n_pre')) + min(f('edu_k12'), 3e6 * f('n_k12')) + min(f('edu_uni'), 9e6 * f('n_uni'))) * .15;
-    var leg = min(f('d_leg'), r.inc), ds = min(f('d_des'), max(0, r.inc - leg) * .3) + min(f('d_rel'), max(0, r.inc - leg) * .1), g = leg + ds;
-    var don = min(g, 1e7) * .15 + max(0, g - 1e7) * .3;
-    var rent = (P.nohouse && pay <= 8e7) ? min(f('rent'), 1e7) * (pay <= 5.5e7 ? .17 : .15) : 0;
-    var special = ins + med + edu + don, std = !(rent > 0 || r.hs > 0 || r.mort > 0);
-    cr_['보장성보험'] = std ? 0 : ins; cr_['의료비'] = std ? 0 : med; cr_['교육비'] = std ? 0 : edu; cr_['기부금(법정·지정)'] = std ? 0 : don;
-    if (std) cr_['특별·표준세액공제'] = max(special, 13e4);
-    cr_['월세'] = rent; var pol = f('d_pol'), hts = f('d_hts');
-    cr_['정치자금·고향사랑'] = min(pol, 1e5) * 100 / 110 + (pol > 1e5 ? (min(pol, 3e7) - 1e5) * .15 : 0) + min(hts, 1e5) * 100 / 110 + max(0, min(hts, 2e7) - 1e5) * .165;
-    r.cr = cr_; r.crSum = 0; for (var k in cr_) r.crSum += cr_[k];
-    r.det = max(0, r.tax - r.crSum); r.paid = f('paid'); r.diff = r.det - r.paid; r.local = r.det * .1 - r.paid * .1; r.std = std; r.med = med; r.thr = thr;
+  function findIn(list, id) { return (db[list] || []).filter(function (x) { return x.id === id; })[0]; }
+  function ownerOnOpen(id) {
+    var c = OWN[id]; if (!c) return;
+    var m = $(id), f = m && m.querySelector('form'); if (!f) return;
+    var sel = f.querySelector('.fc25-owner'), isTxn = c.list === 'transactions';
+    if (!sel) {
+      f.insertAdjacentHTML('afterbegin', '<div class="fc25-owner-wrap"><label class="block text-xs font-semibold text-slate-600 mb-1">' + c.label + '</label>'
+        + '<select class="fc25-owner w-full border border-slate-300 rounded-lg p-2 text-xs font-bold bg-sky-50/40" onchange="this.dataset.touched=\'1\'"></select></div>');
+      sel = f.querySelector('.fc25-owner');
+    }
+    sel.innerHTML = ownerOptions(isTxn); sel.dataset.touched = '';
+    var eid = $(c.idf) && $(c.idf).value ? Number($(c.idf).value) : null, item = eid != null ? findIn(c.list, eid) : null;
+    if (isTxn) {
+      /* 기존 내역의 소분류가 새 목록에 없으면 보존 */
+      var sub = $('txn-subcategory');
+      if (item && item.subcategory && sub && ![].some.call(sub.options, function (o) { return o.value === item.subcategory; })) {
+        sub.insertAdjacentHTML('beforeend', '<option value="' + esc(item.subcategory) + '">' + esc(item.subcategory) + '</option>'); sub.value = item.subcategory;
+      }
+      sel.value = item ? ownerOf(item) : 'J';
+    } else sel.value = item && item.owner ? item.owner : 'J';
+  }
+  var _om = window.openModal;
+  window.openModal = function (id) { var r = _om.apply(this, arguments); safe('명의열기', ownerOnOpen)(id); return r; };
+
+  /* 저장 래퍼 : 명의 기록 + 원본이 객체를 새로 만들며 버리던 필드(할부·투자 연결, 적금 회차 등) 보존 */
+  function wrapSave(fname, modalId) {
+    var c = OWN[modalId], orig = window[fname]; if (typeof orig !== 'function') return;
+    window[fname] = function () {
+      var sel = document.querySelector('#' + modalId + ' .fc25-owner'), v = sel ? sel.value : null;
+      var eid = $(c.idf) && $(c.idf).value ? Number($(c.idf).value) : null, before = {};
+      (db[c.list] || []).forEach(function (x) { before[x.id] = x; });
+      var snap = eid != null && before[eid] ? JSON.parse(JSON.stringify(before[eid])) : null;
+      var r = orig.apply(this, arguments);
+      safe('명의저장', function () {
+        var list = db[c.list] || [], tg = eid != null ? findIn(c.list, eid) : list.filter(function (x) { return !before[x.id]; })[0];
+        if (!tg) return;
+        if (snap) Object.keys(snap).forEach(function (k) { if (!(k in tg)) tg[k] = snap[k]; });
+        if (v) tg.owner = v;
+        if (c.after) c.after(tg);
+        save(); refreshApp();
+      })();
+      return r;
+    };
+  }
+
+  /* 내역 표 : 사용자 배지 + 사용자 필터 */
+  function decorateTx() {
+    var tb = $('txn-table-body'); if (!tb) return;
+    [].forEach.call(tb.querySelectorAll('tr'), function (tr) {
+      var b = tr.querySelector('button[onclick^="openEditTxnModal("]'); if (!b) return;
+      var id = Number((b.getAttribute('onclick').match(/\(([^)]+)\)/) || [])[1]), t = findIn('transactions', id); if (!t) return;
+      var c = ownerOf(t); tr.dataset.owner = c;
+      var cell = tr.children[tr.children.length - 4];
+      if (cell && !cell.querySelector('.fc25-own')) cell.insertAdjacentHTML('afterbegin', badge(c, !t.owner) + ' ');
+    });
+  }
+  function ownerFilter() {
+    var s = $('fc25-owner-filter');
+    if (!s) { var fp = $('filter-payment'); if (!fp) return null; fp.insertAdjacentHTML('afterend', '<select id="fc25-owner-filter" onchange="renderTransactions()" class="fc24-in bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg p-2.5"></select>'); s = $('fc25-owner-filter'); }
+    var v = s.value || 'ALL';
+    s.innerHTML = '<option value="ALL">전체 사용자</option>' + OW.map(function (c) { return '<option value="' + c + '">' + esc(c === 'J' ? '공동 생활비' : nm(c) + ' 개인') + '</option>'; }).join('');
+    s.value = v; return s;
+  }
+  function applyOwnerFilter() {
+    var s = $('fc25-owner-filter'), v = s ? s.value : 'ALL', tb = $('txn-table-body'); if (!tb || v === 'ALL') return;
+    var n = 0;
+    [].forEach.call(tb.querySelectorAll('tr'), function (tr) { if (!tr.dataset.owner) return; if (tr.dataset.owner !== v) tr.style.display = 'none'; else if (tr.style.display !== 'none') n++; });
+    if ($('txn-count')) $('txn-count').innerText = n;
+    var q = (($('txn-search') || {}).value || '').trim().toLowerCase(), ft = $('filter-type').value, fpay = $('filter-payment').value, inc = 0, exp = 0;
+    db.transactions.forEach(function (t) {
+      if (!t.date || t.date.indexOf(selectedMonth) !== 0 || (ft !== 'ALL' && t.type !== ft) || (fpay !== 'ALL' && t.payment !== fpay) || ownerOf(t) !== v) return;
+      if (q && [t.date, t.category, t.subcategory, t.payment, t.memo].join(' ').toLowerCase().indexOf(q) < 0) return;
+      if (t.type === 'INCOME') inc += t.amount; else if (t.type === 'EXPENSE') exp += t.amount;
+    });
+    if ($('txn-sum18')) $('txn-sum18').innerHTML = '<b>' + esc(short(v)) + '</b> · 수입 <b class="text-emerald-600">' + K(inc) + '</b> · 지출 <b class="text-slate-800">' + K(exp) + '</b>';
+  }
+  var _rt = window.renderTransactions;
+  window.renderTransactions = function () { var r = _rt.apply(this, arguments); safe('내역', function () { ownerFilter(); decorateTx(); applyOwnerFilter(); })(); return r; };
+  if (window.FC18 && FC18.applyTxFilter) { var _af = FC18.applyTxFilter; FC18.applyTxFilter = function () { var r = _af.apply(this, arguments); safe('필터', applyOwnerFilter)(); return r; }; }
+  if (window.FC18) FC18.exportCSV = function () {
+    var q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
+    var rows = [['날짜', '구분', '대분류', '소분류', '사용자', '결제수단', '메모', '금액']].concat(db.transactions.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).map(function (t) {
+      return [t.date, { INCOME: '수입', EXPENSE: '지출', TRANSFER: '이체' }[t.type] || t.type, t.category, t.subcategory, short(ownerOf(t)), t.payment, t.memo, t.amount]; }));
+    var blob = new Blob(['﻿' + rows.map(function (r) { return r.map(q).join(','); }).join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '가계부_내역_' + nowM() + '.csv'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    showToast('전체 거래내역 ' + db.transactions.length + '건을 CSV로 내보냈습니다.');
+  };
+
+  /* 이체 소분류 : 공동통장 입금 · 저축/목표/연금 납입 */
+  var _us = window.updateSubcategoryOptions;
+  window.updateSubcategoryOptions = function () {
+    var r = _us.apply(this, arguments);
+    safe('소분류', function () {
+      if ($('txn-type').value !== 'TRANSFER') return;
+      var list = $('txn-category').value === '자산이동' ? ['저축/적금 납입', '투자매수', '투자매도', '목표적립', '연금 납입', '자신계좌이체', '부부간이체'] : ['자신계좌이체', '부부간이체', '공동통장 입금'];
+      $('txn-subcategory').innerHTML = list.map(function (s) { return '<option value="' + s + '">' + s + '</option>'; }).join('');
+    })();
+    return r;
+  };
+
+  /* 부부 재무 규칙 (설정 탭) */
+  function shareH() {
+    var s = st(), mode = s.shareMode || 'income';
+    if (mode === 'half') return 0.5;
+    if (mode === 'custom') return Math.min(100, Math.max(0, +s.shareH || 50)) / 100;
+    var h = +s.husbandIncome || 0, w = +s.wifeIncome || 0; return h + w > 0 ? h / (h + w) : 0.5;
+  }
+  function injectSettings() {
+    if ($('fc25-rules')) return;
+    var first = document.querySelector('#view-settings > div'); if (!first) return;
+    first.insertAdjacentHTML('afterend', '<div id="fc25-rules" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">'
+      + '<div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-3 flex-wrap"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-handshake text-accent"></i> 부부 재무 규칙</h3>'
+      + '<p class="text-xs text-slate-500 mt-0.5">각자 용돈 한도와 공동 생활비 분담 방식을 정해 두면 대시보드에서 사용·분담 현황과 정산액을 보여줍니다. 출생연도는 은퇴 시뮬레이터에 쓰입니다.</p></div>'
+      + '<button onclick="FC25.saveRules()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">규칙 저장</button></div>'
+      + '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">'
+      + fld('fc25-by-h', '<span id="fc25-lab-byh">남편</span> 출생연도', 0, { type: 'number', ph: '예: 1988' }) + fld('fc25-by-w', '<span id="fc25-lab-byw">아내</span> 출생연도', 0, { type: 'number', ph: '예: 1990' })
+      + fld('fc25-allow-h', '<span id="fc25-lab-alh">남편</span> 월 용돈 한도 (원)', 1) + fld('fc25-allow-w', '<span id="fc25-lab-alw">아내</span> 월 용돈 한도 (원)', 1)
+      + '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">공동 생활비 분담 방식</label><select id="fc25-share-mode" class="' + IN + '"><option value="income">소득 비례 (월 정기 수입 기준)</option><option value="half">반반 (50:50)</option><option value="custom">직접 비율 지정</option></select></div>'
+      + fld('fc25-share-h', '<span id="fc25-lab-shh">남편</span> 분담 비율 (%, 직접 지정 시)', 0, { type: 'number' })
+      + '<div class="col-span-2 text-[11px] text-slate-500 leading-relaxed self-end">공동 생활비 분담 = <b>공동 생활비로 지정한 지출을 각자 카드로 낸 금액</b> + <b>[이체 › 계좌이체 › 공동통장 입금]</b>으로 기록한 금액입니다. 개인으로 지정한 지출은 그 사람의 용돈 사용액으로 집계합니다.</div>'
+      + '</div></div>');
+  }
+  function fillSettings() {
+    if (!$('fc25-rules')) return;
+    var s = st();
+    ['byh', 'alh', 'shh'].forEach(function (k) { $('fc25-lab-' + k).innerText = short('H'); });
+    ['byw', 'alw'].forEach(function (k) { $('fc25-lab-' + k).innerText = short('W'); });
+    $('fc25-by-h').value = s.husbandBirthYear || ''; $('fc25-by-w').value = s.wifeBirthYear || '';
+    setMoney('fc25-allow-h', s.allowanceH); setMoney('fc25-allow-w', s.allowanceW);
+    $('fc25-share-mode').value = s.shareMode || 'income'; $('fc25-share-h').value = s.shareH != null ? s.shareH : 50;
+  }
+  function saveRules() {
+    var s = st(), by = function (id) { var v = parseInt($(id).value, 10); return v > 1900 && v < 2100 ? v : null; };
+    s.husbandBirthYear = by('fc25-by-h'); s.wifeBirthYear = by('fc25-by-w');
+    s.allowanceH = P($('fc25-allow-h').value); s.allowanceW = P($('fc25-allow-w').value);
+    s.shareMode = $('fc25-share-mode').value; s.shareH = Math.min(100, Math.max(0, parseFloat($('fc25-share-h').value) || 50));
+    saveData(); showToast('부부 재무 규칙이 저장되었습니다.');
+  }
+  var _rs = window.renderSettingsTab;
+  window.renderSettingsTab = function () { var r = _rs.apply(this, arguments); safe('설정', function () { injectSettings(); fillSettings(); })(); return r; };
+
+  /* =================================================================
+     3. 연금 3층 · 전세보증금 · ISA 자산 유형
+     ================================================================= */
+  var EXT = { '전세보증금': 'LEASE', '국민연금': 'NPS', '퇴직연금': 'PEN', '연금저축': 'PEN', 'IRP': 'PEN', 'ISA': 'ISA' };
+  var NONLIQ = { '전세보증금': 1, '국민연금': 1, '퇴직연금': 1, '연금저축': 1, 'IRP': 1 };
+  function assetValue(a, mo) {
+    if (a.subType !== '적금') return a.amount || 0;
+    var m = a.months || 12;
+    var paid = Math.max(0, Math.min(m, a.paidRounds != null ? a.paidRounds : (a.startMonth ? mIdx(mo) - mIdx(a.startMonth) + 1 : m)));
+    return (a.amount || 0) * paid;
+  }
+  function injectAssetOptions() {
+    var s = $('asset-subtype'); if (!s || s.querySelector('[value="IRP"]')) return;
+    s.insertAdjacentHTML('beforeend', '<optgroup label="보증금"><option value="전세보증금">전세·월세 보증금 (임차)</option></optgroup>'
+      + '<optgroup label="연금 · 절세계좌"><option value="국민연금">국민연금 (공적연금)</option><option value="퇴직연금">퇴직연금 (DB/DC)</option><option value="연금저축">연금저축</option><option value="IRP">IRP (개인형 퇴직연금)</option><option value="ISA">ISA</option></optgroup>');
+    var mw = $('asset-months-wrapper'); if (!mw) return;
+    mw.insertAdjacentHTML('afterend', '<div id="fc25-ext" class="hidden grid grid-cols-2 gap-3">'
+      + fld('fc25-pen-monthly', '예상 월 연금 (현재가치, 원)', 1, { on: 'calcAssetPreview()' }) + fld('fc25-pen-age', '연금 개시 나이', 0, { type: 'number', ph: '65', on: 'calcAssetPreview()' })
+      + fld('fc25-pen-contrib', '올해 납입액 (세액공제용, 원)', 1, { on: 'calcAssetPreview()' }) + fld('fc25-lease-end', '계약 만기', 0, { type: 'month' }) + '</div>');
+  }
+  var _uf = window.updateAssetFormFields;
+  window.updateAssetFormFields = function () {
+    var r = _uf.apply(this, arguments);
+    safe('자산폼', function () {
+      var t = $('asset-subtype').value, k = EXT[t], box = $('fc25-ext'), amt = $('asset-amount'), lab = $('asset-amount-label'), rw = $('asset-rate').parentNode;
+      if (!box) return;
+      box.classList.toggle('hidden', !k);
+      var show = { 'fc25-pen-monthly': k === 'NPS' || k === 'PEN', 'fc25-pen-age': k === 'NPS' || k === 'PEN', 'fc25-pen-contrib': t === '연금저축' || t === 'IRP' || t === 'ISA', 'fc25-lease-end': k === 'LEASE' };
+      [].forEach.call(box.children, function (d) { d.style.display = show[d.dataset.k] ? '' : 'none'; });
+      rw.style.display = (k === 'NPS' || k === 'LEASE') ? 'none' : '';
+      amt.required = k !== 'NPS';
+      if (k === 'NPS') lab.innerText = '누적 납부액 (참고용 · 순자산 제외)';
+      else if (k === 'LEASE') lab.innerText = '보증금 (원)';
+      else if (k) lab.innerText = '현재 적립금 / 평가액 (원)';
+    })();
+    return r;
+  };
+  var _cp = window.calcAssetPreview;
+  window.calcAssetPreview = function () {
+    var t = $('asset-subtype') && $('asset-subtype').value; if (!EXT[t] || !$('fc25-ext')) return _cp.apply(this, arguments);
+    var amt = P($('asset-amount').value), pm = P($('fc25-pen-monthly').value), pa = +$('fc25-pen-age').value || 65, ct = P($('fc25-pen-contrib').value), msg;
+    if (t === '국민연금') msg = '예상 수령: 월 <b>' + K(pm) + '</b> (연 ' + K(pm * 12) + ') · ' + pa + '세부터<br><span class="text-slate-500">팔거나 인출할 수 없는 권리라 순자산에는 넣지 않고, 은퇴 시뮬레이터의 연금 수입으로 반영합니다. 예상액은 국민연금공단 \'내 곁에 국민연금\'에서 확인할 수 있습니다.</span>';
+    else if (t === '전세보증금') msg = '보증금 <b>' + K(amt) + '</b>은 순자산에 포함하지만, 바로 쓸 수 없는 돈이라 <b>비상자금(유동자산)과 은퇴 준비자산에서는 제외</b>합니다.';
+    else if (t === 'ISA') msg = 'ISA 평가액 <b>' + K(amt) + '</b> · 올해 납입 ' + K(ct) + ' (연 2,000만 원 한도). 유동자산으로 봅니다.';
+    else {
+      var lim = t === '연금저축' ? 6e6 : 9e6;
+      msg = '적립금 <b>' + K(amt) + '</b> · 연금 개시 전 인출이 어려워 비상자금에서는 제외하고 은퇴 준비자산에 포함합니다.'
+        + (t !== '퇴직연금' ? '<br>올해 납입 ' + K(ct) + ' → 세액공제 대상 약 ' + K(Math.min(ct, lim)) + ' (연금저축 600만 · IRP 합산 900만 한도, 부부 각자 본인 계좌만 공제)' : '')
+        + (pm ? '<br>예상 월 수령 ' + K(pm) + ' · ' + pa + '세부터 (참고)' : '');
+    }
+    $('asset-preview-box').innerHTML = '<div class="text-[11px] leading-relaxed text-slate-700">' + msg + '</div>';
+  };
+  var _oa = window.openAssetModal;
+  window.openAssetModal = function (type, id) {
+    safe('자산옵션', injectAssetOptions)();
+    var r = _oa.apply(this, arguments);
+    safe('자산열기', function () {
+      if (type === 'LIABILITY' || !$('fc25-ext')) return;
+      var a = id ? findIn('assets', id) : null;
+      setMoney('fc25-pen-monthly', a && a.pensionMonthly); $('fc25-pen-age').value = a && a.pensionStartAge ? a.pensionStartAge : '';
+      setMoney('fc25-pen-contrib', a && a.annualContrib); $('fc25-lease-end').value = (a && a.leaseEnd) || '';
+      if (a && a.subType === '국민연금') setMoney('asset-amount', a.pensionPaid);
+      $('asset-modal-title').innerText = a ? '자산 수정 (예적금 · 연금 · 보증금)' : '자산 등록 (예적금 · 연금 · 보증금)';
+      updateAssetFormFields(); calcAssetPreview();
+    })();
+    return r;
+  };
+  OWN['asset-modal'].after = function (a) {
+    var t = a.subType, keys = ['pensionMonthly', 'pensionStartAge', 'annualContrib', 'leaseEnd', 'pensionPaid'];
+    if (!EXT[t]) { keys.forEach(function (k) { delete a[k]; }); return; }
+    a.pensionMonthly = P($('fc25-pen-monthly').value) || 0;
+    a.pensionStartAge = parseInt($('fc25-pen-age').value, 10) || 65;
+    a.annualContrib = P($('fc25-pen-contrib').value) || 0;
+    a.leaseEnd = $('fc25-lease-end').value || null;
+    if (t === '국민연금') { a.pensionPaid = a.amount || 0; a.amount = 0; a.rate = 0; }
+  };
+
+  function pensionLine(card, a) {
+    if (!EXT[a.subType] || card.querySelector('.fc25-pline')) return;
+    var t = a.subType, txt;
+    if (t === '국민연금') txt = '예상 월 수령 <b>' + K(a.pensionMonthly) + '</b> · ' + (a.pensionStartAge || 65) + '세 개시 · 순자산 제외';
+    else if (t === '전세보증금') txt = (a.leaseEnd ? '계약 만기 <b>' + esc(a.leaseEnd) + '</b> · ' : '') + '비상자금(유동자산)에서 제외';
+    else if (t === 'ISA') txt = '올해 납입 ' + K(a.annualContrib) + ' / 한도 2,000만';
+    else txt = (t !== '퇴직연금' ? '올해 납입 ' + K(a.annualContrib) + ' · ' : '') + (a.pensionMonthly ? '예상 월 ' + K(a.pensionMonthly) + ' (' + (a.pensionStartAge || 65) + '세~) · ' : '') + '비상자금 제외';
+    card.insertAdjacentHTML('beforeend', '<div class="fc25-pline mt-1 pt-1.5 border-t border-slate-200/60 text-[11px] text-slate-500">' + txt + '</div>');
+  }
+  function decorateList(boxId, re, list) {
+    var box = $(boxId); if (!box) return;
+    [].forEach.call(box.querySelectorAll('button[onclick]'), function (b) {
+      var m = (b.getAttribute('onclick') || '').match(re); if (!m) return;
+      var item = findIn(list, Number(m[1])); if (!item) return;
+      var card = b; while (card.parentNode && card.parentNode !== box) card = card.parentNode;
+      if (!card.parentNode || card.querySelector('.fc25-own')) return;
+      var title = card.querySelector('span.font-bold.text-slate-800') || card.querySelector('.font-bold') || card.querySelector('.font-medium');
+      if (title) title.insertAdjacentHTML('beforeend', ' ' + badge(item.owner || 'J', !item.owner)); else card.insertAdjacentHTML('afterbegin', badge(item.owner || 'J', !item.owner));
+      if (list === 'assets') pensionLine(card, item);
+    });
+  }
+  function nwByOwner(mo) {
+    var r = { J: { a: 0, d: 0 }, H: { a: 0, d: 0 }, W: { a: 0, d: 0 } }, add = function (o, k, v) { r[r[o] ? o : 'J'][k] += Number(v) || 0; };
+    db.assets.forEach(function (a) { add(a.owner, 'a', assetValue(a, mo)); });
+    (db.investments || []).forEach(function (i) { add(i.owner, 'a', i.value); });
+    (db.realEstates || []).forEach(function (x) { add(x.owner, 'a', x.value); });
+    (db.liabilities || []).forEach(function (l) { add(l.owner, 'd', l.amount); });
+    (db.installments || []).forEach(function (i) { try { add(cardOwner(i.payment) || 'J', 'd', FC.calcInst(i, mo).remaining); } catch (e) {} });
     return r;
   }
-  function solve(t) {
-    var A = t.A, B = t.B, S = t.S, best = null, rows = [];
-    ['A', 'B'].forEach(function (ck) { ['A', 'B'].forEach(function (cp) {
-      if ((S.ck !== 'auto' && S.ck !== ck) || (S.cp !== 'auto' && S.cp !== cp)) return;
-      var a = calc(A, S, deps(S, 'A', ck, cp)), b = calc(B, S, deps(S, 'B', ck, cp)), tot = a.det + b.det;
-      rows.push({ ck: ck, cp: cp, tot: tot }); if (!best || tot < best.tot - 1) best = { ck: ck, cp: cp, tot: tot, a: a, b: b };
-    }); });
-    best.rows = rows; return best;
+  function renderAssetSummary() {
+    var v = $('view-assets'); if (!v) return;
+    var host = $('fc25-asum');
+    if (!host) { host = document.createElement('div'); host.id = 'fc25-asum'; host.className = 'grid grid-cols-2 lg:grid-cols-6 gap-3'; v.insertBefore(host, v.children[1] || null); }
+    var mo = selectedMonth, nw = nwByOwner(mo), by = function (f) { return sum(db.assets.filter(f), function (a) { return a.amount; }); };
+    var pen = by(function (a) { return a.subType === '퇴직연금' || a.subType === '연금저축' || a.subType === 'IRP'; }), lease = by(function (a) { return a.subType === '전세보증금'; });
+    var nps = sum(db.assets.filter(function (a) { return a.subType === '국민연금'; }), function (a) { return a.pensionMonthly; });
+    var cell = function (t, val, sub, cls) { return '<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-base font-extrabold ' + (cls || 'text-slate-800') + '">' + val + '</div><div class="text-[10px] text-slate-400 mt-0.5">' + sub + '</div></div>'; };
+    host.innerHTML = OW.map(function (c) { return cell(badge(c) + ' 명의 순자산', K(nw[c].a - nw[c].d), '자산 ' + K(nw[c].a) + ' · 부채 ' + K(nw[c].d), nw[c].a - nw[c].d < 0 ? 'text-red-600' : 'text-slate-800'); }).join('')
+      + cell('연금 적립금 (퇴직·연금저축·IRP)', K(pen), '비상자금 제외 · 은퇴자산 포함', 'text-indigo-700')
+      + cell('국민연금 예상 (부부 합산)', '월 ' + K(nps), '현재가치 · 순자산 제외', 'text-indigo-700')
+      + cell('전세·월세 보증금', K(lease), '순자산 포함 · 비상자금 제외', 'text-amber-700');
+  }
+  var _ra = window.renderAssetsAndInvestments;
+  window.renderAssetsAndInvestments = function () {
+    var r = _ra.apply(this, arguments);
+    safe('자산꾸밈', function () {
+      decorateList('asset-items-list', /openAssetModal\('ASSET',\s*([\d.]+)\)/, 'assets');
+      decorateList('realestate-items-grid', /FRE\.open\(([\d.]+)\)/, 'realEstates');
+      decorateList('liability-items-list', /FRE\.openDebt\(([\d.]+)\)/, 'liabilities');
+      decorateList('investment-items-list', /FINV\.open\(([\d.]+)\)/, 'investments');
+      var lst = $('asset-items-list'), h = lst && lst.previousElementSibling && lst.previousElementSibling.querySelector('h4');
+      if (h) h.innerHTML = '<i class="fa-solid fa-wallet text-emerald-600"></i> 예적금 · 연금 · 보증금';
+      renderAssetSummary();
+    })();
+    return r;
+  };
+
+  /* 대시보드 : 비상자금·투자비중을 유동자산 기준으로 보정 + 부부 재무 현황 */
+  function monthTx(mo) { return db.transactions.filter(function (t) { return t.date && t.date.indexOf(mo) === 0; }); }
+  function avgExp(mo) {
+    var byM = {}; db.transactions.forEach(function (t) { if (t.type === 'EXPENSE' && t.date) byM[t.date.slice(0, 7)] = (byM[t.date.slice(0, 7)] || 0) + t.amount; });
+    var ex = [0, 1, 2].map(function (i) { return byM[addM(mo, -i)] || 0; }).filter(Boolean);
+    if (ex.length) return ex.reduce(function (a, b) { return a + b; }, 0) / ex.length;
+    return sum(db.fixedExpenses, function (f) { return f.amount; }) + (window.FC ? FC.instSummary(mo).thisCharge : 0);
+  }
+  function liquidOnly(mo) { return sum(db.assets.filter(function (a) { return !NONLIQ[a.subType]; }), function (a) { return assetValue(a, mo); }); }
+  function fixHealth() {
+    if (!db.assets.some(function (a) { return NONLIQ[a.subType]; })) return;
+    var g = document.querySelector('#fc18-health .grid'); if (!g || g.children.length < 4) return;
+    var mo = selectedMonth, liq = liquidOnly(mo), ae = avgExp(mo), ef = ae > 0 ? liq / ae : null, c0 = g.children[0].children;
+    c0[1].textContent = ef == null ? '-' : ef.toFixed(1) + '개월';
+    c0[1].className = 'text-lg font-extrabold ' + (ef == null ? 'text-slate-400' : ef < 3 ? 'text-red-600' : ef < 6 ? 'text-amber-600' : 'text-emerald-600');
+    c0[2].textContent = '유동자산 ' + K(liq) + ' ÷ 월평균 지출 ' + K(ae) + ' (연금·보증금 제외)';
+    var inv = sum(db.investments, function (i) { return i.value; }), c3 = g.children[3].children;
+    c3[1].textContent = ((liq + inv) > 0 ? inv / (liq + inv) * 100 : 0).toFixed(0) + '%';
+    c3[2].textContent = '투자 ' + K(inv) + ' / 예·적금 ' + K(liq) + ' (연금·보증금 제외)';
+  }
+  function coupleStats(mo) {
+    var r = { exp: { J: 0, H: 0, W: 0 }, inc: { J: 0, H: 0, W: 0 }, paid: { J: 0, H: 0, W: 0 }, pool: { H: 0, W: 0 } };
+    monthTx(mo).forEach(function (t) {
+      var o = ownerOf(t);
+      if (t.type === 'EXPENSE') { r.exp[o] += t.amount; if (o === 'J') r.paid[cardOwner(t.payment) || 'J'] += t.amount; }
+      else if (t.type === 'INCOME') r.inc[o] += t.amount;
+      else if (t.type === 'TRANSFER' && t.subcategory === '공동통장 입금' && (o === 'H' || o === 'W')) r.pool[o] += t.amount;
+    });
+    r.cH = r.paid.H + r.pool.H; r.cW = r.paid.W + r.pool.W; return r;
+  }
+  function renderCouple() {
+    var host = $('fc25-couple');
+    if (!host) {
+      var ref = $('fc18-health') || document.querySelector('#view-dashboard .grid-cols-4'); if (!ref) return;
+      host = document.createElement('div'); host.id = 'fc25-couple'; host.className = 'bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4';
+      ref.parentNode.insertBefore(host, ref.nextSibling);
+    }
+    var mo = selectedMonth, s = st(), r = coupleStats(mo), totE = r.exp.J + r.exp.H + r.exp.W, nw = nwByOwner(mo);
+    var box = function (title, body) { return '<div class="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2"><div class="text-[11px] font-bold text-slate-600">' + title + '</div>' + body + '</div>'; };
+    var line = function (l, v, extra) { return '<div class="flex justify-between items-center text-xs gap-2"><span>' + l + '</span><b class="text-slate-800">' + v + '</b></div>' + (extra || ''); };
+    var spend = OW.map(function (c) { return line(badge(c) + (c === 'J' ? ' 공동 생활비' : ' 개인'), K(r.exp[c]) + ' <span class="text-slate-400 font-normal">' + (totE ? Math.round(r.exp[c] / totE * 100) : 0) + '%</span>'); }).join('');
+    var allow = ['H', 'W'].map(function (c) {
+      var lim = +s[c === 'H' ? 'allowanceH' : 'allowanceW'] || 0, used = r.exp[c], p = lim ? used / lim * 100 : 0;
+      return line(esc(short(c)) + ' 용돈', K(used) + (lim ? ' / ' + K(lim) : ''), lim ? bar(p, p >= 100 ? 'bg-red-500' : p >= 80 ? 'bg-amber-500' : 'bg-accent') + (p >= 100 ? '<div class="text-[10px] text-red-600">한도 ' + K(used - lim) + ' 초과</div>' : '') : '<div class="text-[10px] text-slate-400">설정 탭에서 한도를 정하세요</div>');
+    }).join('');
+    var tot = r.cH + r.cW, sh = shareH(), diff = r.cH - tot * sh, pH = tot ? r.cH / tot * 100 : 0;
+    var settle = tot <= 0 ? '<div class="text-[11px] text-slate-400">공동 생활비 지출이나 공동통장 입금 기록이 아직 없습니다.</div>'
+      : Math.abs(diff) < 1000 ? '<div class="text-[11px] text-emerald-700">목표 비율대로 분담되고 있습니다.</div>'
+      : '<div class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">정산: <b>' + esc(short(diff > 0 ? 'W' : 'H')) + '</b> → <b>' + esc(short(diff > 0 ? 'H' : 'W')) + '</b> ' + K(Math.abs(diff)) + ' 보내면 목표 비율이 됩니다.</div>';
+    var share = line(esc(short('H')) + ' 부담', K(r.cH)) + line(esc(short('W')) + ' 부담', K(r.cW))
+      + '<div class="h-2 rounded-full overflow-hidden flex mt-1"><div class="bg-sky-400" style="width:' + pH + '%"></div><div class="bg-rose-400 flex-1"></div></div>'
+      + '<div class="text-[10px] text-slate-500">실제 ' + Math.round(pH) + ' : ' + Math.round(100 - pH) + ' · 목표 ' + Math.round(sh * 100) + ' : ' + Math.round(100 - sh * 100) + ' (' + ({ income: '소득 비례', half: '반반', custom: '직접 지정' }[s.shareMode || 'income']) + ')</div>' + settle;
+    var own = OW.map(function (c) { return line(badge(c) + ' 순자산', K(nw[c].a - nw[c].d)); }).join('')
+      + '<div class="text-[10px] text-slate-400">명의를 지정하지 않은 자산·부채는 공동으로 집계합니다. 배우자 증여공제는 10년간 6억 원까지입니다.</div>';
+    host.innerHTML = '<div class="flex items-center justify-between"><h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-people-roof text-accent mr-1.5"></i>부부 재무 현황 <span class="text-[11px] text-slate-400 font-normal">(' + mo + ')</span></h3><button onclick="switchTab(\'settings\')" class="text-[11px] text-slate-500 hover:text-accent">용돈·분담 규칙 설정 <i class="fa-solid fa-chevron-right"></i></button></div>'
+      + '<div class="grid grid-cols-1 lg:grid-cols-4 gap-3">' + box('지출 귀속', spend) + box('개인 용돈 사용', allow) + box('공동 생활비 분담', share) + box('명의별 순자산', own) + '</div>';
+  }
+  var _rd = window.renderDashboard;
+  window.renderDashboard = function () { var r = _rd.apply(this, arguments); safe('대시보드', function () { fixHealth(); renderCouple(); })(); return r; };
+
+  [['handleSaveTxn', 'transaction-modal'], ['handleSaveAsset', 'asset-modal'], ['handleSaveRealEstate', 'realestate-modal'], ['handleSaveLiability', 'liability-modal'], ['handleSaveInvestment', 'investment-modal']]
+    .forEach(function (x) { wrapSave(x[0], x[1]); });
+
+  window.FC25 = Object.assign(window.FC25 || {}, { saveRules: saveRules, ownerOf: ownerOf, short: short, nm: nm, cardOwner: cardOwner, codeOfName: codeOfName, badge: badge, assetValue: assetValue, avgExp: avgExp, monthTx: monthTx, NONLIQ: NONLIQ, mIdx: mIdx, addM: addM, nowM: nowM, today: today, fld: fld, setMoney: setMoney, bar: bar, sum: sum, safe: safe, INACT: INACT, ACT: ACT, IN: IN });
+  safe('부트', function () { injectAssetOptions(); refreshApp(); })();
+})();
+</script>
+<script>
+/* ===== Financial Core v25-2 : 선저축 예산 · 목표별 자금 ===== */
+(function () {
+  'use strict';
+  var F = window.FC25, $ = function (id) { return document.getElementById(id); };
+  var K = function (n) { return formatKRW(Math.round(n || 0)); }, esc = function (s) { return escapeHTML(s); }, P = function (v) { return parseCurrencyValue(v); };
+  var st = function () { return db.settings || (db.settings = {}); }, sum = F.sum, safe = F.safe;
+  var FIXEDCAT = /주거|금융|보험|세금/;
+
+  function incomeBase(mo) {
+    var inc = sum(F.monthTx(mo).filter(function (t) { return t.type === 'INCOME'; }), function (t) { return t.amount; });
+    var reg = (+st().husbandIncome || 0) + (+st().wifeIncome || 0);
+    return { inc: inc, reg: reg, base: inc || reg, fromReg: !inc && !!reg };
+  }
+  function target(base) { var s = st(); return s.saveMode === 'pct' ? Math.round(base * (+s.savePct || 0) / 100) : (+s.saveTarget || 0); }
+  function savedIn(mo) { return sum(F.monthTx(mo).filter(function (t) { return t.type === 'TRANSFER' && t.category === '자산이동' && t.subcategory !== '투자매도'; }), function (t) { return t.amount; }); }
+  function budgetTotal() { return sum(Object.keys(db.budgets || {}), function (k) { return db.budgets[k]; }); }
+  function plan(mo) {
+    var b = incomeBase(mo), T = target(b.base), exp = sum(F.monthTx(mo).filter(function (t) { return t.type === 'EXPENSE'; }), function (t) { return t.amount; });
+    return { b: b, T: T, avail: b.base - T, B: budgetTotal(), S: savedIn(mo), exp: exp, surplus: b.inc - exp,
+      fixed: sum(db.fixedExpenses, function (f) { return f.amount; }) + (window.FC ? FC.instSummary(mo).thisCharge : 0) };
   }
 
-  /* ---- 화면 ---- */
-  function fieldHtml(p, f, P) {
-    if (f[2] === 'T' && !P.teacher) return '';
-    var v = P.f[f[0]]; var isN = f[2] === 'n';
-    return '<label class="flex items-center justify-between gap-2 text-[11px] text-slate-600"><span class="flex-1 min-w-0">' + f[1] + '</span><input data-p="' + p + '" data-k="' + f[0] + '" inputmode="numeric" value="' + (v ? (+v).toLocaleString('ko-KR') : '') + '" placeholder="0" onfocus="this.select()" onchange="FC25.chg(this)" class="w-32 shrink-0 border border-slate-300 rounded-lg px-2 py-1.5 text-right ' + (isN ? '' : '') + '"></label>';
+  /* ---------- 목표 ---------- */
+  function goals() { return db.goals || (db.goals = []); }
+  function goalSaved(g) { return (+g.initial || 0) + sum(db.transactions.filter(function (t) { return t.goalId === g.id && t.type === 'TRANSFER'; }), function (t) { return t.amount; }); }
+  function goalInfo(g) {
+    var saved = goalSaved(g), tgt = +g.target || 0, rem = Math.max(0, tgt - saved);
+    var ml = g.due ? F.mIdx(g.due) - F.mIdx(F.nowM()) + 1 : null;
+    var req = rem <= 0 ? 0 : (ml == null ? null : (ml > 0 ? rem / ml : rem));
+    var pl = +g.plan || 0, stt;
+    if (rem <= 0) stt = ['달성', 'bg-emerald-100 text-emerald-800'];
+    else if (ml != null && ml <= 0) stt = ['기한 경과', 'bg-red-100 text-red-700'];
+    else if (req == null) stt = ['기한 미정', 'bg-slate-100 text-slate-600'];
+    else if (pl >= req) stt = ['순항', 'bg-emerald-100 text-emerald-800'];
+    else stt = [pl ? '월 ' + K(req - pl) + ' 부족' : '적립 계획 필요', 'bg-amber-100 text-amber-800'];
+    return { saved: saved, tgt: tgt, rem: rem, ml: ml, req: req, pc: tgt ? Math.min(100, saved / tgt * 100) : 0, stt: stt,
+      thisM: sum(db.transactions.filter(function (t) { return t.goalId === g.id && t.date && t.date.indexOf(F.nowM()) === 0; }), function (t) { return t.amount; }) };
   }
-  function personHtml(p, P) {
-    var chk = function (k, t) { return '<label class="flex items-center gap-1.5 text-[11px] text-slate-600"><input type="checkbox" data-p="' + p + '" data-c="' + k + '" ' + (P[k] ? 'checked' : '') + ' onchange="FC25.chk(this)"> ' + t + '</label>'; };
-    return '<div class="border border-slate-200 rounded-xl p-4 space-y-3 bg-white"><div class="flex items-center justify-between"><b class="text-slate-800">' + esc(P.name) + '</b><span class="text-[11px] text-slate-400">' + (P.teacher ? '교원' : '') + '</span></div><div class="flex flex-wrap gap-x-4 gap-y-1">' + chk('teacher', '교원 (교사)') + chk('marry', '2026년 혼인신고 (생애 1회)') + chk('nohouse', '무주택 세대주·세대원') + '</div>'
-      + GR.map(function (g) { return '<details ' + (g[1] ? 'open' : '') + ' class="border-t border-slate-100 pt-2"><summary class="text-xs font-bold text-slate-700 cursor-pointer">' + g[0] + '</summary><div class="space-y-1.5 mt-2" data-grp="' + p + g[0] + '">' + g[2].map(function (f) { return fieldHtml(p, f, P); }).join('') + '</div></details>'; }).join('') + '</div>';
+  function goalCard(g) {
+    var i = goalInfo(g);
+    return '<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">'
+      + '<div class="flex justify-between items-start gap-2"><div class="font-bold text-slate-800 text-sm">' + esc(g.name) + ' ' + F.badge(g.owner || 'J') + '</div>'
+      + '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + i.stt[1] + '">' + i.stt[0] + '</span></div>'
+      + '<div class="flex justify-between text-xs"><span>' + K(i.saved) + ' / <b>' + K(i.tgt) + '</b></span><span class="font-bold text-accent">' + i.pc.toFixed(0) + '%</span></div>' + F.bar(i.pc, 'bg-accent')
+      + '<div class="grid grid-cols-3 gap-2 text-[11px] text-slate-500">'
+      + '<div>남은 금액<br><b class="text-slate-800">' + K(i.rem) + '</b></div>'
+      + '<div>기한<br><b class="text-slate-800">' + (g.due ? esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월)' : '') : '-') + '</b></div>'
+      + '<div>필요 월 적립<br><b class="text-slate-800">' + (i.req == null ? '-' : K(i.req)) + '</b>' + (g.plan ? '<br>계획 ' + K(g.plan) : '') + '</div></div>'
+      + '<div class="flex items-center gap-2 pt-1 border-t border-slate-200/70"><span class="text-[11px] text-slate-500">이번 달 ' + K(i.thisM) + '</span>'
+      + '<input id="fc25-gc-' + g.id + '" type="text" oninput="formatCurrencyInput(this)" placeholder="' + (g.plan ? Number(g.plan).toLocaleString('ko-KR') : '적립액') + '" class="ml-auto w-28 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-right">'
+      + '<button onclick="FC25.contrib(' + g.id + ')" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-semibold">적립</button>'
+      + '<button onclick="FC25.editGoal(' + g.id + ')" class="text-slate-400 hover:text-accent text-xs p-1" title="수정"><i class="fa-solid fa-pen-to-square"></i></button>'
+      + '<button onclick="FC25.delGoal(' + g.id + ')" class="text-slate-400 hover:text-red-500 text-xs p-1" title="삭제"><i class="fa-solid fa-trash-can"></i></button></div></div>';
+  }
+  function goalForm(g) {
+    var f = $('fc25-gform'); if (!f) return;
+    f.classList.remove('hidden');
+    f.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-6 gap-3 text-xs">'
+      + F.fld('fc25-g-name', '목표 이름', 0, { ph: '예: 내 집 마련, 아이 교육비, 차 교체' })
+      + '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">누구의 목표</label><select id="fc25-g-owner" class="' + F.IN + '">' + ['J', 'H', 'W'].map(function (c) { return '<option value="' + c + '">' + esc(c === 'J' ? '부부 공동' : F.nm(c)) + '</option>'; }).join('') + '</select></div>'
+      + F.fld('fc25-g-target', '목표 금액 (원)', 1) + F.fld('fc25-g-due', '목표 시점', 0, { type: 'month' })
+      + F.fld('fc25-g-initial', '이미 모아 둔 돈 (원)', 1) + F.fld('fc25-g-plan', '월 적립 계획 (원)', 1)
+      + '</div><input type="hidden" id="fc25-g-id"><div class="flex justify-end gap-2 mt-3"><button onclick="FC25.cancelGoal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">취소</button><button onclick="FC25.saveGoal()" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">목표 저장</button></div>';
+    $('fc25-g-id').value = g ? g.id : ''; $('fc25-g-name').value = g ? g.name : ''; $('fc25-g-owner').value = g ? (g.owner || 'J') : 'J';
+    F.setMoney('fc25-g-target', g && g.target); $('fc25-g-due').value = g && g.due ? g.due : ''; F.setMoney('fc25-g-initial', g && g.initial); F.setMoney('fc25-g-plan', g && g.plan);
+    $('fc25-g-name').focus();
+  }
+  function saveGoal() {
+    var name = $('fc25-g-name').value.trim(), tgt = P($('fc25-g-target').value);
+    if (!name || !tgt) { showToast('목표 이름과 목표 금액을 입력하세요.', 'warning'); return; }
+    var id = $('fc25-g-id').value ? Number($('fc25-g-id').value) : null, g = id ? goals().filter(function (x) { return x.id === id; })[0] : null;
+    if (!g) { g = { id: Date.now() }; goals().push(g); }
+    g.name = name; g.owner = $('fc25-g-owner').value; g.target = tgt; g.due = $('fc25-g-due').value || null; g.initial = P($('fc25-g-initial').value); g.plan = P($('fc25-g-plan').value);
+    $('fc25-gform').classList.add('hidden'); saveData(); showToast('목표 \'' + name + '\'이(가) 저장되었습니다.');
+  }
+  function contrib(id) {
+    var g = goals().filter(function (x) { return x.id === id; })[0]; if (!g) return;
+    var amt = P(($('fc25-gc-' + id) || {}).value) || (+g.plan || 0);
+    if (!amt) { showToast('적립할 금액을 입력하세요.', 'warning'); return; }
+    db.transactions.push({ id: Date.now(), date: F.today(), type: 'TRANSFER', category: '자산이동', subcategory: '목표적립', payment: '계좌이체', amount: amt, memo: '[목표] ' + g.name, owner: g.owner || 'J', goalId: g.id });
+    saveData(); showToast('\'' + g.name + '\'에 ' + K(amt) + '을 적립했습니다. (이체 내역에 기록)');
+  }
+  function delGoal(id) {
+    var g = goals().filter(function (x) { return x.id === id; })[0]; if (!g) return;
+    showCustomConfirm('목표 삭제', '[' + g.name + '] 목표를 삭제합니다. 이미 기록된 적립 이체 내역은 그대로 남습니다.', function () {
+      db.goals = goals().filter(function (x) { return x.id !== id; }); saveData(); showToast('목표가 삭제되었습니다.');
+    });
+  }
+
+  /* ---------- 선저축 ---------- */
+  function setSave() {
+    var s = st(); s.saveMode = $('fc25-save-mode').value;
+    if (s.saveMode === 'pct') s.savePct = Math.max(0, Math.min(90, parseFloat($('fc25-save-val').value) || 0)); else s.saveTarget = P($('fc25-save-val').value);
+    saveData(); showToast('선저축 목표가 저장되었습니다.');
+  }
+  function adjustBudgets() {
+    var p = plan(selectedMonth), keys = Object.keys(db.budgets || {});
+    if (!p.T) { showToast('먼저 월 저축·투자 목표를 정하세요.', 'warning'); return; }
+    var fixedSum = sum(keys.filter(function (k) { return FIXEDCAT.test(k); }), function (k) { return db.budgets[k]; });
+    var var_ = keys.filter(function (k) { return !FIXEDCAT.test(k) && db.budgets[k] > 0; }), varSum = sum(var_, function (k) { return db.budgets[k]; }), room = p.avail - fixedSum;
+    if (room <= 0 || !varSum) { showToast('고정성 예산만으로 가용액을 넘습니다. 저축 목표나 고정비를 먼저 점검하세요.', 'warning'); return; }
+    var f = Math.min(1, room / varSum);
+    showCustomConfirm('예산 선저축 기준 조정', '주거·금융·보험·세금 예산은 그대로 두고, 나머지 ' + var_.length + '개 카테고리 예산을 ' + Math.round(f * 100) + '% 수준으로 줄여 총액을 ' + K(p.avail) + ' 이내로 맞춥니다.', function () {
+      var_.forEach(function (k) { db.budgets[k] = Math.floor(db.budgets[k] * f / 1000) * 1000; });
+      saveData(); showToast('예산을 선저축 기준으로 조정했습니다.');
+    });
+  }
+  function renderPresave() {
+    var host = $('fc25-presave'); if (!host) return;
+    var s = st(), p = plan(selectedMonth), over = p.B - p.avail, gl = goals().map(goalInfo), reqSum = sum(gl.filter(function (i) { return i.req; }), function (i) { return i.req; });
+    var pc = p.T ? p.S / p.T * 100 : 0;
+    var cell = function (t, v, sub, cls) { return '<div class="p-3 rounded-lg bg-slate-50 border border-slate-200"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-lg font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div><div class="text-[11px] text-slate-400 mt-0.5">' + sub + '</div></div>'; };
+    host.innerHTML = '<div class="flex flex-wrap justify-between items-center gap-3 pb-3 border-b border-slate-100"><div><h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-piggy-bank text-accent mr-2"></i>먼저 저축하고, 남은 돈으로 쓰기</h3>'
+      + '<p class="text-xs text-slate-400 mt-0.5">수입이 들어오면 저축·투자 목표액부터 떼고, 나머지를 생활비 예산으로 나눕니다. (' + selectedMonth + ' 기준)</p></div>'
+      + '<div class="flex items-center gap-2 text-xs"><select id="fc25-save-mode" onchange="FC25.renderGoals()" class="border border-slate-300 rounded-lg px-2 py-2"><option value="amt">월 금액</option><option value="pct">수입 대비 %</option></select>'
+      + '<input id="fc25-save-val" type="text" class="w-32 border border-slate-300 rounded-lg px-2 py-2 text-right"><button onclick="FC25.setSave()" class="bg-slate-900 text-white px-3.5 py-2 rounded-lg font-semibold">저장</button></div></div>'
+      + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-3">'
+      + cell('기준 수입', K(p.b.base), p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입 합계 사용' : '이번 달 수입 기록 합계')
+      + cell('저축·투자 목표', K(p.T), s.saveMode === 'pct' ? '수입의 ' + (+s.savePct || 0) + '%' : '월 고정 금액', 'text-accent')
+      + cell('생활비 가용액', K(p.avail), '고정비+할부 ' + K(p.fixed) + ' 포함', p.avail < 0 ? 'text-red-600' : 'text-slate-800')
+      + cell('카테고리 예산 합계', K(p.B), over > 0 ? '가용액보다 ' + K(over) + ' 많음' : '가용액 이내', over > 0 ? 'text-red-600' : 'text-emerald-600')
+      + cell('이번 달 실제 저축·투자', K(p.S), (p.T ? '목표의 ' + pc.toFixed(0) + '% · ' : '') + '수입-지출 잉여 ' + K(p.surplus), p.T && p.S >= p.T ? 'text-emerald-600' : 'text-slate-800')
+      + '</div>' + (p.T ? F.bar(pc, pc >= 100 ? 'bg-emerald-500' : 'bg-accent') : '')
+      + '<div class="flex flex-wrap items-center gap-3 text-xs">'
+      + (over > 0 && p.T ? '<div class="flex-1 min-w-[240px] bg-red-50 border border-red-200 text-red-800 rounded-lg px-3 py-2">예산을 다 쓰면 저축 목표를 지킬 수 없습니다. 예산을 ' + K(over) + ' 줄여야 합니다.</div><button onclick="FC25.adjustBudgets()" class="bg-red-600 text-white px-3.5 py-2 rounded-lg font-semibold">예산 자동 조정</button>' : '')
+      + (reqSum ? '<div class="flex-1 min-w-[240px] ' + (reqSum > p.T ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-800') + ' border rounded-lg px-3 py-2">목표 달성에 필요한 월 적립 합계 <b>' + K(reqSum) + '</b> · 선저축 목표 ' + K(p.T) + (reqSum > p.T ? ' → 목표 시점을 늦추거나 저축액을 ' + K(reqSum - p.T) + ' 늘려야 합니다.' : ' 안에서 감당할 수 있습니다.') + '</div>' : '')
+      + '<div class="text-[11px] text-slate-400 w-full">실제 저축·투자 = 이번 달 [이체 › 자산이동] 기록(투자매도 제외). 적금 납입·투자매수·목표적립·연금 납입을 이체로 기록하면 자동 집계됩니다.</div></div>';
+    var mode = $('fc25-save-mode'), val = $('fc25-save-val');
+    if (mode.dataset.v) mode.value = mode.dataset.v; else mode.value = s.saveMode === 'pct' ? 'pct' : 'amt';
+    mode.onchange = function () { mode.dataset.v = mode.value; renderPresave(); };
+    if (mode.value === 'pct') { val.value = s.savePct || ''; val.placeholder = '예: 30'; val.oninput = null; }
+    else { val.value = s.saveTarget ? Number(s.saveTarget).toLocaleString('ko-KR') : ''; val.placeholder = '예: 2,000,000'; val.oninput = function () { formatCurrencyInput(val); }; }
+  }
+  function renderGoals() {
+    renderPresave();
+    var l = $('fc25-glist'); if (!l) return;
+    var g = goals().slice().sort(function (a, b) { return (a.due || '9999') < (b.due || '9999') ? -1 : 1; });
+    l.innerHTML = g.length ? g.map(goalCard).join('') : '<div class="text-xs text-slate-400 p-6 text-center border border-dashed border-slate-300 rounded-xl lg:col-span-2">아직 목표가 없습니다. 주택 자금, 자녀 교육비, 차량 교체, 여행처럼 쓸 곳이 정해진 돈을 목표로 등록해 보세요.</div>';
+  }
+  function renderBudgetBanner() {
+    var v = $('view-budget'); if (!v) return;
+    var b = $('fc25-bbanner'); if (!b) { v.insertAdjacentHTML('afterbegin', '<div id="fc25-bbanner"></div>'); b = $('fc25-bbanner'); }
+    var p = plan(selectedMonth), over = p.B - p.avail;
+    b.className = 'p-4 rounded-xl border shadow-sm text-xs flex flex-wrap items-center gap-3 ' + (!p.T ? 'bg-sky-50 border-sky-200 text-sky-900' : over > 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800');
+    b.innerHTML = '<i class="fa-solid fa-piggy-bank"></i>' + (!p.T ? '<span>저축·투자 목표가 없습니다. 지난달 지출을 기준으로 예산을 잡으면 저축이 \'남는 돈\'이 됩니다. 저축액부터 정해 두세요.</span>'
+      : '<span>선저축 ' + K(p.T) + ' → 생활비 가용 <b>' + K(p.avail) + '</b> · 예산 합계 <b>' + K(p.B) + '</b>' + (over > 0 ? ' (' + K(over) + ' 초과)' : ' (여유 ' + K(-over) + ')') + '</span>')
+      + '<button onclick="switchTab(\'goals\')" class="ml-auto bg-white border border-current px-3 py-1.5 rounded-lg font-semibold">목표 · 선저축 설정</button>';
+  }
+  var _ab = window.autoRecommendBudgetFromLastMonth;
+  window.autoRecommendBudgetFromLastMonth = function () {
+    var r = _ab.apply(this, arguments);
+    safe('추천예산', function () { var p = plan(selectedMonth); if (p.T && p.B > p.avail) setTimeout(function () { showToast('지난달 기준 예산이 선저축 후 가용액보다 ' + K(p.B - p.avail) + ' 많습니다. [목표 · 선저축]에서 조정하세요.', 'warning'); }, 600); })();
+    return r;
+  };
+
+  /* ---------- 화면 · 탭 ---------- */
+  function injectGoalsView() {
+    if ($('view-goals')) return;
+    var anchor = $('nav-retire') || $('nav-settings');
+    if (anchor) anchor.insertAdjacentHTML('beforebegin', '<button onclick="switchTab(\'goals\')" id="nav-goals" class="' + F.INACT + '"><i class="fa-solid fa-flag-checkered w-5 text-center text-emerald-400"></i> 목표 · 선저축 계획</button>');
+    var vs = $('view-settings'); if (!vs) return;
+    vs.insertAdjacentHTML('afterend', '<section id="view-goals" class="space-y-6 hidden">'
+      + '<div id="fc25-presave" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"></div>'
+      + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex justify-between items-center pb-3 border-b border-slate-100 gap-3"><div><h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-flag-checkered text-accent mr-2"></i>목표별 자금</h3>'
+      + '<p class="text-xs text-slate-400 mt-0.5">목표마다 기한과 월 적립 계획을 두고, [적립]을 누르면 이체 내역에 기록되어 진행률이 올라갑니다.</p></div>'
+      + '<button onclick="FC25.newGoal()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-4 py-2 rounded-lg shrink-0"><i class="fa-solid fa-plus text-amber-400 mr-1"></i>목표 추가</button></div>'
+      + '<div id="fc25-gform" class="hidden p-4 bg-amber-50/60 border border-amber-200 rounded-xl"></div><div id="fc25-glist" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div></div></section>');
+  }
+  var VIEWS = { goals: ['view-goals', 'nav-goals', '목표 · 선저축 계획', function () { renderGoals(); }] };
+  F.VIEWS = VIEWS;
+  var _sw = window.switchTab;
+  window.switchTab = function (t) {
+    Object.keys(VIEWS).forEach(function (k) { var v = $(VIEWS[k][0]), n = $(VIEWS[k][1]); if (v) v.classList.add('hidden'); if (n) n.className = F.INACT; });
+    var c = VIEWS[t]; if (!c || !$(c[0])) return _sw.apply(this, arguments);
+    _sw('dashboard'); $('view-dashboard').classList.add('hidden'); $('nav-dashboard').className = F.INACT;
+    $(c[0]).classList.remove('hidden'); if ($(c[1])) $(c[1]).className = F.ACT; $('page-title').innerText = c[2];
+    safe('탭', c[3])();
+  };
+  var _rf = window.refreshApp;
+  window.refreshApp = function () {
+    var r = _rf.apply(this, arguments);
+    safe('새로고침', function () { renderBudgetBanner(); var v = $('view-goals'); if (v && !v.classList.contains('hidden')) renderGoals(); })();
+    return r;
+  };
+
+  Object.assign(window.FC25, { renderGoals: renderGoals, setSave: setSave, adjustBudgets: adjustBudgets, newGoal: function () { goalForm(null); }, editGoal: function (id) { goalForm(goals().filter(function (x) { return x.id === id; })[0]); },
+    cancelGoal: function () { $('fc25-gform').classList.add('hidden'); }, saveGoal: saveGoal, contrib: contrib, delGoal: delGoal, savingTarget: function (mo) { return target(incomeBase(mo || selectedMonth).base); } });
+  safe('부트2', function () { injectGoalsView(); renderBudgetBanner(); })();
+})();
+</script>
+<script>
+/* ===== Financial Core v25-3 : 부부 2인 은퇴자금 시뮬레이터 ===== */
+(function () {
+  'use strict';
+  var F = window.FC25, $ = function (id) { return document.getElementById(id); };
+  var K = function (n) { return formatKRW(Math.round(n || 0)); }, esc = function (s) { return escapeHTML(s); };
+  var st = function () { return db.settings || (db.settings = {}); }, sum = F.sum, safe = F.safe;
+  var num = function (id) { return parseFloat(String(($(id) || {}).value || '').replace(/,/g, '')) || 0; };
+
+  /* [키, 라벨, 금액여부] */
+  var PA = [['aAge', '현재 나이'], ['aRet', '은퇴 나이'], ['aLife', '기대수명'], ['aPen', '공적연금 월 예상액 (현재가치)', 1], ['aPAge', '연금 개시 나이']];
+  var PB = PA.map(function (f) { return ['b' + f[0].slice(1), f[1], f[2]]; });
+  var PH = [['assets', '현재 은퇴 준비자산 (원)', 1], ['save', '부부 월 저축·투자액 (원)', 1], ['shareA', '저축 중 남편 소득 몫 (%)'], ['growth', '저축액 연 증가율 (%)'],
+    ['pre', '은퇴 전 수익률 (%)'], ['post', '은퇴 후 수익률 (%)'], ['infl', '물가상승률 (%)'], ['cost', '부부 월 생활비 (현재가치, 원)', 1], ['surv', '1인 생존 시 생활비 (%)'], ['survPen', '유족연금 비율 (%)']];
+  var ALL = PA.concat(PB, PH);
+
+  function pensionOf(o) {
+    var l = db.assets.filter(function (a) { return a.subType === '국민연금' && (a.owner || 'J') === o; });
+    return { m: sum(l, function (a) { return a.pensionMonthly; }), age: l.length ? (l[0].pensionStartAge || 65) : 65 };
+  }
+  function defaults() {
+    var s = st(), y = new Date().getFullYear(), aAge = s.husbandBirthYear ? y - s.husbandBirthYear : 40, bAge = s.wifeBirthYear ? y - s.wifeBirthYear : aAge;
+    var pa = pensionOf('H'), pb = pensionOf('W'), mo = selectedMonth;
+    var assets = sum(db.assets.filter(function (a) { return a.subType !== '전세보증금' && a.subType !== '국민연금'; }), function (a) { return F.assetValue(a, mo); }) + sum(db.investments, function (i) { return i.value; });
+    var inc = {}, ex = {};
+    db.transactions.forEach(function (t) { var m = (t.date || '').slice(0, 7); if (t.type === 'INCOME') inc[m] = (inc[m] || 0) + t.amount; if (t.type === 'EXPENSE') ex[m] = (ex[m] || 0) + t.amount; });
+    var ms = Object.keys(ex).sort().slice(-3), ae = ms.length ? sum(ms, function (m) { return ex[m]; }) / ms.length : 0, sv = ms.length ? sum(ms, function (m) { return (inc[m] || 0) - ex[m]; }) / ms.length : 0;
+    var tgt = F.savingTarget ? F.savingTarget(mo) : 0, h = +s.husbandIncome || 0, w = +s.wifeIncome || 0;
+    return { aAge: aAge, aRet: 60, aLife: 88, aPen: pa.m, aPAge: pa.age, bAge: bAge, bRet: 60, bLife: 92, bPen: pb.m, bPAge: pb.age,
+      assets: Math.round(assets), save: Math.max(0, Math.round((tgt || sv) / 1e4) * 1e4), shareA: h + w > 0 ? Math.round(h / (h + w) * 100) : 50, growth: 2,
+      pre: 5, post: 3, infl: 2.5, cost: Math.max(2e6, Math.round(ae * 0.7 / 1e4) * 1e4), surv: 70, survPen: 50 };
+  }
+  function setForm(o) { ALL.forEach(function (f) { var el = $('q-' + f[0]); if (el) el.value = f[2] ? (Math.round(+o[f[0]] || 0)).toLocaleString('ko-KR') : (o[f[0]] != null ? o[f[0]] : ''); }); }
+  function readForm() { var o = {}; ALL.forEach(function (f) { o[f[0]] = num('q-' + f[0]); }); o.shareA = Math.min(100, Math.max(0, o.shareA)) / 100; return o; }
+
+  /* 한 해의 상태 : 생존·근로 여부, 연금(유족연금 포함), 생활비 */
+  function step(p, y) {
+    var aA = p.aAge + y, bA = p.bAge + y, aL = aA < p.aLife, bL = bA < p.bLife, f = Math.pow(1 + p.infl / 100, y);
+    var aW = aL && aA < p.aRet, bW = bL && bA < p.bRet, aP = aA >= p.aPAge ? p.aPen : 0, bP = bA >= p.bPAge ? p.bPen : 0, sp = p.survPen / 100;
+    /* 1인 생존 : 본인 연금 + 유족연금 30% 또는 유족연금만 중 큰 쪽 */
+    var pen = aL && bL ? aP + bP : aL ? Math.max(aP + p.bPen * sp * 0.3, p.bPen * sp) : bL ? Math.max(bP + p.aPen * sp * 0.3, p.aPen * sp) : 0;
+    var alive = (aL ? 1 : 0) + (bL ? 1 : 0);
+    return { aA: aA, bA: bA, aL: aL, bL: bL, alive: alive, work: aW || bW, share: (aW ? p.shareA : 0) + (bW ? 1 - p.shareA : 0),
+      pen: pen * 12 * f, cost: alive ? p.cost * 12 * f * (alive === 2 ? 1 : p.surv / 100) : 0 };
+  }
+  function span(p) { return Math.max(p.aLife - p.aAge, p.bLife - p.bAge, 0); }
+  function retY(p) { return Math.max(0, Math.min(p.aRet - p.aAge, p.aLife - p.aAge), Math.min(p.bRet - p.bAge, p.bLife - p.bAge)); }
+  function sim(p, sv) {
+    var bal = p.assets, rows = [], depl = null, atR = null, n = span(p), rY = retY(p);
+    for (var y = 0; y < n; y++) {
+      var s = step(p, y);
+      if (y === rY) atR = bal;
+      if (s.work) bal = bal * (1 + p.pre / 100) + (sv * 12 * Math.pow(1 + p.growth / 100, y) * s.share + s.pen) * (1 + p.pre / 200);
+      else { bal = (bal - (s.cost - s.pen)) * (1 + p.post / 100); if (bal < 0) { if (!depl) depl = s; bal = 0; } }
+      rows.push({ aA: s.aA + 1, bA: s.bA + 1, n: bal, r: bal / Math.pow(1 + p.infl / 100, y + 1) });
+    }
+    if (atR == null) atR = bal;
+    return { rows: rows, depl: depl, atR: atR, end: bal };
+  }
+  function need(p) {
+    var rY = retY(p), s = 0;
+    for (var y = rY; y < span(p); y++) { var x = step(p, y); if (!x.work) s += (x.cost - x.pen) / Math.pow(1 + p.post / 100, y - rY); }
+    return Math.max(0, s);
+  }
+  function events(p) {
+    var E = [], A = F.short('H'), B = F.short('W'), add = function (age0, at, label) { if (at - age0 >= 0) E.push({ y: at - age0, label: label }); };
+    add(p.aAge, p.aRet, A + ' 은퇴'); add(p.bAge, p.bRet, B + ' 은퇴'); add(p.aAge, p.aPAge, A + ' 연금 개시'); add(p.bAge, p.bPAge, B + ' 연금 개시');
+    add(p.aAge, p.aLife, A + ' 기대수명 도달 → 1인 가구'); add(p.bAge, p.bLife, B + ' 기대수명 도달 → 1인 가구');
+    return E.sort(function (a, b) { return a.y - b.y; });
+  }
+
+  function run(persist) {
+    var out = $('q-out'), p = readForm(); if (!out) return;
+    if (persist) { db.retire2 = {}; ALL.forEach(function (f) { db.retire2[f[0]] = num('q-' + f[0]); }); try { localStorage.setItem('FINANCIAL_CORE_DB', JSON.stringify(db)); } catch (e) {} }
+    var bad = [['a', F.short('H')], ['b', F.short('W')]].filter(function (x) { return !(p[x[0] + 'Ret'] >= p[x[0] + 'Age'] && p[x[0] + 'Life'] > p[x[0] + 'Ret']); });
+    if (bad.length) { out.innerHTML = '<div class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">' + esc(bad.map(function (x) { return x[1]; }).join(', ')) + '의 나이 조건을 확인하세요 (현재 나이 ≤ 은퇴 나이 < 기대수명).</div>'; return; }
+    var s = sim(p, p.save), nd = need(p), rY = retY(p), inf = Math.pow(1 + p.infl / 100, rY), ratio = nd > 0 ? s.atR / nd * 100 : 100, req = 0;
+    if (s.depl) { if (sim(p, 5e7).depl) req = null; else { var lo = 0, hi = 5e7; for (var i = 0; i < 40; i++) { var m = (lo + hi) / 2; if (sim(p, m).depl) lo = m; else hi = m; } req = Math.ceil(hi / 1e4) * 1e4; } }
+    var A = esc(F.short('H')), B = esc(F.short('W')), ok = !s.depl;
+    var card = function (t, v, sub, c) { return '<div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm"><div class="text-[11px] font-semibold text-slate-400">' + t + '</div><div class="text-lg font-extrabold ' + (c || 'text-slate-800') + '">' + v + '</div><div class="text-[11px] text-slate-400 mt-0.5">' + sub + '</div></div>'; };
+    var penNow = p.aPen + p.bPen, repl = p.cost > 0 ? penNow / p.cost * 100 : 0;
+    var sc = [-1, 0, 1].map(function (d) {
+      var q = Object.assign({}, p, { pre: p.pre + d, post: p.post + d }), r = sim(q, q.save);
+      return '<tr class="border-t border-slate-100"><td class="p-2">' + (d ? (d > 0 ? '낙관 (+1%p)' : '보수 (-1%p)') : '기준') + '</td><td class="p-2 text-right">' + K(r.atR) + '</td><td class="p-2 ' + (r.depl ? 'text-red-600' : 'text-emerald-600') + '">'
+        + (r.depl ? A + ' ' + r.depl.aA + '세 · ' + B + ' ' + r.depl.bA + '세에 고갈' : '두 사람 기대수명까지 유지 (잔액 ' + K(r.end) + ')') + '</td></tr>';
+    }).join('');
+    var ev = events(p).map(function (e) {
+      var bal = e.y === 0 ? p.assets : (s.rows[e.y - 1] || {}).n;
+      return '<tr class="border-t border-slate-100"><td class="p-2">' + (new Date().getFullYear() + e.y) + '년</td><td class="p-2 text-center">' + (p.aAge + e.y) + ' / ' + (p.bAge + e.y) + '</td><td class="p-2">' + esc(e.label) + '</td><td class="p-2 text-right">' + K(bal) + '</td></tr>';
+    }).join('');
+    out.innerHTML = '<div class="p-4 rounded-xl border text-sm font-bold ' + (ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800') + '">'
+      + (ok ? '현재 계획이면 두 사람 모두 기대수명(' + A + ' ' + p.aLife + '세 · ' + B + ' ' + p.bLife + '세)까지 자금이 유지됩니다.' : '현재 계획이면 ' + A + ' ' + s.depl.aA + '세 · ' + B + ' ' + s.depl.bA + '세 무렵 자금이 고갈됩니다.') + '</div>'
+      + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">'
+      + card('두 사람 모두 은퇴할 때 자산', K(s.atR), (new Date().getFullYear() + rY) + '년 · 현재가치 ' + K(s.atR / inf))
+      + card('필요 은퇴자산', K(nd), '현재가치 ' + K(nd / inf))
+      + card('자금 충족률', ratio.toFixed(0) + '%', '예상 ÷ 필요', ratio >= 100 ? 'text-emerald-600' : ratio >= 70 ? 'text-amber-600' : 'text-red-600')
+      + card('필요 월 저축', req == null ? '산출 불가' : req === 0 ? '추가 불필요' : K(req), '현재 ' + K(p.save) + (req > p.save ? ' · 월 ' + K(req - p.save) + ' 부족' : ''), req == null || req > p.save ? 'text-red-600' : 'text-emerald-600')
+      + card('공적연금 소득대체율', repl.toFixed(0) + '%', '부부 연금 ' + K(penNow) + ' ÷ 생활비 ' + K(p.cost), repl >= 50 ? 'text-emerald-600' : 'text-amber-600')
+      + '</div>'
+      + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><div class="text-xs font-bold text-slate-700 mb-2">연도별 자산 추이 <span class="font-normal text-slate-400">(가로축: ' + A + ' 나이 / ' + B + ' 나이)</span></div><div style="height:260px"><canvas id="q-chart"></canvas></div></div>'
+      + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">'
+      + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">부부 생애 이벤트</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">연도</th><th class="p-2">' + A + ' / ' + B + '</th><th class="p-2 text-left">이벤트</th><th class="p-2 text-right">그 시점 자산</th></tr></thead><tbody>' + ev + '</tbody></table></div>'
+      + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">수익률 시나리오</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">시나리오</th><th class="p-2 text-right">은퇴 시점 자산</th><th class="p-2 text-left">결과</th></tr></thead><tbody>' + sc + '</tbody></table></div></div>'
+      + '<div class="text-[11px] text-slate-400 leading-relaxed">※ 한 사람만 은퇴한 기간에는 은퇴한 사람의 소득 몫만큼 저축이 줄고, 생활비는 남은 근로소득으로 충당한다고 가정합니다. 두 사람이 모두 은퇴하면 자산에서 생활비를 꺼내 쓰고 연금으로 일부를 메웁니다. 한 사람이 떠난 뒤에는 생활비를 설정 비율로 줄이고, 남은 사람은 \'본인 연금 + 유족연금의 30%\'와 \'유족연금\' 중 큰 쪽을 받는다고 봅니다. 세금·건강보험료·주택(전세보증금 포함)은 반영하지 않은 단순 시뮬레이션이며 투자 결과를 보장하지 않습니다.</div>';
+    var cv = $('q-chart');
+    if (window.Chart && cv) {
+      var old = Chart.getChart && Chart.getChart(cv); if (old) old.destroy();
+      new Chart(cv, { type: 'line', data: { labels: s.rows.map(function (r) { return r.aA + '/' + r.bA; }), datasets: [
+        { label: '명목 자산', data: s.rows.map(function (r) { return Math.round(r.n); }), borderColor: '#2E6F40', tension: .2, pointRadius: 0 },
+        { label: '현재가치', data: s.rows.map(function (r) { return Math.round(r.r); }), borderColor: '#F59E0B', borderDash: [4, 4], tension: .2, pointRadius: 0 }] },
+        options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + K(c.parsed.y); } } } }, scales: { y: { ticks: { callback: function (v) { return (v / 1e8).toFixed(1) + '억'; } } } } } });
+    }
   }
   function build() {
-    var host = $('view-tax'); if (!host || $('fc25-tax')) return;
-    var t = data(), old = document.createElement('details'); old.className = 'bg-white rounded-xl border border-slate-200 p-4';
-    old.innerHTML = '<summary class="text-xs font-bold text-slate-600 cursor-pointer">간이 시뮬레이터 · 카드 전략 (기존 기능)</summary>'; var kids = [].slice.call(host.children), wrap = document.createElement('div'); wrap.className = 'space-y-6 mt-4'; kids.forEach(function (k) { wrap.appendChild(k); }); old.appendChild(wrap);
-    var box = document.createElement('div'); box.id = 'fc25-tax'; box.className = 'space-y-5';
-    box.innerHTML = '<div class="bg-slate-900 text-white rounded-2xl p-5 space-y-1"><div class="font-bold text-base"><i class="fa-solid fa-file-invoice text-amber-300 mr-2"></i>2026 귀속 연말정산 상세 계산기 <span class="text-xs text-slate-300 font-normal">(2027년 2월 정산)</span></div><p class="text-[11px] text-slate-300 leading-relaxed">부부 각자 소득·공제를 입력하면 결정세액과 환급액을 계산하고, 자녀·부모 공제를 누구에게 올릴지 비교합니다. 2026 귀속 개정(자녀세액공제 25/55만원+40만원, 월세 한도 1,000만원, 카드한도 자녀 가산 등)을 반영한 <b>추정치</b>이며, 확정 안내(국세청·NEIS)가 나오면 달라질 수 있습니다.</p></div>'
-      + '<div class="bg-white rounded-xl border border-slate-200 p-4 space-y-3"><div class="text-xs font-bold text-slate-700">공통 · 부양가족</div><div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">' + SH.map(function (f) { return '<label class="flex items-center justify-between gap-2 text-[11px] text-slate-600"><span class="flex-1">' + f[1] + '</span><input data-s="' + f[0] + '" inputmode="numeric" value="' + (t.S[f[0]] || '') + '" placeholder="0" onfocus="this.select()" onchange="FC25.chg(this)" class="w-20 border border-slate-300 rounded-lg px-2 py-1.5 text-right"></label>'; }).join('') + '</div>'
-      + '<div class="flex flex-wrap gap-3 text-[11px] text-slate-600 items-center"><span>자녀 공제자</span><select id="fc25-ck" onchange="FC25.chg(this)" class="border border-slate-300 rounded-lg px-2 py-1.5"><option value="auto">자동 (세금 최소)</option><option value="A">' + esc(t.A.name) + '</option><option value="B">' + esc(t.B.name) + '</option></select><span>부모 공제자</span><select id="fc25-cp" onchange="FC25.chg(this)" class="border border-slate-300 rounded-lg px-2 py-1.5"><option value="auto">자동 (세금 최소)</option><option value="A">' + esc(t.A.name) + '</option><option value="B">' + esc(t.B.name) + '</option></select><button onclick="FC25.imp()" class="ml-auto border border-slate-300 rounded-lg px-3 py-1.5 font-semibold hover:bg-slate-50">가계부에서 카드 사용액 가져오기</button></div></div>'
-      + '<div id="fc25-teach" class="hidden bg-amber-50 border border-amber-200 text-amber-900 rounded-xl p-3 text-[11px] leading-relaxed space-y-0.5"></div>'
-      + '<div id="fc25-persons" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div><div id="fc25-out" class="space-y-4"></div>';
-    host.appendChild(box); host.appendChild(old); $('fc25-ck').value = t.S.ck || 'auto'; $('fc25-cp').value = t.S.cp || 'auto'; draw(true);
+    var v = $('view-retire');
+    if (!v) {
+      var vs = $('view-settings'); if (!vs) return;
+      vs.insertAdjacentHTML('afterend', '<section id="view-retire" class="space-y-6 hidden"></section>'); v = $('view-retire');
+      var ns = $('nav-settings'); if (ns && !$('nav-retire')) ns.insertAdjacentHTML('beforebegin', '<button onclick="switchTab(\'retire\')" id="nav-retire" class="' + F.INACT + '"></button>');
+    }
+    if ($('q-out')) return;
+    var nb = $('nav-retire'); if (nb) nb.innerHTML = '<i class="fa-solid fa-umbrella-beach w-5 text-center text-rose-400"></i> 부부 은퇴자금 시뮬레이터';
+    var inp = function (f) { return F.fld('q-' + f[0], f[1], f[2], { on: 'FC25.retire(1)' }); };
+    var col = function (title, icon, list, cls) { return '<div class="p-4 rounded-xl border space-y-3 ' + cls + '"><div class="font-bold text-slate-800 text-xs"><i class="fa-solid ' + icon + ' mr-1.5"></i>' + title + '</div><div class="grid grid-cols-2 gap-3">' + list.map(inp).join('') + '</div></div>'; };
+    v.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex flex-wrap justify-between items-center gap-3 pb-3 border-b border-slate-100"><div><h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-umbrella-beach text-rose-500 mr-2"></i>부부 은퇴자금 시뮬레이터</h3>'
+      + '<p class="text-xs text-slate-400 mt-0.5">두 사람의 나이·은퇴 시기·연금 개시를 따로 넣고, 한 사람이 먼저 떠난 뒤의 생활비와 유족연금까지 반영합니다.</p></div>'
+      + '<button onclick="FC25.retireAuto()" class="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i>가계부 데이터로 자동 채우기</button></div>'
+      + '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4"><div id="q-colA"></div><div id="q-colB"></div><div id="q-colH"></div></div>'
+      + '<div class="text-[11px] text-slate-400">자동 채우기: 나이는 [설정 › 부부 재무 규칙]의 출생연도, 연금은 명의별 \'국민연금\' 자산, 준비자산은 예적금·연금계좌·투자 합계(전세보증금 제외), 저축액은 선저축 목표(없으면 최근 3개월 평균 잉여)에서 가져옵니다.</div></div>'
+      + '<div id="q-out" class="space-y-4"></div>';
+    $('q-colA').outerHTML = col('<span class="q-nmA"></span>', 'fa-user text-sky-600', PA, 'bg-sky-50/50 border-sky-200');
+    $('q-colB').outerHTML = col('<span class="q-nmB"></span>', 'fa-user text-rose-600', PB, 'bg-rose-50/50 border-rose-200');
+    $('q-colH').outerHTML = col('가계 공통', 'fa-house text-slate-600', PH, 'bg-slate-50 border-slate-200');
   }
-  function draw(full) {
-    var t = data(); if (full) $('fc25-persons').innerHTML = personHtml('A', t.A) + personHtml('B', t.B);
-    var tc = [t.A, t.B].filter(function (p) { return p.teacher; }), th = $('fc25-teach'); th.classList.toggle('hidden', !tc.length);
-    if (tc.length) th.innerHTML = '<b>교원 반영 안내</b><br>· 연구보조비(활동비)는 월 20만원 이내 비과세 → 연 240만원까지 입력 가능 (입력란이 열렸습니다)<br>· 공무원연금·사학연금 기여금은 공적연금 전액 소득공제 → "공적연금 기여금"에 연간 합계 입력 (고용보험은 공무원 해당 없음)<br>· 식대 월 20만원 이내 비과세 · 6세 이하 보육수당은 자녀 1인당 월 20만원 비과세<br>· 교원단체·공무원직장협의회 회비는 지정기부금 항목(15%)에 입력 (노조 회비는 소속 확인 필요)<br>· NEIS 급여명세의 "연구활동비/비과세 수당" 합계와 맞춰 입력하세요.';
-    var R = solve(t), a = R.a, b = R.b, row = function (l, x, y, cls) { return '<tr class="border-t border-slate-100 ' + (cls || '') + '"><td class="p-2">' + l + '</td><td class="p-2 text-right">' + x + '</td><td class="p-2 text-right">' + y + '</td></tr>'; };
-    var neg = function (v) { return v ? '-' + K(v) : '0원'; }, rows = '';
-    rows += row('총급여 (비과세 ' + K(a.nt) + ' / ' + K(b.nt) + ' 제외)', K(a.pay), K(b.pay)) + row('근로소득공제', neg(a.cd), neg(b.cd)) + row('<b>근로소득금액</b>', K(a.inc), K(b.inc));
-    rows += row('인적공제', neg(a.person), neg(b.person)) + row('4대보험·공적연금', neg(a.ins4), neg(b.ins4)) + row('카드 소득공제 (25% 문턱 ' + K(a.cardTh) + ' / ' + K(b.cardTh) + ')', neg(a.card), neg(b.card)) + row('주택자금·기타 소득공제', neg(a.spec - a.card + a.mort), neg(b.spec - b.card + b.mort));
-    rows += row('<b>과세표준</b>', K(a.tb), K(b.tb)) + row('<b>산출세액</b>', K(a.tax), K(b.tax));
-    Object.keys(a.cr).forEach(function (k) { if (a.cr[k] || b.cr[k]) rows += row('세액공제 · ' + k, neg(a.cr[k]), neg(b.cr[k])); });
-    rows += row('<b>결정세액</b>', '<b>' + K(a.det) + '</b>', '<b>' + K(b.det) + '</b>', 'bg-slate-50') + row('기납부 소득세', K(a.paid), K(b.paid)) + row('<b>차감징수(소득세)</b>', mon(a.diff), mon(b.diff), 'bg-slate-50') + row('지방소득세 포함 정산', mon(a.diff * 1.1), mon(b.diff * 1.1));
-    var tot = (a.diff + b.diff) * 1.1, nm = { A: t.A.name, B: t.B.name };
-    var worst = max.apply(null, R.rows.map(function (x) { return x.tot; })), tips = [];
-    [['A', a, t.A], ['B', b, t.B]].forEach(function (x) {
-      var r = x[1], P = x[2];
-      if (r.pay > 0 && r.cardUse < r.cardTh) tips.push(P.name + ': 카드 사용액이 25% 문턱까지 ' + K(r.cardTh - r.cardUse) + ' 남음 (아직 공제 없음). 지출을 이쪽 명의로 몰아주면 유리합니다.');
-      else if (r.pay > 0) tips.push(P.name + ': 카드 공제 ' + K(r.card) + ' (기본한도 ' + K(r.cardLim) + '). 문턱 초과분은 체크카드·현금영수증(30%)이 신용카드(15%)보다 공제율이 높습니다.');
-      if (r.pRoom > 0 && r.pay > 0) tips.push(P.name + ': 연금계좌 세액공제 한도(900만원)가 ' + K(r.pRoom) + ' 남았습니다. 채우면 약 ' + K(r.pRoom * r.pRate * 1.1) + ' 절세 (지방소득세 포함).');
-      if (P.teacher && N(P.f.research) < 2.4e6) tips.push(P.name + ' (교원): 연구보조비 비과세는 연 240만원까지입니다. 급여명세에 해당 수당이 있으면 입력하세요.');
-    });
-    if (a.pay && b.pay) tips.push('의료비는 총급여가 낮은 쪽(' + (a.pay <= b.pay ? t.A.name : t.B.name) + ')의 3% 문턱이 더 낮아 그쪽 명의로 몰아주는 편이 유리합니다 (본인·부모 의료비 등 요건 확인).');
-    $('fc25-out').innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3"><div class="bg-white border border-slate-200 rounded-xl p-4"><div class="text-[11px] text-slate-400">부부 합산 (지방소득세 포함)</div><div class="text-lg">' + mon(tot) + '</div></div><div class="bg-white border border-slate-200 rounded-xl p-4"><div class="text-[11px] text-slate-400">부양가족 공제 배분</div><div class="text-sm font-bold text-slate-800">자녀 → ' + nm[R.ck] + ' · 부모 → ' + nm[R.cp] + '</div><div class="text-[11px] text-slate-400">' + (R.rows.length > 1 ? '다른 배분 대비 최대 ' + K(worst - R.tot) + ' 절감' : '직접 지정') + '</div></div><div class="bg-white border border-slate-200 rounded-xl p-4"><div class="text-[11px] text-slate-400">결정세액 합계</div><div class="text-lg font-extrabold text-slate-800">' + K(a.det + b.det) + '</div></div></div>'
-      + '<div class="bg-white border border-slate-200 rounded-xl p-4 overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">항목</th><th class="p-2 text-right">' + esc(t.A.name) + '</th><th class="p-2 text-right">' + esc(t.B.name) + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
-      + (tips.length ? '<div class="bg-sky-50 border border-sky-200 text-sky-900 rounded-xl p-4 text-[11px] leading-relaxed space-y-1"><b class="text-xs">절세 포인트</b>' + tips.map(function (x) { return '<div>· ' + esc(x) + '</div>'; }).join('') + '</div>' : '')
-      + '<div class="text-[11px] text-slate-400 leading-relaxed">※ 추정치입니다. 카드 추가공제 한도·주택자금 합산한도·기부금 한도·의료비 특례(난임 등)는 단순화했고, 간소화 자료·회사 공제신고서·NEIS 계산과 다를 수 있습니다. 2027년 1월 초 국세청 안내와 대조하세요.</div>';
+  function open() {
+    build();
+    [].forEach.call(document.querySelectorAll('.q-nmA'), function (e) { e.innerText = F.nm('H'); });
+    [].forEach.call(document.querySelectorAll('.q-nmB'), function (e) { e.innerText = F.nm('W'); });
+    var base = defaults(), o = Object.assign({}, base, db.retire2 || {});
+    if (db.retire2 && db.retire2.shareA != null) o.shareA = db.retire2.shareA;
+    setForm(o); run(false);
   }
-  function chg(el) {
-    var t = data(), v = el.value;
-    if (el.dataset.p) { t[el.dataset.p].f[el.dataset.k] = N(v); el.value = N(v) ? N(v).toLocaleString('ko-KR') : ''; }
-    else if (el.dataset.s) { t.S[el.dataset.s] = N(v); el.value = N(v) || ''; }
-    else if (el.id === 'fc25-ck') t.S.ck = v; else if (el.id === 'fc25-cp') t.S.cp = v;
-    save(); draw(false);
-  }
-  function chk(el) { var t = data(); t[el.dataset.p][el.dataset.c] = el.checked; save(); draw(true);  }
-  function imp() {
-    var t = data(), yr = '2026', sum = { A: {}, B: {} }, ex = /주거|금융|보험|세금|자산이동/;
-    ['credit', 'debit', 'cash', 'market', 'transit', 'culture'].forEach(function (k) { sum.A[k] = 0; sum.B[k] = 0; });
-    var n = 0;
-    db.transactions.forEach(function (x) {
-      if (x.type !== 'EXPENSE' || !x.date || x.date.slice(0, 4) !== yr || ex.test(x.category || '')) return;
-      var card = db.cards.filter(function (c) { return String(x.payment || '').indexOf(c.name) >= 0; })[0], who = card ? (/아내|영희/.test(card.owner) || card.owner === (db.settings || {}).wifeName ? 'B' : 'A') : null, hay = [x.category, x.subcategory, x.memo].join(' ');
-      if (!card && !/현금/.test(x.payment || '')) return; if (!who) return;
-      var k = /대중교통|지하철|버스|택시/.test(hay) ? 'transit' : /전통시장/.test(hay) ? 'market' : /도서|공연|영화|박물관|미술관|수영|헬스|체육/.test(hay) ? 'culture' : card.type === '체크카드' ? 'debit' : 'credit';
-      sum[who][k] += x.amount; n++;
-    });
-    ['A', 'B'].forEach(function (p) { for (var k in sum[p]) t[p].f[k] = sum[p][k]; });
-    save(); draw(true); showToast('2026년 카드 지출 ' + n + '건을 가져왔습니다. (현금 결제는 소유자를 알 수 없어 제외 — 직접 입력)');
-  }
-  window.FC25 = { chg: chg, chk: chk, imp: imp };
-  build();
+  F.VIEWS.retire = ['view-retire', 'nav-retire', '부부 은퇴자금 시뮬레이터', open];
+  Object.assign(window.FC25, { retire: run, retireAuto: function () { setForm(defaults()); run(true); showToast('가계부 데이터로 나이·연금·자산·저축·생활비를 채웠습니다.'); } });
+  safe('은퇴부트', build)();
 })();
+</script>
+<script>
+/* ===== Financial Core v25-4 : 연말정산 현행 한도 · 과세표준 추정 · 부부 공제 배분 ===== */
+(function () {
+  'use strict';
+  var F = window.FC25, $ = function (id) { return document.getElementById(id); };
+  var K = function (n) { return formatKRW(Math.round(n || 0)); }, esc = function (s) { return escapeHTML(s); }, P = function (v) { return parseCurrencyValue(v); };
+  var st = function () { return db.settings || (db.settings = {}); }, sum = F.sum, safe = F.safe;
 
+  /* ---------- 세액 추정 엔진 (2024년 귀속 이후 기준) ---------- */
+  function wageDed(s) {
+    var d = s <= 5e6 ? s * 0.7 : s <= 1.5e7 ? 3.5e6 + (s - 5e6) * 0.4 : s <= 4.5e7 ? 7.5e6 + (s - 1.5e7) * 0.15 : s <= 1e8 ? 1.2e7 + (s - 4.5e7) * 0.05 : 1.475e7 + (s - 1e8) * 0.02;
+    return Math.min(d, 2e7);
+  }
+  /* 국민연금(상한 근사)·건강+장기요양·고용보험 근로자 부담분 근사 */
+  function social(s) { return Math.min(s * 0.045, 3.33e6) + s * 0.04 + s * 0.009; }
+  var BR = [[1.4e7, .06, 0], [5e7, .15, 1.26e6], [8.8e7, .24, 5.76e6], [1.5e8, .35, 1.544e7], [3e8, .38, 1.994e7], [5e8, .40, 2.594e7], [1e9, .42, 3.594e7], [Infinity, .45, 6.594e7]];
+  function taxEst(sal, people, extraDed) {
+    var base = Math.max(0, sal - wageDed(sal) - 1.5e6 * (people || 1) - social(sal) - (extraDed || 0));
+    var b = BR.filter(function (x) { return base <= x[0]; })[0], calc = Math.max(0, base * b[1] - b[2]);
+    var wc = calc <= 1.3e6 ? calc * 0.55 : 715000 + (calc - 1.3e6) * 0.3;
+    var lim = sal <= 3.3e7 ? 740000 : sal <= 7e7 ? Math.max(660000, 740000 - (sal - 3.3e7) * 0.008) : sal <= 1.2e8 ? Math.max(500000, 660000 - (sal - 7e7) * 0.5) : Math.max(200000, 500000 - (sal - 1.2e8) * 0.5);
+    var det = Math.max(0, calc - Math.min(wc, lim) - 130000); /* 표준세액공제 13만 원 포함 */
+    return { base: base, rate: b[1], calc: calc, det: det };
+  }
+  /* 카드 소득공제 : 25% 문턱은 신용 → 체크·현금·문화 → 전통시장·대중교통 순으로 차감 */
+  function cardDed(sal, u) {
+    var le70 = sal <= 7e7, rem = sal * 0.25, raw = 0, sp = 0, total = 0;
+    [{ a: (u.credit || 0) + (le70 ? 0 : u.culture || 0), r: .15 }, { a: u.debit || 0, r: .30 }, { a: le70 ? u.culture || 0 : 0, r: .30, sp: 1 }, { a: u.market || 0, r: .40, sp: 1 }, { a: u.transit || 0, r: .40, sp: 1 }]
+      .forEach(function (c) { total += c.a; var use = Math.min(rem, c.a); rem -= use; var d = (c.a - use) * c.r; raw += d; if (c.sp) sp += d; });
+    var baseLim = le70 ? 3e6 : 2.5e6, extraLim = le70 ? 3e6 : 2e6;
+    return { th: sal * 0.25, total: total, over: Math.max(0, total - sal * 0.25), raw: raw, ded: Math.min(raw, baseLim) + Math.min(Math.max(0, raw - baseLim), extraLim, sp), baseLim: baseLim, extraLim: extraLim };
+  }
+
+  /* ---------- 단일 시뮬레이터 ---------- */
+  function injectTaxInputs() {
+    if ($('fc25-t-market') || !$('tax-card-cash')) return;
+    var g = $('tax-card-cash').closest('.grid'); if (!g) return;
+    g.insertAdjacentHTML('afterend', '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3">'
+      + ['fc25-t-market|전통시장 (40%)', 'fc25-t-transit|대중교통 (40%)', 'fc25-t-culture|도서·공연·체육 (30%, 7천만 이하)'].map(function (x) { x = x.split('|'); return '<div><label class="block font-semibold text-slate-600 mb-1">' + x[1] + '</label><input type="text" id="' + x[0] + '" value="0" oninput="formatCurrencyInput(this)" onchange="calcTaxRefund()" class="w-full border border-slate-300 rounded p-2 font-bold"></div>'; }).join('')
+      + '<div><label class="block font-semibold text-slate-600 mb-1">인적공제 인원 (본인 포함)</label><input type="number" id="fc25-t-people" value="1" min="1" max="10" onchange="calcTaxRefund()" class="w-full border border-slate-300 rounded p-2 font-bold"></div></div>'
+      + '<div class="text-[11px] text-slate-500 mt-2">위 3개 금액은 신용·체크·현금영수증 칸과 겹치지 않게 넣으세요. [가계부 카드실적 불러오기]는 대중교통·도서/공연 소분류와 메모의 \'전통시장\'을 자동으로 나눕니다.</div>');
+  }
+  window.calcTaxRefund = safe('연말정산', function () {
+    injectTaxInputs();
+    var g = function (id) { return $(id) ? Math.max(0, P($(id).value)) : 0; };
+    var sal = Math.max(0, g('tax-salary') - g('tax-nontax'));
+    var u = { credit: g('tax-card-credit'), debit: g('tax-card-debit') + g('tax-card-cash'), market: g('fc25-t-market'), transit: g('fc25-t-transit'), culture: g('fc25-t-culture') };
+    var people = Math.max(1, parseInt(($('fc25-t-people') || {}).value, 10) || 1);
+    var c = cardDed(sal, u), t0 = taxEst(sal, people, 0), t1 = taxEst(sal, people, c.ded), saved = Math.round((t0.det - t1.det) * 1.1);
+    $('calc-net-salary').innerText = K(sal); $('calc-card-threshold').innerText = K(c.th); $('calc-card-over').innerText = K(c.over);
+    $('tax-refund-result').innerText = sal > 0 ? '약 ' + K(saved) : '입력 대기';
+    $('tax-refund-status-label').innerText = sal > 0 ? '카드 소득공제로 줄어드는 세금 추정치 (지방소득세 포함)' : '총급여와 카드 사용액을 입력해 주세요.';
+    if ($('fc18-tax-box')) $('fc18-tax-box').style.display = 'none';
+    var box = $('fc25-tax-box');
+    if (!box) { $('tax-refund-status-label').insertAdjacentHTML('afterend', '<div id="fc25-tax-box" class="mt-3 text-[11px] text-slate-300 space-y-1"></div>'); box = $('fc25-tax-box'); }
+    var row = function (a, b) { return '<div class="flex justify-between gap-2"><span>' + a + '</span><b>' + b + '</b></div>'; };
+    box.innerHTML = row('카드 소득공제액', K(c.ded)) + row('공제 한도 (기본 + 추가)', K(c.baseLim) + ' + ' + K(c.extraLim))
+      + (c.raw > c.ded ? row('한도를 넘어 버려지는 공제', K(c.raw - c.ded)) : '')
+      + row('과세표준 추정 (공제 후)', K(t1.base)) + row('한계세율', Math.round(t1.rate * 100) + '%') + row('결정세액 추정 (공제 전 → 후)', K(t0.det) + ' → ' + K(t1.det))
+      + '<div class="text-slate-400 pt-1 leading-relaxed">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았습니다. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div>';
+  });
+
+  function taxBuckets(year, who) {
+    var b = { credit: 0, debit: 0, cash: 0, market: 0, transit: 0, culture: 0 };
+    db.transactions.forEach(function (t) {
+      if (t.type !== 'EXPENSE' || String(t.date).indexOf(year) !== 0) return;
+      var p = String(t.payment || ''), card = (db.cards || []).filter(function (c) { return c.name && p.indexOf(c.name) >= 0; })[0], kind;
+      if (card) kind = card.type === '체크카드' ? 'debit' : 'credit';
+      else if (p.indexOf('현금영수증') >= 0) kind = 'cash';
+      else if (/계좌이체|자산이동|현금/.test(p)) return;
+      else kind = 'credit';
+      if (who) { var o = (card && F.codeOfName(card.owner)) || F.ownerOf(t); if (o !== who) return; }
+      if (t.subcategory === '대중교통') kind = 'transit';
+      else if (/전통시장|재래시장/.test(t.memo || '')) kind = 'market';
+      else if (t.subcategory === '도서/교재' || t.subcategory === '영화/공연') kind = 'culture';
+      b[kind] += t.amount;
+    });
+    return b;
+  }
+  var _sy = window.syncTaxWithTransactions;
+  window.syncTaxWithTransactions = function () {
+    var r = _sy.apply(this, arguments);
+    safe('실적연동', function () {
+      injectTaxInputs();
+      var b = taxBuckets(selectedMonth.split('-')[0]);
+      [['tax-card-credit', 'credit'], ['tax-card-debit', 'debit'], ['tax-card-cash', 'cash'], ['fc25-t-market', 'market'], ['fc25-t-transit', 'transit'], ['fc25-t-culture', 'culture']].forEach(function (x) { $(x[0]).value = Math.round(b[x[1]]).toLocaleString('ko-KR'); });
+      calcTaxRefund();
+    })();
+    return r;
+  };
+
+  /* ---------- 부부 공제 배분 시뮬레이터 ---------- */
+  var PF = [['credit', '신용카드'], ['debit', '체크·현금영수증'], ['sp40', '대중교통·전통시장'], ['culture', '도서·공연·체육'], ['pens', '연금저축 납입'], ['irp', 'IRP 납입']];
+  function autoPlan() {
+    var y = selectedMonth.split('-')[0], o = { year: y, medical: 0 };
+    ['H', 'W'].forEach(function (c) {
+      var b = taxBuckets(y, c), acc = function (t) { return sum(db.assets.filter(function (a) { return a.subType === t && (a.owner || 'J') === c; }), function (a) { return a.annualContrib; }); };
+      o[c] = { credit: b.credit, debit: b.debit + b.cash, sp40: b.market + b.transit, culture: b.culture, pens: acc('연금저축'), irp: acc('IRP') };
+    });
+    o.medical = sum(db.transactions.filter(function (t) { return t.type === 'EXPENSE' && String(t.date).indexOf(y) === 0 && t.category === '건강/의료' && t.subcategory !== '건강식품'; }), function (t) { return t.amount; });
+    return o;
+  }
+  function person(sal, u, med) {
+    var t0 = taxEst(sal, 1, 0), c = cardDed(sal, { credit: u.credit, debit: u.debit, market: u.sp40, culture: u.culture }), t1 = taxEst(sal, 1, c.ded);
+    var pr = sal <= 5.5e7 ? 0.15 : 0.12, pElig = Math.min(Math.min(u.pens || 0, 6e6) + (u.irp || 0), 9e6), pCred = pElig * pr;
+    var mCred = med > 0 ? Math.min(Math.max(0, med - sal * 0.03), 7e6) * 0.15 : 0, mNet = Math.max(0, mCred - 130000); /* 의료비를 받으면 표준세액공제 13만 원은 빠짐 */
+    var used = Math.min(t1.det, pCred + mNet);
+    return { sal: sal, c: c, card: t0.det - t1.det, pCred: pCred, mNet: mNet, pElig: pElig, pr: pr, det0: t0.det, det1: t1.det, capped: pCred + mNet > t1.det, total: (t0.det - t1.det + used) * 1.1 };
+  }
+  function readPlan() {
+    var o = { year: selectedMonth.split('-')[0], medical: P(($('fc25-c-medical') || {}).value) };
+    ['H', 'W'].forEach(function (c) { o[c] = {}; PF.forEach(function (f) { o[c][f[0]] = P(($('fc25-c-' + c + '-' + f[0]) || {}).value); }); });
+    return o;
+  }
+  function renderCoupleTax(fromInputs) {
+    var box = $('couple-strategy-result'); if (!box) return;
+    var y = selectedMonth.split('-')[0];
+    if (fromInputs && $('fc25-c-medical')) { db.taxPlan = readPlan(); try { localStorage.setItem('FINANCIAL_CORE_DB', JSON.stringify(db)); } catch (e) {} }
+    if (!db.taxPlan || db.taxPlan.year !== y) db.taxPlan = autoPlan();
+    var tp = db.taxPlan, sA = P(($('couple-a-salary') || {}).value) || (+st().husbandAnnual || 0), sB = P(($('couple-b-salary') || {}).value) || (+st().wifeAnnual || 0);
+    if ($('couple-a-salary') && !P($('couple-a-salary').value) && sA) $('couple-a-salary').value = sA.toLocaleString('ko-KR');
+    if ($('couple-b-salary') && !P($('couple-b-salary').value) && sB) $('couple-b-salary').value = sB.toLocaleString('ko-KR');
+    if ($('couple-a-thresh')) $('couple-a-thresh').innerText = K(sA * 0.25);
+    if ($('couple-b-thresh')) $('couple-b-thresh').innerText = K(sB * 0.25);
+    var A = esc(F.short('H')), B = esc(F.short('W'));
+    box.className = 'p-4 bg-white border border-slate-200 rounded-xl text-xs space-y-4 text-slate-700';
+    if (!sA || !sB) { box.innerHTML = '<div class="text-slate-500">두 사람의 연간 총급여를 입력하면 카드·의료비·연금계좌 공제를 누구에게 두는 것이 유리한지 계산합니다. ([설정]의 연간 총급여가 자동으로 들어옵니다.)</div>'; return; }
+    var zero = { credit: 0, debit: 0, sp40: 0, culture: 0 }, merge = function (a, b) { var o = {}; Object.keys(zero).forEach(function (k) { o[k] = (a[k] || 0) + (b[k] || 0); }); return o; };
+    var withPen = function (u, src) { return Object.assign({}, u, { pens: src.pens, irp: src.irp }); };
+    var cards = { cur: [tp.H, tp.W], A: [merge(tp.H, tp.W), zero], B: [zero, merge(tp.H, tp.W)] };
+    var combos = [];
+    Object.keys(cards).forEach(function (ck) {
+      ['H', 'W'].forEach(function (mt) {
+        var pa = person(sA, withPen(cards[ck][0], tp.H), mt === 'H' ? tp.medical : 0), pb = person(sB, withPen(cards[ck][1], tp.W), mt === 'W' ? tp.medical : 0);
+        combos.push({ ck: ck, mt: mt, a: pa, b: pb, total: pa.total + pb.total });
+      });
+    });
+    combos.sort(function (x, y2) { return y2.total - x.total; });
+    var best = combos[0], cur = combos.filter(function (c) { return c.ck === 'cur'; }).sort(function (x, y2) { return y2.total - x.total; })[0];
+    var label = function (c) { return '카드: ' + (c.ck === 'cur' ? '지금처럼 각자' : (c.ck === 'A' ? A : B) + '에게 몰기') + ' · 의료비: ' + (c.mt === 'H' ? A : B); };
+    var inRow = function (c, f) { return '<td class="p-1"><input id="fc25-c-' + c + '-' + f[0] + '" type="text" value="' + Math.round(tp[c][f[0]] || 0).toLocaleString('ko-KR') + '" oninput="formatCurrencyInput(this)" onchange="FC25.coupleTax(1)" class="w-full border border-slate-300 rounded px-2 py-1 text-right"></td>'; };
+    var pcard = function (who, p, u) {
+      var under = p.c.total < p.c.th, room = 9e6 - p.pElig, extra = 0;
+      if (room > 0) { var q = person(p.sal, Object.assign({}, u, { irp: (u.irp || 0) + room }), 0), base = person(p.sal, u, 0); extra = q.total - base.total; }
+      return '<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1"><div class="font-bold text-slate-800">' + who + ' <span class="font-normal text-slate-400">총급여 ' + K(p.sal) + '</span></div>'
+        + '<div class="flex justify-between"><span>카드 25% 문턱 / 사용액</span><b>' + K(p.c.th) + ' / ' + K(p.c.total) + '</b></div>'
+        + (under ? '<div class="text-amber-700">문턱 미달 → 카드 공제 0원. 사용액이 적은 쪽은 공제를 받기 어렵습니다.</div>' : '<div class="flex justify-between"><span>카드 공제로 줄어든 세금</span><b>' + K(p.card * 1.1) + '</b></div>')
+        + '<div class="flex justify-between"><span>연금계좌 세액공제 (' + (p.pr === 0.15 ? '16.5%' : '13.2%') + ')</span><b>' + K(p.pCred * 1.1) + '</b></div>'
+        + (p.mNet ? '<div class="flex justify-between"><span>의료비 세액공제 (표준공제 13만 차감 후)</span><b>' + K(p.mNet * 1.1) + '</b></div>' : '')
+        + '<div class="flex justify-between"><span>결정세액 추정</span><b>' + K(p.det1 * 1.1) + '</b></div>'
+        + (p.capped ? '<div class="text-red-600">낼 세금보다 세액공제가 많아 일부가 사라집니다. 공제를 배우자 쪽으로 옮기세요.</div>' : '')
+        + (room > 0 && extra > 1000 ? '<div class="text-emerald-700">IRP에 ' + K(room) + ' 더 넣으면 약 ' + K(extra) + ' 더 돌려받습니다.</div>' : '') + '</div>';
+    };
+    box.innerHTML = '<div class="flex flex-wrap justify-between items-center gap-2"><div class="font-bold text-accent text-sm"><i class="fa-solid fa-scale-balanced text-amber-500 mr-1"></i>부부 공제 배분 시뮬레이터 (' + y + '년)</div>'
+      + '<button onclick="FC25.coupleTaxAuto()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i>가계부에서 다시 불러오기</button></div>'
+      + '<div class="overflow-x-auto"><table class="w-full"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">항목 (연간, 원)</th><th class="p-2">' + A + '</th><th class="p-2">' + B + '</th></tr></thead><tbody>'
+      + PF.map(function (f) { return '<tr class="border-t border-slate-100"><td class="p-2">' + f[1] + '</td>' + inRow('H', f) + inRow('W', f) + '</tr>'; }).join('')
+      + '<tr class="border-t border-slate-100"><td class="p-2">부부 의료비 합계 (누구 몫이든)</td><td class="p-1" colspan="2"><input id="fc25-c-medical" type="text" value="' + Math.round(tp.medical || 0).toLocaleString('ko-KR') + '" oninput="formatCurrencyInput(this)" onchange="FC25.coupleTax(1)" class="w-full border border-slate-300 rounded px-2 py-1 text-right"></td></tr>'
+      + '</tbody></table></div>'
+      + '<div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900"><b>추천:</b> ' + label(best) + ' → 부부 합산 절세 약 <b>' + K(best.total) + '</b>'
+      + (best.total - cur.total > 1000 ? ' (지금 방식 중 최선인 \'' + label(cur) + '\'보다 ' + K(best.total - cur.total) + ' 많음)' : ' · 지금 방식이 이미 최선에 가깝습니다.') + '</div>'
+      + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">' + pcard(A, best.a, withPen(cards[best.ck][0], tp.H)) + pcard(B, best.b, withPen(cards[best.ck][1], tp.W)) + '</div>'
+      + '<div class="overflow-x-auto"><table class="w-full"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">배분 방식</th><th class="p-2 text-right">' + A + '</th><th class="p-2 text-right">' + B + '</th><th class="p-2 text-right">합계</th></tr></thead><tbody>'
+      + combos.map(function (c) { return '<tr class="border-t border-slate-100' + (c === best ? ' bg-emerald-50 font-bold' : '') + '"><td class="p-2">' + label(c) + '</td><td class="p-2 text-right">' + K(c.a.total) + '</td><td class="p-2 text-right">' + K(c.b.total) + '</td><td class="p-2 text-right">' + K(c.total) + '</td></tr>'; }).join('')
+      + '</tbody></table></div>'
+      + '<div class="text-[11px] text-slate-500 leading-relaxed">※ 맞벌이 부부는 배우자 카드 사용액을 옮겨 공제받을 수 없습니다(각자 본인 사용분만). \'몰기\'는 앞으로 결제 카드를 바꿀 때의 효과입니다. 의료비는 배우자 몫도 실제로 낸 사람이 공제받을 수 있어, 총급여 3% 문턱이 낮은 쪽이 대체로 유리하지만 낼 세금이 적으면 효과가 사라집니다. 연금저축·IRP는 본인 계좌만 공제됩니다. 의료비 한도는 일반 700만 원으로 계산했습니다(본인·65세 이상·장애인 등은 한도 없음). 모든 금액은 지방소득세를 포함한 추정치입니다.</div>';
+  }
+  window.calcCoupleStrategy = safe('부부공제', function () { renderCoupleTax(false); });
+  Object.assign(window.FC25, { coupleTax: function (x) { safe('부부공제', renderCoupleTax)(!!x); }, coupleTaxAuto: function () { db.taxPlan = autoPlan(); renderCoupleTax(false); try { localStorage.setItem('FINANCIAL_CORE_DB', JSON.stringify(db)); } catch (e) {} showToast('가계부 내역으로 부부별 카드·의료비·연금 납입액을 불러왔습니다.'); },
+    taxEst: taxEst, cardDed: cardDed });
+  safe('세금부트', function () { injectTaxInputs(); calcTaxRefund(); calcCoupleStrategy(); })();
+})();
+</script>
+<script>
+/* ===== Financial Core v26 : 주간 빠른 점검 (카드 앱 누적 이용액 → 예산 속도) =====
+   - db.weeklyChecks[YYYY-MM] = [{ date, byCard: { cardId: 금액 }, other }]  (거래 내역과 분리 저장)
+   - 출처(카드별 · 계좌이체/현금)마다 실제 내역이 있는 날짜까지는 실제 값, 그 뒤는 점검값의 증가분으로 추정 */
+(function () {
+  'use strict';
+  var F = window.FC25 || {}, $ = function (id) { return document.getElementById(id); };
+  var K = function (n) { return formatKRW(Math.round(n || 0)); }, esc = function (s) { return escapeHTML(s); }, P = function (v) { return parseCurrencyValue(v); };
+  var safe = function (tag, fn) { return function () { try { return fn.apply(this, arguments); } catch (e) { console.error('[v26 ' + tag + ']', e); } }; };
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var st = function () { return db.settings || (db.settings = {}); };
+  var FIXED = /주거|통신|금융|보험|세금/;   /* v19 속도 알림과 같은 기준 : 고정성 카테고리는 변동 생활비에서 제외 */
+  var IN = 'w-full border border-slate-300 rounded-lg px-2.5 py-2 text-xs';
+
+  function todayS() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function nowM() { return todayS().slice(0, 7); }
+  function dim(mo) { var p = mo.split('-'); return new Date(+p[0], +p[1], 0).getDate(); }
+  function dayOf(s) { return +String(s).slice(8, 10); }
+  function md(mo, d) { return +mo.slice(5) + '/' + d; }
+  function daysSince(s) { return Math.round((Date.parse(todayS() + 'T00:00:00') - Date.parse(s + 'T00:00:00')) / 864e5); }
+  function store() { if (!db.weeklyChecks || typeof db.weeklyChecks !== 'object' || Array.isArray(db.weeklyChecks)) db.weeklyChecks = {}; return db.weeklyChecks; }
+  function byDate(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }
+  function checks(mo) { return (store()[mo] || []).filter(function (c) { return c && c.date; }).sort(byDate); }
+  function lastCheck() {
+    var best = null, s = store();
+    Object.keys(s).forEach(function (m) { (s[m] || []).forEach(function (c) { if (c && c.date && (!best || c.date > best.date)) best = c; }); });
+    return best;
+  }
+  function cards() { return db.cards || []; }
+  function srcOf(t) { var p = String(t.payment || ''), c = cards().filter(function (x) { return x.name && p.indexOf(x.name) >= 0; })[0]; return c ? String(c.id) : 'other'; }
+  function valOf(c, src) {
+    if (src === 'other') return Number(c.other) || 0;
+    var v = c.byCard ? c.byCard[src] : null; return v == null || v === '' ? null : Number(v) || 0;
+  }
+  function checkTotal(c) { return Object.keys(c.byCard || {}).reduce(function (s, k) { return s + (Number(c.byCard[k]) || 0); }, 0) + (Number(c.other) || 0); }
+  function varBudget() { var b = db.budgets || {}; return Object.keys(b).reduce(function (s, k) { return s + (FIXED.test(k) ? 0 : (Number(b[k]) || 0)); }, 0); }
+
+  /* 출처 하나의 이번 달 누적 추정.
+     actual : 실제 내역 합계(마지막 날짜 L) / 점검값은 (0일,0원)부터 직선으로 이어 L 시점 값을 구하고, 최신 점검값과의 차이만 더한다 */
+  function srcEst(mo, src, list, varOnly) {
+    var actual = 0, L = 0, n = 0;
+    (db.transactions || []).forEach(function (t) {
+      if (t.type !== 'EXPENSE' || !t.date || t.date.indexOf(mo) !== 0 || (varOnly && FIXED.test(t.category || '')) || srcOf(t) !== src) return;
+      actual += Number(t.amount) || 0; n++; if (dayOf(t.date) > L) L = dayOf(t.date);
+    });
+    var pts = [{ d: 0, v: 0 }];
+    list.forEach(function (c) { var v = valOf(c, src); if (v != null) pts.push({ d: dayOf(c.date), v: v }); });
+    var last = pts[pts.length - 1], has = pts.length > 1, inc = 0, base = 0;
+    if (has && last.d > L) {
+      for (var i = 0; i < pts.length - 1; i++) if (pts[i].d <= L && L < pts[i + 1].d) { base = pts[i].v + (pts[i + 1].v - pts[i].v) * (L - pts[i].d) / (pts[i + 1].d - pts[i].d); break; }
+      inc = Math.max(0, last.v - base);
+    }
+    return { actual: actual, n: n, L: L, check: has ? last.v : null, checkDay: has ? last.d : 0, base: base, inc: inc, est: actual + inc, day: Math.max(L, has ? last.d : 0) };
+  }
+
+  function compute(mo, draft) {
+    var list = checks(mo);
+    if (draft && draft.date.indexOf(mo) === 0) { list = list.filter(function (c) { return c.date !== draft.date; }); list.push(draft); list.sort(byDate); }
+    var D = dim(mo), cur = mo === nowM(), past = mo < nowM(), tday = cur ? new Date().getDate() : past ? D : 0;
+    var rows = cards().map(function (c) { return { card: c, src: String(c.id) }; }).concat([{ card: null, src: 'other' }]);
+    var est = 0, asOf = 0, hasActual = false, maxL = 0;
+    rows.forEach(function (r) {
+      r.v = srcEst(mo, r.src, list, true); r.a = srcEst(mo, r.src, list, false);
+      est += r.v.est; if (r.v.day > asOf) asOf = r.v.day; if (r.v.n) hasActual = true; if (r.v.L > maxL) maxL = r.v.L;
+    });
+    if (past && asOf) asOf = D;
+    if (cur) asOf = Math.min(asOf, tday);
+    var V = varBudget(), allowed = D ? V * asOf / D : 0, proj = past ? est : (asOf ? est / asOf * D : 0);
+    var weekEnd = 0, week = null, perDay = null;
+    if (cur) {
+      weekEnd = Math.min(D, tday + (7 - new Date().getDay()) % 7);   /* 이번 주 일요일 (월말이면 말일) */
+      week = Math.max(0, V * weekEnd / D - est);
+      var left = asOf < tday ? D - tday + 1 : D - tday;   /* 기준일이 오늘보다 이르면 오늘도 남은 날로 센다 */
+      if (left > 0) perDay = (V - est) / left;
+    }
+    var sv = null, T = F.savingTarget ? (Number(F.savingTarget(mo)) || 0) : 0;
+    if (T > 0) {
+      var inc = 0; (db.transactions || []).forEach(function (t) { if (t.type === 'INCOME' && t.date && t.date.indexOf(mo) === 0) inc += Number(t.amount) || 0; });
+      var reg = (+st().husbandIncome || 0) + (+st().wifeIncome || 0), base = inc || reg, b = db.budgets || {};
+      var fixB = Object.keys(b).reduce(function (s, k) { return s + (FIXED.test(k) ? (Number(b[k]) || 0) : 0); }, 0);
+      var fixR = (db.fixedExpenses || []).reduce(function (s, f) { return s + (Number(f.amount) || 0); }, 0) + (window.FC && FC.instSummary ? (Number(FC.instSummary(mo).thisCharge) || 0) : 0);
+      var fixP = Math.max(fixB, fixR), room = base - T - fixP;
+      sv = { T: T, base: base, fromReg: !inc && !!reg, fixB: fixB, fixR: fixR, fixP: fixP, room: room, allowed: D ? room * asOf / D : 0, proj: proj };
+    }
+    return { mo: mo, D: D, cur: cur, past: past, tday: tday, asOf: asOf, V: V, est: est, allowed: allowed, diff: allowed - est, proj: proj,
+      weekEnd: weekEnd, week: week, perDay: perDay, rows: rows, list: list, hasActual: hasActual, maxL: maxL, sv: sv, hasData: asOf > 0 || est > 0 };
+  }
+
+  function status(r) {
+    if (!r.hasData) return ['기록 없음', 'bg-slate-100 text-slate-500'];
+    if (r.est <= r.allowed) return ['예산 속도 안', 'bg-emerald-100 text-emerald-800'];
+    if (r.est <= r.allowed * 1.1) return ['조금 빠름', 'bg-amber-100 text-amber-800'];
+    return ['빠름', 'bg-red-100 text-red-700'];
+  }
+  function cell(t, v, sub, cls) { return '<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 min-w-0"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-base font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div><div class="text-[10px] text-slate-400 mt-0.5 leading-snug">' + sub + '</div></div>'; }
+  function paceBar(r) {
+    if (!r.V) return '';
+    var p = Math.min(100, r.est / r.V * 100), m = Math.min(100, r.allowed / r.V * 100), cls = r.est > r.allowed * 1.1 ? 'bg-red-500' : r.est > r.allowed ? 'bg-amber-500' : 'bg-emerald-500';
+    return '<div class="relative h-2 bg-slate-100 rounded-full mt-1"><div class="h-full rounded-full ' + cls + '" style="width:' + p + '%"></div>'
+      + '<div class="absolute -top-1 w-0.5 h-4 bg-slate-700" style="left:calc(' + m + '% - 1px)" title="오늘까지 써도 되는 선"></div></div>';
+  }
+  function summaryCells(r) {
+    var asOfTxt = r.asOf ? md(r.mo, r.asOf) + ' 기준' : '기록 없음';
+    var over = r.diff < 0;
+    var c = cell('누적 변동 지출 (추정)', K(r.est), asOfTxt + (r.hasActual ? ' · 실제 내역 우선' : ' · 주간 점검값'))
+      + cell(r.past ? '월 변동 생활비 예산' : '오늘까지 써도 되는 금액', K(r.past ? r.V : r.allowed), r.past ? '지난달 최종 비교' : '예산 ' + K(r.V) + ' × ' + r.asOf + '/' + r.D + '일', '')
+      + (r.cur ? cell('이번 주 남은 사용 가능액', K(r.week), '~' + md(r.mo, r.weekEnd) + '(일)까지' + (r.perDay != null ? ' · 남은 기간 하루 ' + K(Math.max(0, r.perDay)) : ''), r.week > 0 ? 'text-accent' : 'text-red-600')
+        : cell(r.past ? '예산 대비' : '이번 주 남은 사용 가능액', r.past ? (r.V ? Math.round(r.est / r.V * 100) + '%' : '-') : '-', r.past ? (r.est > r.V ? K(r.est - r.V) + ' 초과' : K(r.V - r.est) + ' 남음') : '이번 달에만 계산', r.past && r.est > r.V ? 'text-red-600' : ''))
+      + cell(r.past ? '월 최종 지출' : '월말 예상 지출 (현재 속도)', K(r.proj), r.V ? '예산 대비 ' + Math.round(r.proj / r.V * 100) + '%' + (r.proj > r.V ? ' · ' + K(r.proj - r.V) + ' 초과 예상' : '') : '변동 생활비 예산을 정하면 비교합니다', r.V && r.proj > r.V ? 'text-red-600' : 'text-slate-800');
+    var msg = !r.hasData ? '' : '<div class="text-[11px] ' + (over ? 'text-red-700' : 'text-emerald-700') + '">' + (r.past ? '' : '오늘까지 기준보다 <b>' + K(Math.abs(r.diff)) + '</b> ' + (over ? '더 썼습니다. 남은 기간에 나눠 줄여야 합니다.' : '덜 썼습니다.')) + '</div>';
+    return { cells: c, msg: msg };
+  }
+  function savingHtml(r) {
+    var s = r.sv; if (!s) return '';
+    var over = r.est > s.allowed, projOver = s.proj > s.room;
+    return '<div class="p-3 rounded-lg border text-xs space-y-1 ' + (projOver ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-800') + '">'
+      + '<div class="font-bold"><i class="fa-solid fa-piggy-bank mr-1"></i>선저축 가용액 기준</div>'
+      + '<div>수입 ' + K(s.base) + (s.fromReg ? ' (정기 수입)' : '') + ' − 선저축 ' + K(s.T) + ' − 고정비 ' + K(s.fixP) + ' = 변동비 가용 <b>' + K(s.room) + '</b></div>'
+      + (s.room > 0 ? '<div>오늘까지 가용 ' + K(s.allowed) + ' 대비 누적 ' + K(r.est) + ' → ' + (over ? '<b>' + K(r.est - s.allowed) + ' 초과</b>' : K(s.allowed - r.est) + ' 여유')
+        + ' · 월말 예상 ' + K(s.proj) + (projOver ? ' → 선저축을 지키려면 <b>' + K(s.proj - s.room) + '</b> 줄여야 합니다.' : ' (가용액 이내)') + '</div>'
+        : '<div class="text-red-700">선저축과 고정비만으로 수입을 넘습니다. 저축 목표나 고정비를 먼저 점검하세요.</div>')
+      + '<div class="text-[10px] opacity-70">고정비 = 고정성 예산(주거·통신·금융·보험·세금) ' + K(s.fixB) + '과 등록 고정비+할부 ' + K(s.fixR) + ' 중 큰 값</div></div>';
+  }
+  function cardTable(r) {
+    var tr = r.rows.map(function (x) {
+      var c = x.card, a = x.a, name = c ? esc(c.name) + (c.owner ? ' <span class="text-slate-400">(' + esc(c.owner) + ')</span>' : '') : '계좌이체 · 현금';
+      var tgt = c ? Number(c.targetAmount) || 0 : 0, pc = tgt ? a.est / tgt * 100 : 0;
+      var perf = !c ? '<span class="text-slate-300">-</span>' : !tgt ? '<span class="text-slate-400">목표 없음</span>'
+        : '<div class="min-w-[90px]">' + (a.est >= tgt ? '<b class="text-emerald-600">달성</b>' : K(tgt - a.est) + ' 남음') + ' <span class="text-slate-400">/ ' + K(tgt) + '</span>' + F.bar(pc, a.est >= tgt ? 'bg-emerald-500' : 'bg-accent') + '</div>';
+      return '<tr class="border-t border-slate-100 align-top"><td class="py-1.5 pr-2">' + name + '</td>'
+        + '<td class="py-1.5 pr-2 text-right">' + (a.check == null ? '<span class="text-slate-300">-</span>' : K(a.check) + '<div class="text-[10px] text-slate-400">' + md(r.mo, a.checkDay) + ' 점검</div>') + '</td>'
+        + '<td class="py-1.5 pr-2 text-right">' + (a.n ? K(a.actual) + '<div class="text-[10px] text-slate-400">' + a.n + '건 · ~' + md(r.mo, a.L) + '</div>' : '<span class="text-slate-300">-</span>') + '</td>'
+        + '<td class="py-1.5 pr-2 text-right font-bold">' + K(a.est) + '</td><td class="py-1.5">' + perf + '</td></tr>';
+    }).join('');
+    return '<div class="overflow-x-auto"><table class="w-full text-[11px] text-slate-700" style="white-space:nowrap"><thead><tr class="text-slate-400 text-left"><th class="py-1 pr-2 font-semibold">결제수단</th><th class="py-1 pr-2 font-semibold text-right">주간 점검</th><th class="py-1 pr-2 font-semibold text-right">실제 내역</th><th class="py-1 pr-2 font-semibold text-right">반영 누적</th><th class="py-1 font-semibold">실적 목표</th></tr></thead><tbody>' + tr + '</tbody></table></div>'
+      + '<div class="text-[10px] text-slate-400">카드별 누적·실적은 모든 카테고리 기준, 위 페이스는 주거·통신·금융·보험·세금을 뺀 변동 생활비 기준입니다.</div>';
+  }
+  function histHtml(r) {
+    if (!r.list.length) return '<div class="text-[11px] text-slate-400">' + r.mo + ' 주간 점검 기록이 없습니다.</div>';
+    return '<div class="text-[11px] font-bold text-slate-600">' + r.mo + ' 점검 기록' + (r.hasActual ? ' <span class="font-normal text-slate-400">— 실제 내역이 생겨 참고(추정)로만 씁니다</span>' : '') + '</div>'
+      + r.list.map(function (c) {
+        var real = r.hasActual && dayOf(c.date) <= r.maxL, saved = checks(r.mo).some(function (x) { return x.date === c.date; });
+        return '<div class="flex items-center gap-2 text-[11px] px-2 py-1.5 rounded border border-slate-200 bg-slate-50"><b>' + esc(c.date) + '</b><span>' + K(checkTotal(c)) + '</span>'
+          + (r.hasActual ? '<span class="text-[10px] px-1.5 rounded bg-slate-200 text-slate-600">참고(추정)</span>' : '')
+          + (real ? '<span class="text-[10px] text-slate-400">이 날짜까지는 실제 내역 우선</span>' : '')
+          + (saved ? '<button onclick="FC26.del(\'' + esc(c.date) + '\')" class="ml-auto text-slate-400 hover:text-red-500" title="삭제"><i class="fa-solid fa-trash-can"></i></button>' : '<span class="ml-auto text-[10px] text-accent">미리보기</span>') + '</div>';
+      }).join('');
+  }
+
+  /* ---------- 모달 ---------- */
+  function injectModal() {
+    if ($('fc26-modal')) return;
+    document.body.insertAdjacentHTML('beforeend', '<div id="fc26-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center hidden z-50" onclick="if(event.target===this)FC26.close()">'
+      + '<div class="bg-white rounded-xl shadow-xl w-[620px] max-w-[94vw] max-h-[90vh] overflow-y-auto p-6 border border-slate-200 space-y-4">'
+      + '<div class="flex justify-between items-center pb-3 border-b border-slate-100"><h3 class="font-bold text-slate-800"><i class="fa-solid fa-calendar-check text-accent mr-1.5"></i>주간 빠른 점검</h3><button onclick="FC26.close()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>'
+      + '<p class="text-[11px] text-slate-500 leading-relaxed">카드 앱 첫 화면의 <b>이번 달 이용금액(누적)</b>을 카드마다 그대로 옮겨 적으세요. 거래 내역은 만들지 않고 예산 속도만 계산합니다. 통신비·보험료처럼 카드로 자동결제되는 고정비가 이미 포함돼 있다면 그만큼 빼고 적으면 더 정확합니다.</p>'
+      + '<div class="grid grid-cols-2 gap-3"><div><label class="block font-semibold text-slate-600 mb-1 text-xs">점검일</label><input id="fc26-date" type="date" onchange="FC26.fill()" class="' + IN + '"></div><div id="fc26-prev" class="text-[10px] text-slate-400 self-end pb-1"></div></div>'
+      + '<div id="fc26-inputs" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>'
+      + '<div class="flex justify-end gap-2"><button onclick="FC26.close()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">닫기</button><button onclick="FC26.save()" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">점검 저장</button></div>'
+      + '<div id="fc26-result" class="space-y-3 pt-3 border-t border-slate-100"></div><div id="fc26-hist" class="space-y-1.5"></div></div></div>');
+  }
+  function moneyIn(id, label, ph, val) {
+    return '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">' + label + '</label><input id="' + id + '" type="text" inputmode="numeric" oninput="formatCurrencyInput(this);FC26.preview()"'
+      + ' placeholder="' + (ph != null ? '지난 점검 ' + Number(ph).toLocaleString('ko-KR') : '이번 달 누적 이용액') + '" value="' + (val != null ? Number(val).toLocaleString('ko-KR') : '') + '" class="' + IN + ' text-right font-bold"></div>';
+  }
+  function fill() {
+    var d = $('fc26-date').value || todayS(), mo = d.slice(0, 7), list = checks(mo);
+    var same = list.filter(function (c) { return c.date === d; })[0], prev = list.filter(function (c) { return c.date < d; }).pop();
+    var html = cards().map(function (c, i) {
+      var k = String(c.id), v = same && same.byCard && same.byCard[k] != null ? same.byCard[k] : null, ph = prev && prev.byCard && prev.byCard[k] != null ? prev.byCard[k] : null;
+      return moneyIn('fc26-c-' + i, esc(c.name) + (c.owner ? ' <span class="font-normal text-slate-400">(' + esc(c.owner) + ')</span>' : ''), ph, v);
+    }).join('');
+    if (!cards().length) html = '<div class="sm:col-span-2 text-[11px] text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">등록된 카드가 없습니다. [보유 카드] 탭에서 카드를 등록하면 카드별로 입력할 수 있습니다.</div>';
+    html += moneyIn('fc26-other', '계좌이체 · 현금 생활비 <span class="font-normal text-slate-400">(선택)</span>', prev ? prev.other : null, same ? same.other : null);
+    $('fc26-inputs').innerHTML = html;
+    $('fc26-prev').innerHTML = same ? '<span class="text-amber-700">이 날짜의 점검 기록을 수정합니다.</span>' : prev ? '흐린 글씨는 ' + esc(prev.date) + ' 점검값입니다.' : '';
+    preview();
+  }
+  function readDraft() {
+    var d = $('fc26-date').value, by = {}, any = false;
+    cards().forEach(function (c, i) { var el = $('fc26-c-' + i); if (el && el.value.trim() !== '') { by[String(c.id)] = P(el.value); any = true; } });
+    var o = $('fc26-other'), ov = o && o.value.trim() !== '' ? P(o.value) : 0; if (o && o.value.trim() !== '') any = true;
+    return { date: d, byCard: by, other: ov, any: any };
+  }
+  function renderResult(draft) {
+    var host = $('fc26-result'); if (!host) return;
+    var d = ($('fc26-date') && $('fc26-date').value) || todayS(), mo = d.slice(0, 7), r = compute(mo, draft), s = status(r), sc = summaryCells(r);
+    host.innerHTML = '<div class="flex items-center gap-2"><b class="text-sm text-slate-800">' + mo + ' 예산 속도</b><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + s[1] + '">' + s[0] + '</span>'
+      + (draft ? '<span class="text-[10px] text-accent">입력값 미리보기</span>' : '') + '<span class="ml-auto text-[10px] text-slate-400">월 변동 생활비 예산 ' + K(r.V) + '</span></div>'
+      + (r.V ? '' : '<div class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">변동 생활비 예산이 0원입니다. [예산 관리]에서 식비·교통 등 카테고리 예산을 정하면 속도를 비교합니다.</div>')
+      + '<div class="grid grid-cols-2 gap-2">' + sc.cells + '</div>' + paceBar(r) + sc.msg + savingHtml(r) + cardTable(r);
+    $('fc26-hist').innerHTML = histHtml(r);
+  }
+  function preview() {
+    var dr = readDraft(), mo = (dr.date || '').slice(0, 7), same = dr.date ? checks(mo).filter(function (c) { return c.date === dr.date; })[0] : null;
+    var dirty = dr.any && dr.date && (!same || JSON.stringify(same.byCard || {}) !== JSON.stringify(dr.byCard) || (Number(same.other) || 0) !== dr.other);
+    renderResult(dirty ? { date: dr.date, byCard: dr.byCard, other: dr.other } : null);
+  }
+  function open() {
+    injectModal();
+    $('fc26-date').max = todayS();
+    $('fc26-date').value = selectedMonth === nowM() || selectedMonth > nowM() ? todayS() : selectedMonth + '-' + pad(dim(selectedMonth));
+    fill(); $('fc26-modal').classList.remove('hidden');
+  }
+  function close() { if ($('fc26-modal')) $('fc26-modal').classList.add('hidden'); }
+  function save() {
+    var dr = readDraft();
+    if (!dr.date) { showToast('점검일을 선택하세요.', 'warning'); return; }
+    if (dr.date > todayS()) { showToast('미래 날짜로는 점검할 수 없습니다.', 'warning'); return; }
+    if (!dr.any) { showToast('카드 누적 이용액을 하나 이상 입력하세요.', 'warning'); return; }
+    var mo = dr.date.slice(0, 7), s = store(), list = (s[mo] || []).filter(function (c) { return c && c.date !== dr.date; });
+    list.push({ date: dr.date, byCard: dr.byCard, other: dr.other }); list.sort(byDate); s[mo] = list;
+    saveData();
+    var r = compute(mo);
+    showToast(dr.date + ' 주간 점검 저장 · ' + (r.cur ? '이번 주 남은 사용 가능액 ' + K(r.week) : '누적 ' + K(r.est)));
+    fill();
+  }
+  function del(date) {
+    var mo = String(date).slice(0, 7);
+    showCustomConfirm('주간 점검 삭제', date + ' 주간 점검 기록을 삭제합니다. 거래 내역에는 영향이 없습니다.', function () {
+      var s = store(); s[mo] = (s[mo] || []).filter(function (c) { return c.date !== date; }); if (!s[mo].length) delete s[mo];
+      saveData(); showToast('주간 점검 기록을 삭제했습니다.'); if ($('fc26-modal') && !$('fc26-modal').classList.contains('hidden')) fill();
+    });
+  }
+
+  /* ---------- 대시보드 '이번 달 페이스' 미니 카드 + 모바일 버튼 ---------- */
+  function nagInfo() {
+    var lc = lastCheck();
+    if (!lc) return { nag: true, txt: '아직 주간 점검 기록이 없습니다. 일주일에 한 번, 카드 앱의 이번 달 이용금액만 옮겨 적으면 월중에도 예산 속도를 알 수 있습니다.' };
+    var n = daysSince(lc.date);
+    return n > 7 ? { nag: true, txt: '마지막 주간 점검이 ' + n + '일 전(' + lc.date + ')입니다.' } : { nag: false, n: n, date: lc.date };
+  }
+  function renderPace() {
+    var v = $('view-dashboard'); if (!v) return;
+    var host = $('fc26-pace');
+    if (!host) { host = document.createElement('div'); host.id = 'fc26-pace'; host.className = 'bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3'; v.insertBefore(host, v.firstElementChild); }
+    var mo = selectedMonth, r = compute(mo), s = status(r), sc = summaryCells(r), ng = nagInfo(), showNag = ng.nag && mo === nowM();
+    host.innerHTML = '<div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-gauge-high text-accent mr-1.5"></i>이번 달 페이스 <span class="text-[11px] text-slate-400 font-normal">(' + mo + ' · 변동 생활비 예산 ' + K(r.V) + ')</span></h3>'
+      + '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + s[1] + '">' + s[0] + '</span>'
+      + '<button onclick="FC26.open()" class="ml-auto bg-slate-800 hover:bg-slate-900 text-white text-xs px-3.5 py-2 rounded-lg font-semibold"><i class="fa-solid fa-calendar-check text-amber-400 mr-1"></i>주간 점검</button></div>'
+      + (showNag ? '<div class="flex flex-wrap items-center gap-2 text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2"><i class="fa-solid fa-bell"></i><span class="flex-1 min-w-[200px]">' + ng.txt + '</span><button onclick="FC26.open()" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg font-semibold">이번 주 점검하기</button></div>' : '')
+      + (r.hasData ? '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + sc.cells + '</div>' + paceBar(r) + sc.msg
+        : '<div class="text-[11px] text-slate-400">' + mo + ' 지출 기록과 주간 점검이 아직 없습니다.</div>')
+      + '<div class="text-[10px] text-slate-400">' + (r.hasActual ? '실제 내역이 있는 날짜까지는 내역 합계를, 그 뒤는 주간 점검값을 씁니다. 점검 기록 ' + r.list.length + '회는 참고(추정)입니다.' : r.list.length ? '주간 점검 ' + r.list.length + '회 기록 기준 추정치입니다. 월말에 명세서를 붙여넣으면 실제 값으로 바뀝니다.' : '') + '</div>';
+    var mb = $('fc26-mdot'); if (mb) mb.style.display = ng.nag ? '' : 'none';
+  }
+  function injectMobile() {
+    var bar = $('fc21-bar'); if (!bar || $('fc26-mbtn')) return;
+    bar.insertAdjacentHTML('beforeend', '<button id="fc26-mbtn" onclick="FC26.open()" aria-label="주간 점검" class="absolute -top-3 h-7 px-2.5 rounded-full bg-white border border-slate-300 shadow text-[10px] font-bold text-slate-700 flex items-center gap-1" style="left:calc(50% + 32px)">'
+      + '<i class="fa-solid fa-calendar-check text-accent"></i>주간<span id="fc26-mdot" class="w-2 h-2 rounded-full bg-red-500" style="display:none"></span></button>');
+  }
+
+  var _rd = window.renderDashboard;
+  window.renderDashboard = function () {
+    var r = _rd.apply(this, arguments);
+    safe('페이스', function () { injectMobile(); renderPace(); var m = $('fc26-modal'); if (m && !m.classList.contains('hidden')) preview(); })();
+    return r;
+  };
+  window.FC26 = { open: open, close: close, save: save, del: del, fill: fill, preview: preview, compute: compute, checks: checks };
+  safe('부트', function () { injectModal(); injectMobile(); renderPace(); })();
+})();
 </script>
 </body>
 </html>
