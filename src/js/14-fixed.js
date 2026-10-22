@@ -147,39 +147,38 @@
   };
 
   function itemHtml(f) {
-    var applied = Fx.isApplied(f);
-    var btn = applied ? '<span class="text-xs bg-slate-100 border border-slate-200 text-slate-500 font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"><i class="fa-solid fa-check text-[10px] text-emerald-600"></i> 반영완료</span>'
-      : '<button onclick="App.fixed.apply(' + f.id + ')" class="text-xs bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1"><i class="fa-solid fa-plus text-[10px]"></i> 반영하기</button>';
-    var kind = isInc(f) ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">수입</span>' : '';
-    var auto = '<label class="inline-flex items-center gap-1 text-[10px] font-semibold cursor-pointer select-none ' + (f.auto ? 'text-emerald-700' : 'text-slate-400') + '" title="매달 자동 반영">'
-      + '<input type="checkbox" ' + (f.auto ? 'checked' : '') + ' onchange="App.fixed.setAuto(' + f.id + ', this.checked)" class="accent-emerald-600"> 자동</label>';
-    return '<li class="py-3 flex items-center justify-between gap-2 flex-wrap"><div class="min-w-0"><div class="font-bold text-slate-700 flex items-center gap-1.5 flex-wrap">' + kind + C.badge(f.owner || 'J') + ' ' + u.esc(f.name) + '</div>'
-      + '<div class="text-[11px] text-slate-400 mt-0.5">매월 ' + f.day + '일 · ' + u.esc(f.payment || '계좌이체') + '</div></div>'
-      + '<div class="flex items-center gap-1.5 ml-auto"><span class="font-bold mr-1 ' + (isInc(f) ? 'text-emerald-600' : 'text-slate-800') + '">' + u.K(f.amount) + '</span>' + auto + btn
-      + '<button onclick="App.fixed.open(' + f.id + ')" class="text-slate-400 hover:text-accent p-1"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="App.fixed.remove(' + f.id + ')" class="text-slate-300 hover:text-red-500 p-1"><i class="fa-solid fa-xmark"></i></button></div></li>';
+    var applied = Fx.isApplied(f), own = f.owner && f.owner !== 'J';
+    var btn = applied ? '<span class="fx-done"><i class="fa-solid fa-check"></i> 들어감</span>'
+      : '<button onclick="App.fixed.apply(' + f.id + ')" class="fx-put">넣기</button>';
+    var auto = '<label class="fx-auto' + (f.auto ? ' on' : '') + '" title="날짜가 지나면 이 달 내역에 알아서 들어갑니다"><input type="checkbox" ' + (f.auto ? 'checked' : '') + ' onchange="App.fixed.setAuto(' + f.id + ', this.checked)"> 매달 자동</label>';
+    return '<li class="fx-row"><div class="min-w-0 flex-1"><div class="font-semibold text-[15px] text-slate-900 truncate">' + u.esc(f.name) + (own ? ' <span class="text-[13px] font-normal text-slate-500">· ' + u.esc(C.short(f.owner)) + '</span>' : '') + '</div>'
+      + '<div class="text-[13px] text-slate-500 mt-0.5">매달 ' + f.day + '일 · ' + u.esc(f.payment || '계좌이체') + '</div></div>'
+      + '<div class="text-right shrink-0"><div class="font-bold text-[15px] ' + (isInc(f) ? 'text-accent' : 'text-slate-900') + '">' + (isInc(f) ? '+' : '') + u.n0(f.amount) + '원</div></div>'
+      + '<div class="fx-act">' + auto + btn
+      + '<button onclick="App.fixed.open(' + f.id + ')" class="fx-ic" aria-label="고치기"><i class="fa-solid fa-pen"></i></button><button onclick="App.fixed.remove(' + f.id + ')" class="fx-ic" aria-label="삭제"><i class="fa-solid fa-trash-can"></i></button></div></li>';
   }
 
   App.views.add({
-    id: 'fixed', order: 40, title: '월 고정비 & 카드 할부', nav: { label: '고정비 & 카드할부', icon: 'fa-calendar-check' },
+    id: 'fixed', order: 40, title: '고정비 · 할부', nav: { label: '고정비 · 할부', icon: 'fa-rotate' },
     render: function (el) {
       var rec = recommendations().slice(0, 3), list = db().fixedExpenses, unapplied = list.filter(function (f) { return !Fx.isApplied(f); }).length;
-      var exp = list.filter(function (f) { return !isInc(f); }), inc = list.filter(isInc), ia = db().ui.instAuto || {};
-      el.innerHTML = '<div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-5 space-y-3"><div class="flex justify-between items-center"><h4 class="font-bold text-amber-900 text-xs flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-amber-600"></i> 과거 지출 패턴 분석: 반복 고정비 자동 추천</h4><span class="text-[11px] text-amber-700">최근 반복 지출 감지</span></div>'
-        + '<div class="grid grid-cols-1 md:grid-cols-3 gap-3">' + (rec.length ? rec.map(function (r, i) {
-          return '<div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm flex justify-between items-center text-xs"><div><div class="font-bold text-slate-800">' + u.esc(r.memo) + '</div><div class="text-[11px] text-slate-400">과거 ' + r.count + '회 반복 (평균 ' + u.K(r.avg) + ')</div></div>'
-            + '<button onclick="App.fixed.addRecommended(' + i + ')" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded-lg font-bold text-[11px] shadow-sm">+ 고정비 전환</button></div>';
-        }).join('') : '<div class="md:col-span-3 text-center text-amber-700/70 text-xs py-2">현재 추천할 새로운 반복 지출 항목이 없습니다.</div>') + '</div></div>'
-        + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">'
-        + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex justify-between items-center pb-3 border-b border-slate-100 gap-2 flex-wrap"><div><h3 class="font-bold text-slate-800">월 고정 지출 · 수입</h3><p class="text-xs text-slate-400 mt-0.5">\'반영하기\'를 누르면 ' + u.esc(u.monthLabel(App.state.month)) + ' 내역에 들어갑니다. <b class="text-emerald-700">자동</b>을 켜면 날짜가 지나면 알아서 들어갑니다.</p></div>'
-        + '<div class="flex gap-1.5 shrink-0">' + (unapplied ? '<button onclick="App.fixed.applyAll()" class="text-xs bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-semibold px-3 py-1.5 rounded-lg">' + unapplied + '건 모두 반영</button>' : '')
-        + '<button onclick="App.fixed.open()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">+ 고정 항목 추가</button></div></div>'
-        + '<ul class="divide-y divide-slate-100 text-xs">' + (list.length ? exp.map(itemHtml).join('')
-          + (inc.length ? '<li class="pt-3 pb-1 text-[11px] font-bold text-emerald-700">고정 수입 · 합계 ' + u.K(u.sum(inc, function (f) { return f.amount; })) + '</li>' + inc.map(itemHtml).join('') : '')
-          : '<li class="py-4 text-center text-slate-400">등록된 고정 항목이 없습니다.</li>') + '</ul></div>'
-        + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex justify-between items-center pb-3 border-b border-slate-100 gap-2 flex-wrap"><div><h3 class="font-bold text-slate-800">신용카드 할부 현황</h3><p class="text-xs text-slate-400 mt-0.5">잔여 회차 및 남은 할부 잔액 집계</p></div>'
-        + '<div class="flex items-center gap-2"><label class="inline-flex items-center gap-1 text-[11px] font-semibold cursor-pointer select-none ' + (ia.on ? 'text-emerald-700' : 'text-slate-500') + '" title="진행 중 할부의 당월 청구분을 청구일이 지나면 자동으로 지출에 반영"><input type="checkbox" ' + (ia.on ? 'checked' : '') + ' onchange="App.inst.setAuto(this.checked)" class="accent-emerald-600"> 매달 자동 반영</label>'
-        + '<button onclick="App.inst.open()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">+ 할부 수동 등록</button></div></div>'
-        + '<ul id="installment-list" class="divide-y divide-slate-100 text-xs space-y-1">' + App.inst.panelHtml() + '</ul></div></div>';
+      var exp = list.filter(function (f) { return !isInc(f); }), inc = list.filter(isInc), ia = db().ui.instAuto || {}, m = parseInt(App.state.month.slice(5), 10);
+      var sum = function (L) { return u.n0(u.sum(L, function (f) { return f.amount; })) + '원'; };
+      el.innerHTML = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">'
+        + '<div class="card"><div class="card-h"><h3>매달 나가고 들어오는 돈</h3><button onclick="App.fixed.open()" class="btn sec" style="height:38px">+ 추가</button></div>'
+        + (unapplied ? '<div class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-50 text-[14px] text-amber-900 mb-2"><span>' + m + '월 내역에 아직 안 들어간 항목이 <b>' + unapplied + '건</b> 있어요.</span><button onclick="App.fixed.applyAll()" class="btn pri" style="height:38px">모두 넣기</button></div>'
+          : (list.length ? '<div class="text-[14px] text-slate-500 mb-2">' + m + '월 내역에 모두 들어갔어요.</div>' : ''))
+        + (list.length ? (exp.length ? '<div class="fx-sec"><span>나가는 돈</span><span>' + sum(exp) + '</span></div><ul>' + exp.map(itemHtml).join('') + '</ul>' : '')
+          + (inc.length ? '<div class="fx-sec"><span>들어오는 돈</span><span class="text-accent">+' + sum(inc) + '</span></div><ul>' + inc.map(itemHtml).join('') + '</ul>' : '')
+          : '<div class="empty">월세 · 관리비 · 통신비 · 보험 · 월급처럼 매달 같은 돈을 등록해 두면, 버튼 한 번(또는 자동으로) 이 달 내역에 들어가요.</div>')
+        + '</div>'
+        + '<div class="card"><div class="card-h"><h3>카드 할부</h3><button onclick="App.inst.open()" class="btn sec" style="height:38px">+ 할부 등록</button></div>'
+        + '<label class="fx-auto' + (ia.on ? ' on' : '') + ' mb-2" title="진행 중인 할부의 이 달 청구분을 청구일이 지나면 지출로 넣습니다"><input type="checkbox" ' + (ia.on ? 'checked' : '') + ' onchange="App.inst.setAuto(this.checked)"> 매달 청구분을 자동으로 지출에 넣기</label>'
+        + '<ul id="installment-list" class="divide-y divide-slate-100 text-xs space-y-1">' + App.inst.panelHtml() + '</ul></div></div>'
+        + (rec.length ? '<div class="card"><div class="card-h"><h3>반복해서 나간 돈</h3><span class="text-[13px] text-slate-500">고정비로 등록하면 매달 자동으로 넣을 수 있어요</span></div>'
+          + rec.map(function (r, i) {
+            return '<div class="row"><div class="t"><b>' + u.esc(r.memo) + '</b><small>지난 ' + r.count + '번 · 평균 ' + u.n0(r.avg) + '원</small></div><button onclick="App.fixed.addRecommended(' + i + ')" class="btn sec" style="height:36px">고정비로 등록</button></div>';
+          }).join('') + '</div>' : '');
     }
   });
 })(window.App);

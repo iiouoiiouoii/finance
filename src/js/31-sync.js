@@ -61,8 +61,7 @@
   var state = 'off';
   function setSt(s, msg) {
     state = s;
-    var dot = u.$('sync-dot'), col = { ok: '#10B981', busy: '#3B82F6', warn: '#F59E0B', err: '#EF4444', off: '#CBD5E1', ro: '#8B5CF6' }[s] || '#CBD5E1';
-    if (dot) dot.style.background = col;
+    if (App.ui.renderFoot) App.ui.renderFoot();
     var t = u.$('sync-status'); if (t) t.innerHTML = msg || (cfg().repo ? '마지막 동기화: <b>' + fmt(meta().savedAt) + '</b>' + (meta().dirty ? ' · <span class="text-amber-600">업로드 대기</span>' : '') : '아직 연결되지 않았습니다.');
   }
   function apply(o, sha) {
@@ -395,15 +394,15 @@
     location.reload();
   };
 
-  /* ---------- 헤더 버튼 ---------- */
-  App.ui.headerItems.push([10, function () {
+  /* ---------- 메뉴 아래 계정 · 동기화 상태 (한 줄로 : 누가 로그인했고 저장이 어디까지 됐는지) ---------- */
+  App.ui.footItems.push([10, function () {
     var info = getJ(LK), on = info && cfg().repo;
-    return '<button onclick="App.sync.' + (on ? 'logout' : 'showLogin') + '()" title="' + (on ? u.esc(info.id) + ' 로그인됨 · 클릭하면 로그아웃' : '아이디·비밀번호로 내 데이터 불러오기') + '" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold shrink-0">'
-      + (on ? '<i class="fa-solid fa-user-check text-accent mr-1"></i><span class="hidden md:inline">' + u.esc(info.id) + '</span>' : '<i class="fa-solid fa-right-to-bracket mr-1"></i><span class="hidden md:inline">로그인</span>') + '</button>';
-  }]);
-  App.ui.headerItems.push([30, function () {
-    var col = { ok: '#10B981', busy: '#3B82F6', warn: '#F59E0B', err: '#EF4444', off: '#CBD5E1', ro: '#8B5CF6' }[state] || '#CBD5E1';
-    return '<button onclick="App.sync.open()" title="GitHub 백업·동기화" class="relative px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600"><i class="fa-solid fa-cloud"></i><span id="sync-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-white" style="background:' + col + '"></span></button>';
+    var col = { ok: '#0B7A57', busy: '#3B82F6', warn: '#E8A10A', err: '#E5484D', off: '#C4CAD1', ro: '#7C5CDB' }[state] || '#C4CAD1';
+    var label = { ok: '저장됨', busy: '저장 중', warn: '올리기 대기', err: '동기화 오류', off: '이 기기에만 저장', ro: '보기 전용' }[state] || '';
+    if (!on) return '<button onclick="App.sync.showLogin()" class="foot-row"><span class="foot-ic"><i class="fa-regular fa-user"></i></span><span class="flex-1 min-w-0"><b>로그인</b><small>이 기기에만 저장 중</small></span></button>';
+    return '<div class="foot-row"><span class="foot-ic"><i class="fa-regular fa-user"></i></span><button onclick="App.sync.open()" class="flex-1 min-w-0 text-left" title="동기화 설정 · 아이디 추가"><b>' + u.esc(info.id) + '</b>'
+      + '<small><span id="sync-dot" class="inline-block w-1.5 h-1.5 rounded-full align-middle mr-1" style="background:' + col + '"></span>' + label + '</small></button>'
+      + '<button onclick="App.sync.logout()" class="foot-out" title="로그아웃" aria-label="로그아웃"><i class="fa-solid fa-arrow-right-from-bracket"></i></button></div>';
   }]);
 
   /* ---------- 시작 ---------- */
@@ -419,7 +418,11 @@
     /* 로그인 유지를 끈 상태에서 탭을 새로 열면 다시 로그인 */
     var info = getJ(LK);
     if (info && c.repo && !c.pass) { var s0 = ''; try { s0 = sessionStorage.getItem(SK) || ''; } catch (e) {} if (!s0) setTimeout(function () { gate(true); u.$('login-id').value = info.id || ''; u.$('login-pw').focus(); }, 300); }
-    /* 백업 알림 (동기화를 안 쓸 때만) */
-    if (!c.repo) setTimeout(function () { var last = +localStorage.getItem('FC_LAST_BACKUP') || 0; if (App.db.transactions.length > 0 && Date.now() - last > 30 * 864e5) u.toast('최근 30일 내 백업 기록이 없습니다. [설정]에서 JSON 백업이나 GitHub 동기화를 권장합니다.', 'warning'); }, 1500);
+  };
+  /* 백업 필요 여부 (동기화를 안 쓰고 30일 넘게 파일 백업도 없을 때) : 홈 [지금 할 일]에 보여 준다 */
+  S.backupDue = function () {
+    if (cfg().repo) return false;
+    var last = 0; try { last = +localStorage.getItem('FC_LAST_BACKUP') || 0; } catch (e) {}
+    return (App.db.transactions || []).length > 0 && Date.now() - last > 30 * 864e5;
   };
 })(window.App);

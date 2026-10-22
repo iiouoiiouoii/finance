@@ -287,14 +287,14 @@
   };
 
   store.loadSample = function () {
-    u.confirm('샘플 데이터 로드', '데모 샘플 데이터를 불러오시겠습니까? 지금 데이터는 지워집니다.', function () {
-      store.replace(sampleData()); u.toast('샘플 데이터를 불러왔습니다.');
-    });
+    u.confirm('예시 데이터 넣기', '지금 데이터가 지워지고 예시 데이터로 바뀝니다.\n필요하면 먼저 [백업 파일 받기]를 하세요.', function () {
+      store.replace(sampleData()); u.toast('예시 데이터를 넣었습니다.');
+    }, '예시 데이터로 바꾸기');
   };
   store.clearAll = function () {
-    u.confirm('전체 데이터 초기화', '모든 내역 및 입력 데이터를 초기화하시겠습니까?', function () {
-      store.replace(emptyData()); u.toast('모든 데이터가 초기화되었습니다.');
-    });
+    u.confirm('모든 데이터 지우기', '이 기기의 내역 · 자산 · 설정이 모두 지워지고 되돌릴 수 없습니다.\n필요하면 먼저 [백업 파일 받기]를 하세요.', function () {
+      store.replace(emptyData()); u.toast('모든 데이터를 지웠습니다.');
+    }, '모두 지우기');
   };
 
   /* ---------- JSON 백업 · 복원 ---------- */

@@ -183,6 +183,7 @@
     var n = u.daysBetween(lc.date, u.today());
     return n > 7 ? { nag: true, txt: '마지막 주간 점검이 ' + n + '일 전(' + lc.date + ')입니다.' } : { nag: false };
   }
+  W.nag = function () { return nagInfo(); };
   W.paceHtml = function (mo) {
     var r = W.compute(mo), s = status(r), sc = summaryCells(r), ng = nagInfo(), showNag = ng.nag && mo === u.nowM();
     return '<div id="dash-pace" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3"><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-gauge-high text-accent mr-1.5"></i>이번 달 페이스 <span class="text-[11px] text-slate-400 font-normal">(' + mo + ' · 변동 생활비 예산 ' + u.K(r.V) + ')</span></h3>'

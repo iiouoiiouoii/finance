@@ -23,11 +23,21 @@
     return '<div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3"><h4 class="font-bold text-slate-800 border-b border-slate-200 pb-2 flex items-center gap-1.5"><i class="fa-solid ' + icon + '"></i> ' + title + '</h4>'
       + '<div class="grid grid-cols-2 gap-3">' + u.field('set-' + p + '-name', '이름 / 별칭') + u.field('set-' + p + '-income', '월 정기 수입 (원)', { money: true }) + u.field('set-' + p + '-annual', '연간 총급여 (원)', { money: true }) + u.field('set-' + p + '-payday', '월 급여일 (일)', { type: 'number', attrs: 'min="1" max="31"' }) + '</div></div>';
   }
+  /* 데이터 · 화면 : 백업 · 동기화 · 화면 크기 · 샘플 · 초기화 (위험한 버튼은 맨 아래, 확인을 거친다) */
+  function dataCard() {
+    var row = function (t, d, right) { return '<div class="flex items-center justify-between gap-4 flex-wrap py-4 border-t border-slate-100 first:border-0"><div class="min-w-0"><div class="font-semibold text-slate-900 text-[15px]">' + t + '</div><div class="text-[13px] text-slate-500 mt-0.5">' + d + '</div></div><div class="flex gap-2 flex-wrap">' + right + '</div></div>'; };
+    return '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm"><h3 class="font-bold text-slate-900 text-base mb-1">데이터 · 화면</h3>'
+      + row('여러 기기에서 같이 쓰기', '아이디로 로그인하면 휴대폰 · PC · 배우자 기기가 같은 데이터를 봅니다.', '<button onclick="App.sync.open()" class="btn sec">동기화 · 아이디 관리</button>')
+      + row('파일로 백업', '이 브라우저 데이터를 파일 하나로 내려받거나, 받아 둔 파일로 되돌립니다.', '<button onclick="App.store.exportBackup()" class="btn sec">백업 파일 받기</button><label class="btn sec cursor-pointer">백업에서 되돌리기<input type="file" accept="application/json" onchange="App.store.importBackup(this)" class="hidden"></label>')
+      + row('화면 크기', '보통은 기기에 맞춤으로 두면 됩니다.', App.ui.modeHtml())
+      + row('예시 데이터로 둘러보기', '지금 데이터를 지우고 예시 데이터를 넣습니다. 먼저 백업하세요.', '<button onclick="App.store.loadSample()" class="btn sec">예시 데이터 넣기</button>')
+      + row('모든 데이터 지우기', '이 기기의 내역 · 자산 · 설정을 모두 지웁니다. 되돌릴 수 없습니다.', '<button onclick="App.store.clearAll()" class="btn sec" style="color:#C4282D">모두 지우기</button>') + '</div>';
+  }
   App.views.add({
-    id: 'settings', order: 110, title: '설정 & 세분화 카테고리 관리', nav: { label: '설정 & 카테고리 관리', icon: 'fa-gear', color: 'text-sky-400' },
+    id: 'settings', order: 110, title: '설정', nav: { label: '설정', icon: 'fa-gear' },
     render: function (el) {
       var s = db().settings, plan = App.cat.buildPlan('ALL', false);
-      el.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-2"><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-users text-accent"></i> 부부 프로필 및 수입 정보 설정</h3>'
+      el.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-2"><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-users text-accent"></i> 우리 부부 · 월급</h3>'
         + '<button onclick="App.settings.saveProfile()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">부부 정보 저장</button></div>'
         + '<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">' + person('h', '본인 (근로자 A)', 'fa-user text-accent', s) + person('w', '배우자 (근로자 B)', 'fa-user-tie text-amber-600', s) + '</div></div>'
         + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-3 flex-wrap"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-handshake text-accent"></i> 부부 재무 규칙</h3>'
@@ -44,9 +54,7 @@
         + '<div class="border-t border-slate-200 pt-3 space-y-2"><div class="flex items-start justify-between gap-3 flex-wrap"><div><div class="font-bold text-slate-800 text-sm">학습된 가맹점 분류 <span class="text-[11px] font-semibold text-slate-400">' + Object.keys(db().merchantRules || {}).length + '개</span></div>'
         + '<div class="text-[11px] text-slate-500 mt-0.5">내역의 분류를 직접(또는 일괄 편집으로) 고치면 그 가맹점은 다음부터 키워드보다 먼저 이 분류로 들어갑니다.</div></div>'
         + (Object.keys(db().merchantRules || {}).length ? '<button onclick="App.cat.clearRules()" class="text-xs bg-white border border-slate-300 text-red-500 px-3 py-1.5 rounded-lg">모두 지우기</button>' : '') + '</div>' + App.cat.rulesHtml() + '</div>'
-        + '<div class="border-t border-slate-200 pt-3 flex items-start justify-between gap-3 flex-wrap"><div><div class="font-bold text-slate-800 text-sm">데이터 백업 · 복원</div><div class="text-[11px] text-slate-500 mt-0.5">데이터는 이 브라우저에 저장됩니다. 방문기록 삭제 시 소실되므로 <strong>GitHub 동기화</strong>를 켜거나 <strong>월 1회 백업</strong>을 권장합니다.</div></div>'
-        + '<div class="flex gap-2"><button onclick="App.store.exportBackup()" class="text-xs bg-slate-800 text-white px-3 py-1.5 rounded-lg font-semibold">JSON 백업</button><label class="text-xs bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded-lg cursor-pointer">복원<input type="file" accept="application/json" onchange="App.store.importBackup(this)" class="hidden"></label></div></div></div>'
-        + '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">' + App.cat.listHtml() + '</div></div>';
+        + '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">' + App.cat.listHtml() + '</div></div>' + dataCard();
       u.$('set-h-name').value = s.husbandName || '남편'; u.setMoney('set-h-income', s.husbandIncome); u.setMoney('set-h-annual', s.husbandAnnual); u.$('set-h-payday').value = s.husbandPayday || 25;
       u.$('set-w-name').value = s.wifeName || '아내'; u.setMoney('set-w-income', s.wifeIncome); u.setMoney('set-w-annual', s.wifeAnnual); u.$('set-w-payday').value = s.wifePayday || 10;
       u.$('set-by-h').value = s.husbandBirthYear || ''; u.$('set-by-w').value = s.wifeBirthYear || '';

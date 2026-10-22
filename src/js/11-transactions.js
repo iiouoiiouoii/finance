@@ -33,46 +33,53 @@
   };
 
   /* ---------- 모달 ---------- */
+  /* 입력 순서 : 구분 → 금액 → 어디서(메모) → 날짜 → 분류 → 결제수단 → 누구 돈. 금액에 바로 커서가 간다 */
   function modal() {
-    return u.modal('transaction-modal', u.modalHead('txn-modal-title', '거래 내역 등록', 'transaction-modal')
-      + '<form id="txn-form" onsubmit="App.txn.save(event)" class="space-y-3"><input type="hidden" id="edit-txn-id">'
-      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">사용자 (누구의 수입·지출인가)</label><select id="txn-owner" class="' + u.IN + ' font-bold bg-sky-50/40"></select></div>'
-      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">날짜</label><input type="date" id="txn-date" required class="' + u.IN + '"></div>'
-      + '<div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-slate-600 mb-1">구분</label>'
-      + '<select id="txn-type" onchange="App.txn.updateCategories()" class="' + u.IN + '"><option value="EXPENSE">지출</option><option value="INCOME">수입</option><option value="TRANSFER">이체</option></select></div>'
-      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">결제수단 / 보유카드</label><select id="txn-payment" class="' + u.IN + '"></select></div></div>'
-      + '<div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-slate-600 mb-1">대분류</label><select id="txn-category" onchange="App.txn.updateSubs()" class="' + u.IN + ' font-bold text-slate-800"></select></div>'
-      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">소분류</label><select id="txn-subcategory" class="' + u.IN + ' bg-amber-50/50 font-semibold"></select></div></div>'
-      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">금액 (원)</label><input type="text" id="txn-amount" required data-money inputmode="numeric" placeholder="0" class="' + u.IN + ' font-bold"></div>'
-      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">메모 / 가맹점 (자동분류 키워드 인식)</label><input type="text" id="txn-memo" onchange="App.txn.autoClassify(this.value)" placeholder="예: 스타벅스, 올리브영, GS칼텍스" class="' + u.IN + '"></div>'
-      + '<div class="pt-3 flex justify-end gap-2"><button type="button" onclick="App.u.close(\'transaction-modal\')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">취소</button>'
-      + '<button type="submit" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">저장하기</button></div></form>');
+    var lab = function (t) { return '<label class="block text-xs font-semibold text-slate-600 mb-1.5">' + t + '</label>'; };
+    return u.modal('transaction-modal', u.modalHead('txn-modal-title', '한 건 입력', 'transaction-modal')
+      + '<form id="txn-form" onsubmit="App.txn.save(event)" class="space-y-4"><input type="hidden" id="edit-txn-id">'
+      + '<select id="txn-type" onchange="App.txn.updateCategories();App.txn.typeSeg()" class="hidden"><option value="EXPENSE">지출</option><option value="INCOME">수입</option><option value="TRANSFER">이체</option></select>'
+      + '<div class="seg w-full" id="txn-type-seg">' + [['EXPENSE', '나간 돈'], ['INCOME', '들어온 돈'], ['TRANSFER', '이체 · 저축']].map(function (x) { return '<button type="button" data-v="' + x[0] + '" onclick="App.txn.setType(\'' + x[0] + '\')" class="flex-1">' + x[1] + '</button>'; }).join('') + '</div>'
+      + '<div>' + lab('금액') + '<div class="relative"><input type="text" id="txn-amount" required data-money inputmode="numeric" placeholder="0" autocomplete="off" class="w-full border border-slate-300 rounded-xl px-4 py-3 pr-10 text-2xl font-bold text-right"><span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-semibold">원</span></div></div>'
+      + '<div>' + lab('어디서 · 무엇에') + '<input type="text" id="txn-memo" oninput="App.txn.autoClassify(this.value)" placeholder="예: 스타벅스, 관리비, 남편 급여" autocomplete="off" class="' + u.IN + '"><div class="text-[12px] text-slate-500 mt-1">가맹점 이름을 쓰면 분류가 자동으로 골라져요.</div></div>'
+      + '<div class="grid grid-cols-2 gap-3"><div>' + lab('날짜') + '<input type="date" id="txn-date" required class="' + u.IN + '"></div>'
+      + '<div>' + lab('결제수단') + '<select id="txn-payment" class="' + u.IN + '"></select></div></div>'
+      + '<div class="grid grid-cols-2 gap-3"><div>' + lab('분류') + '<select id="txn-category" onchange="App.txn.updateSubs()" class="' + u.IN + '"></select></div>'
+      + '<div>' + lab('세부 분류') + '<select id="txn-subcategory" class="' + u.IN + '"></select></div></div>'
+      + '<div>' + lab('누구 돈') + '<select id="txn-owner" class="' + u.IN + '"></select></div>'
+      + '<div class="pt-2 flex items-center gap-2"><button type="button" id="txn-del" onclick="App.txn.removeFromModal()" class="btn sec hidden" style="color:#C4282D">삭제</button>'
+      + '<button type="button" onclick="App.u.close(\'transaction-modal\')" class="btn sec ml-auto">취소</button><button type="submit" class="btn pri px-6">저장</button></div></form>');
   }
   function prep() {
     modal();
     u.$('txn-owner').innerHTML = C.ownerOptions(true);
     u.$('txn-payment').innerHTML = C.payments().map(opt).join('');
   }
+  T.typeSeg = function () { var v = u.val('txn-type'); u.qa('#txn-type-seg button').forEach(function (b) { b.classList.toggle('on', b.dataset.v === v); }); };
+  T.setType = function (v) { u.$('txn-type').value = v; T.updateCategories(); T.typeSeg(); if (u.val('txn-memo')) T.autoClassify(u.val('txn-memo')); };
   T.openNew = function () {
     prep();
-    u.$('txn-modal-title').innerText = '거래 내역 등록';
-    u.$('txn-form').reset(); u.$('edit-txn-id').value = '';
-    u.$('txn-date').value = App.state.month + '-15';
+    u.$('txn-modal-title').innerText = '한 건 입력';
+    u.$('txn-form').reset(); u.$('edit-txn-id').value = ''; u.$('txn-del').classList.add('hidden');
+    /* 날짜 : 이번 달이면 오늘, 다른 달을 보고 있으면 그 달 1일 */
+    u.$('txn-date').value = App.state.month === u.nowM() ? u.today() : App.state.month + '-01';
     u.$('txn-owner').value = 'J';
-    T.updateCategories();
+    T.updateCategories(); T.typeSeg();
     u.open('transaction-modal');
+    setTimeout(function () { var a = u.$('txn-amount'); if (a) a.focus(); }, 60);
   };
   T.openEdit = function (id) {
     var t = u.byId(db().transactions, id); if (!t) return;
     prep();
-    u.$('txn-modal-title').innerText = '거래 내역 수정';
+    u.$('txn-modal-title').innerText = '내역 고치기';
     u.$('edit-txn-id').value = t.id; u.$('txn-date').value = t.date; u.$('txn-type').value = t.type;
     T.updateCategories(); ensureOption('txn-category', t.category); T.updateSubs(); ensureOption('txn-subcategory', t.subcategory || '');
     ensureOption('txn-payment', t.payment);
     u.$('txn-amount').value = u.n0(t.amount); u.$('txn-memo').value = t.memo || '';
-    u.$('txn-owner').value = C.ownerOf(t);
+    u.$('txn-owner').value = C.ownerOf(t); u.$('txn-del').classList.remove('hidden'); T.typeSeg();
     u.open('transaction-modal');
   };
+  T.removeFromModal = function () { var id = u.val('edit-txn-id'); if (!id) return; u.close('transaction-modal'); T.remove(+id); };
   T.save = function (e) {
     e.preventDefault();
     var editId = u.val('edit-txn-id'), before = editId ? u.byId(db().transactions, editId) : null;
@@ -93,10 +100,10 @@
     }
     if (!before) db().transactions.push(t);
     App.store.save(); u.close('transaction-modal');
-    u.toast((before ? '거래 내역이 수정되었습니다.' : '거래 내역이 등록되었습니다.') + App.cat.learnToast([learned], t.category, t.subcategory));
+    u.toast((before ? '고쳤습니다.' : '기록했습니다.') + App.cat.learnToast([learned], t.category, t.subcategory));
   };
   T.remove = function (id) {
-    u.confirm('내역 삭제', '해당 거래 내역을 삭제하시겠습니까?', function () {
+    u.confirm('내역 삭제', '이 내역을 지울까요?', function () {
       db().transactions = db().transactions.filter(function (t) { return t.id !== Number(id); });
       App.store.save(); u.toast('거래 내역이 삭제되었습니다.');
     });
@@ -117,42 +124,50 @@
   T.setFilter = function (k, v) { F[k] = v; if (k === 'q') { renderRows(); return; } App.ui.render(); };
   function selIds() { return Object.keys(SEL).filter(function (k) { return SEL[k]; }).map(Number); }
 
+  var WD = ['일', '월', '화', '수', '목', '금', '토'];
+  function catColor(name) { var c = (db().categories || []).filter(function (x) { return x.name === name; })[0]; return c && c.color ? c.color : '#8B95A1'; }
+  /* 한 줄 : 눌러서 고치기, 왼쪽 체크로 여러 건 선택 */
   function rowHtml(t) {
-    var typeTxt = t.type === 'INCOME' ? '<span class="text-emerald-600 font-bold">수입</span>' : t.type === 'TRANSFER' ? '<span class="text-slate-500">이체</span>' : '지출';
-    var lock = t.type === 'EXPENSE' && !t.installmentId ? (t.lockCategory
-      ? '<i class="fa-solid fa-lock text-[9px] text-amber-500 ml-1 cursor-pointer" onclick="event.stopPropagation();App.cat.toggleLock(' + t.id + ')" title="분류 고정됨 · 클릭하여 해제"></i>'
-      : '<i class="fa-solid fa-lock-open text-[9px] text-slate-300 ml-1 cursor-pointer hover:text-slate-500" onclick="event.stopPropagation();App.cat.toggleLock(' + t.id + ')" title="클릭하면 재분류에서 제외됩니다"></i>') : '';
-    var inst = t.installmentId ? ' <span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold">할부</span>' : '';
-    var on = !!SEL[t.id];
-    return '<tr data-id="' + t.id + '" class="hover:bg-slate-50 transition cursor-pointer' + (on ? ' bg-emerald-50' : '') + '" onclick="App.txn.rowClick(event,' + t.id + ')" ondblclick="App.txn.openEdit(' + t.id + ')">'
-      + '<td class="p-4"><input type="checkbox" class="txn-ck" ' + (on ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="App.txn.sel(' + t.id + ',this.checked)"></td>'
-      + '<td class="p-4 font-mono">' + u.esc(t.date) + '</td><td class="p-4">' + typeTxt + '</td>'
-      + '<td class="p-4 font-bold text-slate-800">' + u.esc(t.category) + lock + '</td>'
-      + '<td class="p-4"><span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">' + u.esc(t.subcategory || '일반') + '</span></td>'
-      + '<td class="p-4 text-slate-600">' + C.badge(C.ownerOf(t), !t.owner) + ' ' + u.esc(t.payment) + '</td>'
-      + '<td class="p-4 text-slate-700">' + u.esc(t.memo || '-') + inst + '</td>'
-      + '<td class="p-4 text-right font-bold ' + (t.type === 'INCOME' ? 'text-emerald-600' : 'text-slate-800') + '">' + u.K(t.amount) + '</td>'
-      + '<td class="p-4 text-center"><div class="flex items-center justify-center gap-2">'
-      + '<button onclick="event.stopPropagation();App.txn.openEdit(' + t.id + ')" class="text-slate-400 hover:text-accent p-1"><i class="fa-solid fa-pen-to-square"></i></button>'
-      + '<button onclick="event.stopPropagation();App.txn.remove(' + t.id + ')" class="text-slate-400 hover:text-red-500 p-1"><i class="fa-solid fa-trash-can"></i></button></div></td></tr>';
+    var on = !!SEL[t.id], inc = t.type === 'INCOME', tr = t.type === 'TRANSFER', own = C.ownerOf(t), col = tr ? '#A5ADB7' : inc ? '#0B7A57' : catColor(t.category);
+    var lock = t.type === 'EXPENSE' && !t.installmentId && t.lockCategory ? ' <i class="fa-solid fa-lock text-[10px] text-slate-400 cursor-pointer" onclick="event.stopPropagation();App.cat.toggleLock(' + t.id + ')" title="분류 고정됨 (규칙 다시 적용에서 제외) · 눌러서 풀기"></i>' : '';
+    var meta = [tr ? u.esc(t.subcategory || '이체') : u.esc(t.category) + (t.subcategory ? ' · ' + u.esc(t.subcategory) : ''), u.esc(t.payment || '')].filter(Boolean).join(' · ')
+      + (own !== 'J' ? ' · ' + u.esc(C.short(own)) + ' 개인' : '') + (t.installmentId ? ' · <span class="text-amber-700 font-semibold">할부</span>' : '') + lock;
+    return '<div data-id="' + t.id + '" class="txn-row' + (on ? ' sel' : '') + '" onclick="App.txn.rowClick(event,' + t.id + ')">'
+      + '<input type="checkbox" class="txn-ck" aria-label="선택" ' + (on ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="App.txn.sel(' + t.id + ',this.checked)">'
+      + '<span class="txn-dot" style="background:' + col + '"></span>'
+      + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + meta + '</small></div>'
+      + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : 'text-slate-900') + '">' + (inc ? '+' : tr ? '' : '-') + u.n0(t.amount) + '원</div></div>';
   }
   function renderRows() {
-    var tb = u.$('txn-table-body'); if (!tb) return;
+    var box = u.$('txn-list'); if (!box) return;
     var list = filtered(), live = {};
     db().transactions.forEach(function (t) { live[t.id] = 1; });
     Object.keys(SEL).forEach(function (k) { if (!live[k]) delete SEL[k]; });
-    tb.innerHTML = list.length ? list.map(rowHtml).join('') : '<tr><td colspan="9" class="p-8 text-center text-slate-400">등록된 내역이 없습니다.</td></tr>';
+    var html = '', day = null;
+    list.forEach(function (t) {
+      if (t.date !== day) {
+        day = t.date;
+        var same = list.filter(function (x) { return x.date === day; }), dOut = C.sumType(same, 'EXPENSE'), dIn = C.sumType(same, 'INCOME'), dt = new Date(day + 'T00:00:00');
+        html += '<div class="txn-day"><span>' + (+day.slice(8)) + '일 ' + WD[dt.getDay()] + '요일' + (day === u.today() ? ' · 오늘' : '') + '</span><span>' + (dIn ? '<b class="text-accent">+' + u.n0(dIn) + '</b> ' : '') + (dOut ? '-' + u.n0(dOut) : '') + '</span></div>';
+      }
+      html += rowHtml(t);
+    });
+    var allOn = list.length > 0 && list.every(function (t) { return SEL[t.id]; });
+    box.innerHTML = list.length ? '<label class="txn-all"><input type="checkbox" id="txn-all" ' + (allOn ? 'checked' : '') + ' onchange="App.txn.selAll(this.checked)"> 보이는 내역 모두 선택</label>' + html
+      : '<div class="empty py-12">' + (F.q || nFilters() ? '조건에 맞는 내역이 없어요.' : '이 달에는 내역이 없어요.<br><button onclick="App.ui.addMenu()" class="btn pri mt-4">기록하기</button>') + '</div>';
     var inc = C.sumType(list, 'INCOME'), exp = C.sumType(list, 'EXPENSE');
-    u.$('txn-count').innerText = list.length;
-    u.$('txn-sum').innerHTML = (F.owner !== 'ALL' ? '<b>' + u.esc(C.short(F.owner)) + '</b> · ' : '') + '수입 <b class="text-emerald-600">' + u.K(inc) + '</b> · 지출 <b class="text-slate-800">' + u.K(exp) + '</b>';
-    var all = u.$('txn-all'); if (all) all.checked = list.length > 0 && list.every(function (t) { return SEL[t.id]; });
+    u.$('txn-sum').innerHTML = '<b class="text-slate-900">' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + ' <span class="mx-1 text-slate-300">|</span> 들어온 돈 <b class="text-accent">' + u.n0(inc) + '원</b> <span class="mx-1 text-slate-300">|</span> 나간 돈 <b class="text-slate-900">' + u.n0(exp) + '원</b>';
     renderBulk();
   }
-  T.rowClick = function (e, id) { if (e.target.closest('button,input,a,i')) return; T.sel(id, !SEL[id]); };
+  function nFilters() { return (F.type !== 'ALL') + (F.pay !== 'ALL') + (F.owner !== 'ALL'); }
+  var showF = false;
+  T.toggleFilters = function () { showF = !showF; var f = u.$('txn-filters'); if (f) f.classList.toggle('hidden', !showF); };
+  T.resetFilters = function () { F.type = F.pay = F.owner = 'ALL'; F.q = ''; App.ui.render(); };
+  T.rowClick = function (e, id) { if (e.target.closest('button,input,a,i,label')) return; if (selIds().length) { T.sel(id, !SEL[id]); return; } T.openEdit(id); };
   T.sel = function (id, on) {
     SEL[id] = on;
-    var tr = document.querySelector('#txn-table-body tr[data-id="' + id + '"]');
-    if (tr) { tr.classList.toggle('bg-emerald-50', on); var c = tr.querySelector('.txn-ck'); if (c) c.checked = on; }
+    var tr = document.querySelector('#txn-list .txn-row[data-id="' + id + '"]');
+    if (tr) { tr.classList.toggle('sel', on); var c = tr.querySelector('.txn-ck'); if (c) c.checked = on; }
     renderBulk();
   };
   T.selAll = function (on) { filtered().forEach(function (t) { SEL[t.id] = on; }); renderRows(); };
@@ -161,17 +176,17 @@
   /* ---------- 일괄 편집 ---------- */
   function renderBulk() {
     var b = u.$('txn-bulk'); if (!b) return;
-    var ids = selIds(); b.classList.toggle('hidden', !ids.length);
+    var ids = selIds(); b.className = ids.length ? 'txn-bulk' : 'hidden';
     if (!ids.length) return;
     if (!u.$('bulk-cat')) {
       var cats = db().categories.map(function (c) { return c.name; }), pays = C.payments();
-      b.innerHTML = '<b id="bulk-cnt" class="mr-1"></b><button onclick="App.txn.bulkDelete()" class="bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg font-semibold"><i class="fa-solid fa-trash-can mr-1"></i>선택 삭제</button><span class="text-slate-400 mx-1">|</span>'
-        + '<select id="bulk-cat" onchange="App.txn.bulkSubs()" class="text-slate-800 rounded px-2 py-1.5"><option value="">대분류 변경 안 함</option>' + cats.map(opt).join('') + '</select>'
-        + '<select id="bulk-sub" class="text-slate-800 rounded px-2 py-1.5"><option value="">소분류 자동</option></select>'
-        + '<select id="bulk-pay" class="text-slate-800 rounded px-2 py-1.5"><option value="">결제수단 변경 안 함</option>' + pays.map(opt).join('') + '</select>'
-        + '<select id="bulk-owner" class="text-slate-800 rounded px-2 py-1.5"><option value="">사용자 변경 안 함</option>' + C.ownerOptions(true) + '</select>'
-        + '<input id="bulk-date" type="date" class="text-slate-800 rounded px-2 py-1.5" title="날짜 일괄 변경">'
-        + '<button onclick="App.txn.bulkApply()" class="bg-accent hover:bg-accent-hover px-3 py-1.5 rounded-lg font-semibold">일괄 변경</button><button onclick="App.txn.clearSel()" class="ml-auto text-slate-300 hover:text-white">선택 해제</button>';
+      b.innerHTML = '<b id="bulk-cnt" class="text-slate-900"></b><span class="text-slate-500">한꺼번에 바꾸기</span>'
+        + '<select id="bulk-cat" onchange="App.txn.bulkSubs()" class="flt-in flt-sm"><option value="">분류 그대로</option>' + cats.map(opt).join('') + '</select>'
+        + '<select id="bulk-sub" class="flt-in flt-sm"><option value="">소분류 자동</option></select>'
+        + '<select id="bulk-pay" class="flt-in flt-sm"><option value="">결제수단 그대로</option>' + pays.map(opt).join('') + '</select>'
+        + '<select id="bulk-owner" class="flt-in flt-sm"><option value="">누구 돈 그대로</option>' + C.ownerOptions(true) + '</select>'
+        + '<input id="bulk-date" type="date" class="flt-in flt-sm" title="날짜 한꺼번에 바꾸기">'
+        + '<button onclick="App.txn.bulkApply()" class="btn pri" style="height:38px">바꾸기</button><button onclick="App.txn.bulkDelete()" class="btn sec" style="height:38px;color:#C4282D">선택 삭제</button><button onclick="App.txn.clearSel()" class="ml-auto text-slate-500 hover:text-slate-900 font-semibold">선택 해제</button>';
     }
     u.$('bulk-cnt').textContent = ids.length + '건 선택';
   }
@@ -232,26 +247,25 @@
     return '<select onchange="App.txn.setFilter(\'' + id + '\', this.value)" class="flt-in" aria-label="' + label + '">' + options.map(function (o) { return '<option value="' + u.esc(o[0]) + '"' + (o[0] === val ? ' selected' : '') + '>' + u.esc(o[1]) + '</option>'; }).join('') + '</select>';
   }
   App.views.add({
-    id: 'transactions', order: 20, title: '수입 · 지출 거래 내역', nav: { label: '수입 · 지출 내역', icon: 'fa-receipt' },
+    id: 'transactions', order: 20, title: '내역', nav: { label: '내역', icon: 'fa-list-ul' },
     render: function (el) {
       if (db().ui.autoReclassify && App.cat.silentReclassify()) App.store.save({ quiet: true });
-      var pays = [['ALL', '전체 결제수단/카드']].concat(C.payments().map(function (p) { return [p, p]; }));
+      var pays = [['ALL', '모든 카드 · 결제수단']].concat(C.payments().map(function (p) { return [p, p]; }));
       if (F.pay !== 'ALL' && C.payments().indexOf(F.pay) < 0) F.pay = 'ALL';
-      el.innerHTML = '<div id="txn-bar" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">'
-        + '<div class="flt-row">' + sel('type', F.type, [['ALL', '전체 구분'], ['INCOME', '수입'], ['EXPENSE', '지출'], ['TRANSFER', '이체']], '구분')
-        + sel('pay', F.pay, pays, '결제수단') + sel('owner', F.owner, [['ALL', '전체 사용자'], ['J', '공동 생활비'], ['H', C.nm('H') + ' 개인'], ['W', C.nm('W') + ' 개인']], '사용자')
-        + '<div class="flt-search"><i class="fa-solid fa-magnifying-glass"></i><input id="txn-search" type="search" value="' + u.esc(F.q) + '" placeholder="메모·분류·결제수단 검색" oninput="App.txn.setFilter(\'q\', this.value)" class="flt-in"></div>'
-        + '<button onclick="App.txn.exportCSV()" class="flt-btn"><i class="fa-solid fa-file-csv"></i> CSV</button>'
-        + '<button onclick="App.paste.open()" class="flt-btn flt-dark"><i class="fa-solid fa-paste text-amber-400"></i> 스마트 붙여넣기</button></div>'
-        + '<div class="flt-row flt-r2"><div class="flt-chips"><span class="flt-chip">조회된 내역 <strong id="txn-count" class="text-slate-800">0</strong> 건</span><span id="txn-sum" class="flt-chip"></span></div>'
-        + '<div class="flt-tools"><label class="flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer select-none" title="켜면 내역 화면을 열 때마다 키워드 규칙으로 자동 재분류합니다">'
-        + '<input type="checkbox" ' + (db().ui.autoReclassify ? 'checked' : '') + ' onchange="App.cat.setAuto(this.checked)" class="accent-emerald-600"> 자동 적용</label>'
-        + '<button onclick="App.cat.openReclass(\'MONTH\')" class="flt-btn flt-sm flt-green" title="키워드 규칙으로 기존 내역 다시 분류"><i class="fa-solid fa-rotate"></i> 새로고침 · 재분류</button>'
-        + '<button onclick="App.cat.undo()" class="flt-btn flt-sm" title="직전 재분류 되돌리기"><i class="fa-solid fa-rotate-left"></i></button></div></div></div>'
-        + '<div id="txn-bulk" class="hidden bg-slate-900 text-white rounded-xl p-3 flex flex-wrap items-center gap-2 text-xs"></div>'
-        + '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"><table class="w-full text-left border-collapse" id="txn-table"><thead><tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">'
-        + '<th class="p-4 w-8"><input type="checkbox" id="txn-all" onchange="App.txn.selAll(this.checked)" title="화면에 보이는 내역 전체 선택"></th><th class="p-4">날짜</th><th class="p-4">구분</th><th class="p-4">대분류</th><th class="p-4">소분류</th><th class="p-4">사용자 · 결제수단</th><th class="p-4">메모 / 가맹점</th><th class="p-4 text-right">금액</th><th class="p-4 text-center">관리</th>'
-        + '</tr></thead><tbody id="txn-table-body" class="divide-y divide-slate-100 text-xs"></tbody></table></div>';
+      var nf = nFilters();
+      el.innerHTML = '<div id="txn-bar" class="card" style="padding:1rem">'
+        + '<div class="flex gap-2"><div class="flt-search"><i class="fa-solid fa-magnifying-glass"></i><input id="txn-search" type="search" value="' + u.esc(F.q) + '" placeholder="가게 이름 · 분류 · 카드로 찾기" oninput="App.txn.setFilter(\'q\', this.value)" class="flt-in"></div>'
+        + '<button onclick="App.txn.toggleFilters()" class="flt-btn"' + (nf ? ' style="border-color:#0B7A57;color:#086247"' : '') + '><i class="fa-solid fa-sliders"></i> 필터' + (nf ? ' ' + nf : '') + '</button></div>'
+        + '<div id="txn-filters" class="' + (showF || nf ? '' : 'hidden') + ' pt-3 space-y-3"><div class="flt-row">' + sel('type', F.type, [['ALL', '나간 돈 · 들어온 돈 · 이체'], ['EXPENSE', '나간 돈만'], ['INCOME', '들어온 돈만'], ['TRANSFER', '이체만']], '구분')
+        + sel('pay', F.pay, pays, '결제수단') + sel('owner', F.owner, [['ALL', '누구 돈이든'], ['J', '공동 생활비'], ['H', C.nm('H') + ' 개인'], ['W', C.nm('W') + ' 개인']], '누구 돈')
+        + (nf || F.q ? '<button onclick="App.txn.resetFilters()" class="flt-btn">조건 지우기</button>' : '') + '</div>'
+        + '<div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 text-[13px] text-slate-600"><span class="font-semibold text-slate-700">분류 규칙</span>'
+        + '<button onclick="App.cat.openReclass(\'MONTH\')" class="flt-btn flt-sm" title="키워드 규칙으로 이 달 내역을 다시 분류합니다">이 달 다시 분류</button><button onclick="App.cat.undo()" class="flt-btn flt-sm">되돌리기</button>'
+        + '<label class="flex items-center gap-1.5 cursor-pointer select-none ml-1"><input type="checkbox" ' + (db().ui.autoReclassify ? 'checked' : '') + ' onchange="App.cat.setAuto(this.checked)" class="accent-emerald-600"> 내역을 열 때마다 자동으로</label>'
+        + '<button onclick="App.txn.exportCSV()" class="flt-btn flt-sm ml-auto"><i class="fa-solid fa-download"></i> 전체 내역 CSV로 받기</button></div></div>'
+        + '<div id="txn-sum" class="text-[14px] text-slate-600 mt-3"></div></div>'
+        + '<div id="txn-bulk" class="hidden"></div>'
+        + '<div id="txn-list" class="card" style="padding:.5rem 0"></div>';
       renderRows();
     }
   });

@@ -121,14 +121,14 @@
   };
 
   /* ---------- 화면 ---------- */
-  var TABS = [['deposit', '예·적금·연금', 'fa-piggy-bank', 'assets'], ['re', '부동산', 'fa-house-chimney', 'realEstates'], ['invest', '투자', 'fa-chart-line', 'investments'], ['debt', '부채(대출)', 'fa-file-invoice-dollar', 'liabilities']];
+  var TABS = [['deposit', '예금 · 연금', 'fa-piggy-bank', 'assets'], ['re', '집', 'fa-house-chimney', 'realEstates'], ['invest', '투자', 'fa-chart-line', 'investments'], ['debt', '대출', 'fa-file-invoice-dollar', 'liabilities']];
   function curTab() { var c = null; try { c = localStorage.getItem('FC19_ASSET_TAB'); } catch (e) {} return c == null ? '0' : c; }
   A.tab = function (k) { try { localStorage.setItem('FC19_ASSET_TAB', String(k)); } catch (e) {} App.ui.render(); };
   function panel(i, title, icon, btn, body) {
     return '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3" data-panel="' + i + '"><div class="flex justify-between items-center pb-2 border-b border-slate-100"><h4 class="font-bold text-slate-800 flex items-center gap-1.5">' + icon + ' ' + title + '</h4>' + btn + '</div>' + body + '</div>';
   }
   App.views.add({
-    id: 'assets', order: 50, title: '자산 · 부동산 · 부채(대출) 현황', nav: { label: '자산 · 부동산 · 부채(대출)', icon: 'fa-building-user', color: 'text-amber-400' },
+    id: 'assets', order: 50, title: '자산 · 대출', nav: { label: '자산 · 대출', icon: 'fa-building-columns' },
     render: function (el) {
       var mo = App.state.month, n = C.netWorth(mo), nw = C.nwByOwner(mo), cur = curTab(), single = cur !== 'all';
       var by = function (f) { return u.sum(db().assets.filter(f), function (a) { return a.amount; }); };
@@ -141,17 +141,16 @@
         panel(2, '투자 평가액', '<i class="fa-solid fa-chart-line text-blue-600"></i>', '<button onclick="App.invest.open()" class="text-xs text-accent font-semibold hover:underline">+ 종목 추가</button>', '<div id="investment-items-list" class="asset-list space-y-2 text-xs">' + App.invest.listHtml() + '</div>'),
         panel(3, '대출 및 부채', '<i class="fa-solid fa-hand-holding-dollar text-red-500"></i>', '<button onclick="App.loans.open()" class="text-xs text-red-500 font-semibold hover:underline">+ 부채 등록</button>', '<div id="liability-items-list" class="asset-list space-y-2.5 text-xs">' + App.loans.listHtml() + '</div>')
       ];
-      el.innerHTML = '<div class="bg-slate-900 text-white p-6 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-md"><div><div class="text-xs text-slate-400">종합 순자산 (Net Worth)</div><div id="asset-summary-networth" class="text-3xl font-extrabold mt-1">' + u.K(n.nw) + '</div></div>'
-        + '<div class="flex flex-wrap gap-8 border-l border-slate-800 pl-8 text-xs"><div><div class="text-slate-400">총 자산 (부동산 포함)</div><div id="asset-summary-total" class="text-base font-bold text-slate-200 mt-0.5">' + u.K(n.assets) + '</div></div>'
-        + '<div><div class="text-slate-400">부동산 (시세 · 전세금)</div><div id="asset-summary-realestate" class="text-base font-bold text-amber-300 mt-0.5">' + u.K(n.re) + '</div></div>'
-        + '<div><div class="text-slate-400">총 부채 (대출 · 세입자 보증금 포함)</div><div id="asset-summary-debt" class="text-base font-bold text-red-400 mt-0.5">' + u.K(n.debt) + '</div></div></div></div>'
-        + '<div class="grid grid-cols-2 lg:grid-cols-6 gap-3">' + C.OW.map(function (c) { return cell(C.badge(c) + ' 명의 순자산', u.K(nw[c].a - nw[c].d), '자산 ' + u.K(nw[c].a) + ' · 부채 ' + u.K(nw[c].d), nw[c].a - nw[c].d < 0 ? 'text-red-600' : 'text-slate-800'); }).join('')
-        + cell('연금 적립금 (퇴직·연금저축·IRP)', u.K(pen), '비상자금 제외 · 은퇴자산 포함', 'text-indigo-700') + cell('국민연금 예상 (부부 합산)', '월 ' + u.K(nps), '현재가치 · 순자산 제외', 'text-indigo-700') + cell('전세·월세 보증금', u.K(lease), '순자산 포함 · 비상자금 제외', 'text-amber-700') + '</div>'
-        + '<div class="flex flex-wrap gap-2">' + TABS.map(function (t, i) {
-          var on = String(i) === cur;
-          return '<button onclick="App.assets.tab(' + i + ')" class="px-4 py-2 rounded-lg text-xs font-semibold border ' + (on ? 'bg-accent text-white border-accent' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100') + '"><i class="fa-solid ' + t[2] + ' mr-1.5"></i>' + t[1] + ' <span class="opacity-70">' + (db()[t[3]] || []).length + '</span></button>';
-        }).join('') + '<button onclick="App.assets.tab(\'all\')" class="px-4 py-2 rounded-lg text-xs font-semibold border ' + (cur === 'all' ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100') + '"><i class="fa-solid fa-table-columns mr-1.5"></i>4칸 모두 보기</button>'
-        + '<button onclick="App.ui.go(\'loan\')" class="ml-auto px-4 py-2 rounded-lg text-xs font-semibold border border-red-200 bg-red-50 text-red-700 hover:bg-red-100"><i class="fa-solid fa-scale-balanced mr-1.5"></i>대출 상환 판단 도우미</button></div>'
+      var won = function (v) { return u.n0(v) + '원'; };
+      el.innerHTML = '<div class="card"><div class="sub">우리 집 순자산</div><div id="asset-summary-networth" class="big mt-1' + (n.nw < 0 ? ' text-red-600' : '') + '">' + won(n.nw) + '</div>'
+        + '<div class="kv mt-4"><div><small>가진 것</small><b id="asset-summary-total" title="' + won(n.assets) + '">' + u.KS(n.assets) + '</b></div><div><small>그중 집 · 전세금</small><b id="asset-summary-realestate" title="' + won(n.re) + '">' + u.KS(n.re) + '</b></div><div><small>갚을 것</small><b id="asset-summary-debt" class="text-red-600" title="' + won(n.debt) + '">' + u.KS(n.debt) + '</b></div></div>'
+        + '<details class="mt-4"><summary class="text-[14px] font-semibold text-slate-600 cursor-pointer select-none">명의별 · 연금 · 보증금 자세히</summary><div class="grid grid-cols-2 lg:grid-cols-6 gap-2 mt-3">'
+        + C.OW.map(function (c) { return cell((c === 'J' ? '공동' : u.esc(C.short(c))) + ' 명의 순자산', won(nw[c].a - nw[c].d), '가진 것 ' + won(nw[c].a) + ' · 갚을 것 ' + won(nw[c].d), nw[c].a - nw[c].d < 0 ? 'text-red-600' : 'text-slate-800'); }).join('')
+        + cell('연금 (퇴직 · 연금저축 · IRP)', won(pen), '비상금에선 빼고 은퇴 준비에 넣어요', 'text-slate-800') + cell('국민연금 예상 (부부)', '월 ' + won(nps), '지금 가치 · 순자산엔 안 넣어요', 'text-slate-800') + cell('예적금 탭의 보증금', won(lease), '순자산엔 넣고 비상금에선 빼요', 'text-slate-800') + '</div></details></div>'
+        + '<div class="flex flex-wrap items-center gap-2"><div class="seg">' + TABS.map(function (t, i) {
+          return '<button onclick="App.assets.tab(' + i + ')" class="' + (String(i) === cur ? 'on' : '') + '">' + t[1] + ' <span class="text-slate-400 font-medium">' + (db()[t[3]] || []).length + '</span></button>';
+        }).join('') + '<button onclick="App.assets.tab(\'all\')" class="' + (cur === 'all' ? 'on' : '') + '">모두</button></div>'
+        + '<button onclick="App.ui.go(\'loan\')" class="more ml-auto">대출 먼저 갚을까? 계산해 보기</button></div>'
         + '<div class="grid gap-5 ' + (single ? 'asset-single grid-cols-1' : 'grid-cols-1 lg:grid-cols-4') + '">' + (single ? panels[+cur] || panels[0] : panels.join('')) + '</div>';
     }
   });

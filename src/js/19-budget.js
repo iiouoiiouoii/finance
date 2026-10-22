@@ -27,7 +27,7 @@
   function notify(first) {
     var L = B.alerts().filter(function (a) { return a.lv !== 'pace'; }), fresh = [];
     L.forEach(function (a) { [a.lv, 'warn'].forEach(function (lv) { var k = App.state.month + a.c + lv; if (!seen[k]) { seen[k] = 1; if (lv === a.lv) fresh.push(a); } }); });
-    if (first) { if (L.length) u.toast('예산 알림: ' + L.length + '개 카테고리가 기준을 넘었습니다.', 'warning'); }
+    if (first) return;   /* 시작할 때는 알림을 띄우지 않는다 : 홈의 [지금 할 일]과 종 아이콘에 이미 보인다 */
     else fresh.forEach(function (a) { u.toast(a.c + (a.lv === 'over' ? ' 예산 초과 (' + a.pc.toFixed(0) + '%)' : ' 예산 ' + a.pc.toFixed(0) + '% 사용'), 'warning'); });
   }
   App.on('saved', u.safe('예산 알림', function () { notify(false); }));
@@ -35,8 +35,8 @@
   B.setWarn = function (v) { db().settings.budgetWarn = Math.max(50, Math.min(100, +v || 80)); seen = {}; App.store.save(); u.toast('예산 경고 기준이 ' + db().settings.budgetWarn + '%로 저장되었습니다.'); };
   App.ui.headerItems.push([40, function () {
     var n = B.alerts().filter(function (a) { return a.lv !== 'pace'; }).length;
-    return '<button onclick="App.ui.go(\'budget\')" title="예산 알림" class="relative px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600"><i class="fa-solid fa-bell"></i>'
-      + (n ? '<span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center">' + n + '</span>' : '') + '</button>';
+    return '<button onclick="App.ui.go(\'budget\')" title="' + (n ? '예산을 넘었거나 거의 다 쓴 항목 ' + n + '개' : '예산 알림 없음') + '" aria-label="예산 알림" class="hdr-icon"><i class="fa-regular fa-bell"></i>'
+      + (n ? '<span class="dot">' + n + '</span>' : '') + '</button>';
   }]);
 
   /* ---------- 예산 바꾸기 : 이 달만 / 이 달부터 계속 ---------- */
@@ -74,10 +74,10 @@
     if (!needAsk(mo)) { finish('forward'); return; }
     var label = u.monthLabel(mo);
     var lines = keys.slice(0, 6).map(function (k) { return '· ' + u.esc(k) + ': ' + u.K(cur[k]) + ' → <b>' + u.K(changes[k]) + '</b>'; }).join('<br>') + (keys.length > 6 ? '<br>· 외 ' + (keys.length - 6) + '개' : '');
-    u.choose('<i class="fa-solid fa-calendar-check text-accent mr-1.5"></i>예산 변경을 어디에 적용할까요?', lines, [
-      { label: label + '만 (기본 예산은 그대로)', value: 'month' },
-      { label: label + '부터 계속 (기본 예산도 변경, 지난달은 그대로)', value: 'forward', cls: 'border-slate-300 text-slate-700 hover:bg-slate-50' },
-      { label: '취소', value: 'cancel', cls: 'border-transparent text-slate-400' }
+    u.choose('예산을 언제부터 바꿀까요?', lines, [
+      { label: label + '부터 계속', value: 'forward' },
+      { label: label + '만', value: 'month', cls: 'border-transparent bg-slate-100 text-slate-700 hover:bg-slate-200' },
+      { label: '취소', value: 'cancel', cls: 'border-transparent text-slate-500' }
     ]).then(finish);
   };
   B.edit = function (k, v) { var o = {}; o[k] = u.P(v); B.change(o); };
@@ -99,35 +99,34 @@
     });
   };
 
-  /* ---------- 화면 ---------- */
+  /* ---------- 화면 : 남은 예산 요약 → 항목별 예산(바로 고치기) → 알림 기준 ---------- */
   App.views.add({
-    id: 'budget', order: 60, title: '카테고리별 예산 바로 관리', nav: { label: '예산 바로 관리', icon: 'fa-sliders' },
+    id: 'budget', order: 60, title: '예산', nav: { label: '예산', icon: 'fa-chart-simple' },
     render: function (el) {
-      var mo = App.state.month, bud = C.budgetFor(mo), ov = C.monthOverride(mo), n = Object.keys(ov).length, L = B.alerts(mo);
-      var T = C.savingTarget(mo), avail = C.incomeBase(mo).base - T, tot = C.budgetTotal(mo), over = tot - avail;
-      var spent = {}; C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') spent[t.category] = (spent[t.category] || 0) + t.amount; });
-      el.innerHTML = '<div class="p-4 rounded-xl border shadow-sm text-xs flex flex-wrap items-center gap-3 ' + (!T ? 'bg-sky-50 border-sky-200 text-sky-900' : over > 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800') + '"><i class="fa-solid fa-piggy-bank"></i>'
-        + (!T ? '<span>저축·투자 목표가 없습니다. 지난달 지출을 기준으로 예산을 잡으면 저축이 \'남는 돈\'이 됩니다. 저축액부터 정해 두세요.</span>'
-          : '<span>선저축 ' + u.K(T) + ' → 생활비 가용 <b>' + u.K(avail) + '</b> · 예산 합계 <b>' + u.K(tot) + '</b>' + (over > 0 ? ' (' + u.K(over) + ' 초과)' : ' (여유 ' + u.K(-over) + ')') + '</span>')
-        + '<button onclick="App.ui.go(\'goals\')" class="ml-auto bg-white border border-current px-3 py-1.5 rounded-lg font-semibold">목표 · 선저축 설정</button></div>'
-        + '<div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2"><div class="flex flex-wrap items-center gap-2 text-xs"><b class="text-slate-800">예산 알림</b><span class="text-slate-500">경고 기준</span>'
-        + '<input type="number" min="50" max="100" value="' + ((db().settings.budgetWarn) || 80) + '" onchange="App.budget.setWarn(this.value)" class="w-16 border border-slate-300 rounded px-2 py-1 text-right"><span class="text-slate-500">% 이상 사용 시 알림</span></div>'
-        + '<div class="space-y-1.5">' + (L.length ? L.map(B.alertHtml).join('') : '<div class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"><i class="fa-solid fa-circle-check mr-1"></i>모든 카테고리가 예산 범위 안에 있습니다.</div>') + '</div></div>'
-        + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5"><div class="flex flex-wrap justify-between items-center pb-4 border-b border-slate-100 gap-3"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-sliders text-accent"></i> 카테고리별 예산 바로 변경 & 자동 추천</h3>'
-        + '<p class="text-xs text-slate-400 mt-0.5">세분화된 카테고리별 예산을 즉시 수정하고 지난달 지출 기반 추천 기능을 활용하세요.</p></div>'
-        + '<button onclick="App.budget.recommend()" class="bg-accent hover:bg-accent-hover text-white text-xs px-4 py-2.5 rounded-lg font-semibold flex items-center gap-2 shadow-sm"><i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i> 지난달 지출 기반 예산 자동 추천</button></div>'
-        + '<div class="p-3 rounded-lg border text-xs flex flex-wrap items-center justify-between gap-2 ' + (n ? 'bg-indigo-50 border-indigo-200 text-indigo-800' : 'bg-slate-50 border-slate-200 text-slate-600') + '"><span><i class="fa-solid fa-calendar-days mr-1"></i><b>' + mo + '</b> 예산 · '
-        + (n ? '이 달 전용 예산 ' + n + '개 항목 적용 중 (나머지는 기본 예산)' : '기본 예산 적용 중') + ' · 예산을 고치면 이 달만/이 달부터 계속 중에서 고를 수 있습니다.</span>'
-        + (n ? '<button onclick="App.budget.resetMonth()" class="px-2.5 py-1 rounded border border-indigo-300 bg-white font-semibold hover:bg-indigo-100">이 달 전용 예산 해제</button>' : '') + '</div>'
-        + '<div id="budget-inline-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">' + db().categories.map(function (c, i) {
-          var b = bud[c.name] || 0, s = spent[c.name] || 0, rem = b - s, rate = b > 0 ? Math.round(s / b * 100) : 0;
-          return '<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3"><div class="flex justify-between items-center"><span class="font-bold text-slate-800 text-sm flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background-color:' + u.esc(c.color) + '"></span> ' + u.esc(c.name) + '</span>'
-            + '<span class="text-xs text-slate-500">당월 지출: <strong class="text-slate-800">' + u.K(s) + '</strong></span></div>'
-            + '<div class="grid grid-cols-2 gap-3 items-center"><div><label class="block text-[11px] text-slate-500 mb-1">월 예산 목표액' + (own(ov, c.name) ? ' <span class="text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 rounded px-1">이 달만</span>' : '') + '</label>'
-            + '<input type="text" data-money inputmode="numeric" value="' + u.n0(b) + '" onchange="App.budget.editIdx(' + i + ', this.value)" class="w-full border border-slate-300 rounded-lg p-2 font-bold text-slate-800 text-xs"></div>'
-            + '<div class="text-right"><div class="text-[11px] text-slate-400">잔여 예산</div><div class="text-sm font-bold ' + (rem < 0 ? 'text-red-500' : 'text-slate-700') + '">' + u.K(rem) + '</div></div></div>'
-            + '<div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden"><div class="' + (rate >= 100 ? 'bg-red-500' : rate >= 80 ? 'bg-amber-500' : 'bg-accent') + ' h-2 rounded-full" style="width:' + Math.min(rate, 100) + '%"></div></div></div>';
-        }).join('') + '</div></div>';
+      var mo = App.state.month, bud = C.budgetFor(mo), ov = C.monthOverride(mo), n = Object.keys(ov).length;
+      var T = C.savingTarget(mo), base = C.incomeBase(mo).base, avail = base - T, tot = C.budgetTotal(mo), over = tot - avail;
+      var spent = {}, spentAll = 0; C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') { spent[t.category] = (spent[t.category] || 0) + t.amount; spentAll += t.amount; } });
+      var left = tot - spentAll, pc = tot ? Math.min(100, spentAll / tot * 100) : 0, m = parseInt(mo.slice(5), 10);
+      var won = function (v) { return u.n0(v) + '원'; };
+      var plan = !T ? '<p class="text-[14px] text-slate-600 mt-4 leading-relaxed">저축 목표를 먼저 정해 두면, 예산이 <b>쓸 수 있는 돈</b> 안에 들어오는지 알려 드려요. <button onclick="App.ui.go(\'goals\')" class="more">저축 목표 정하기</button></p>'
+        : '<div class="mt-4 p-3.5 rounded-xl text-[14px] leading-relaxed ' + (over > 0 ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-700') + '">수입 ' + won(base) + ' − 저축 목표 ' + won(T) + ' = 쓸 수 있는 돈 <b>' + won(avail) + '</b><br>'
+          + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + won(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요 (여유 ' + won(-over) + ').') + '</div>';
+      var rows = db().categories.map(function (c, i) {
+        var bv = bud[c.name] || 0, sv = spent[c.name] || 0, rem = bv - sv, rate = bv > 0 ? sv / bv * 100 : 0;
+        return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0"><span class="txn-dot" style="background:' + u.esc(c.color) + '"></span><b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
+          + '<div class="bud-in"><input type="text" data-money inputmode="numeric" value="' + (bv ? u.n0(bv) : '') + '" placeholder="예산 없음" onchange="App.budget.editIdx(' + i + ', this.value)" aria-label="' + u.esc(c.name) + ' 예산"><span>원</span></div>'
+          + '<div class="col-span-2"><div class="track" style="height:6px"><div class="fill" style="width:' + Math.min(100, rate) + '%;background:' + (rate >= 100 ? '#E5484D' : rate >= 80 ? '#E8A10A' : '#0B7A57') + '"></div></div>'
+          + '<div class="flex justify-between text-[13px] mt-1.5"><span class="text-slate-500">쓴 돈 ' + won(sv) + '</span>' + (bv ? '<span class="' + (rem < 0 ? 'text-red-600 font-semibold' : 'text-slate-600') + '">' + (rem < 0 ? won(-rem) + ' 넘음' : won(rem) + ' 남음') + '</span>' : '') + '</div></div></div>';
+      }).join('');
+      el.innerHTML = '<div class="card"><div class="sub">' + m + '월 예산</div>'
+        + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub mt-1">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
+          + '<div class="track mt-4"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
+          : '<div class="big mt-1">아직 예산이 없어요</div><p class="sub mt-2">아래 항목에 금액을 넣거나, 지난달 쓴 만큼으로 한 번에 채울 수 있어요.</p>')
+        + plan + '</div>'
+        + '<div class="card"><div class="card-h"><h3>항목별 예산</h3><button onclick="App.budget.recommend()" class="btn sec" style="height:38px"><i class="fa-solid fa-wand-magic-sparkles"></i>지난달 쓴 만큼 채우기</button></div>'
+        + '<p class="text-[13px] text-slate-500 -mt-2 mb-2">금액을 고치면 이 달만 바꿀지, 이 달부터 계속 쓸지 물어봐요.' + (n ? ' 지금 이 달만 다르게 정한 항목이 ' + n + '개 있어요. <button onclick="App.budget.resetMonth()" class="more">기본 예산으로 되돌리기</button>' : '') + '</p>'
+        + '<div id="budget-inline-container" class="bud-grid">' + rows + '</div></div>'
+        + '<div class="card flex flex-wrap items-center gap-2 text-[14px] text-slate-700"><b class="text-slate-900 mr-1">알림</b>예산의 <input type="number" min="50" max="100" value="' + ((db().settings.budgetWarn) || 80) + '" onchange="App.budget.setWarn(this.value)" class="w-20 border border-slate-300 rounded-lg px-2 py-2 text-right" aria-label="알림 기준 %">% 를 쓰면 알려 드려요.</div>';
     }
   });
 })(window.App);

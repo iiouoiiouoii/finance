@@ -293,8 +293,8 @@
         + '<td class="p-2 text-center pt-del"><button onclick="App.paste.removeItem(' + i + ')" aria-label="삭제" class="text-slate-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></td></tr>';
     }).join('');
     var btn = u.$('btn-import-parsed');
-    btn.disabled = !items.length;
-    btn.textContent = '가계부 등록' + (ns ? ' (' + (items.length - ns) + '건, 중복 ' + ns + '건 제외)' : '');
+    btn.disabled = !(items.length - ns);
+    btn.textContent = items.length ? (items.length - ns) + '건 가계부에 넣기' + (ns ? ' (이미 있는 ' + ns + '건 빼고)' : '') : '가계부에 넣기';
     var cnt = counts(), sum = function (k) { return u.sum(items.filter(function (t) { return t.type === k && !t._skip; }), function (t) { return t.amount; }); };
     var sm = u.$('paste-summary');
     if (sm) sm.innerHTML = items.length ? '<span>지출 <b>' + cnt.EXPENSE + '</b>건 ' + u.K(sum('EXPENSE')) + '</span>' + (cnt.INCOME ? '<span class="text-emerald-700">수입 <b>' + cnt.INCOME + '</b>건 ' + u.K(sum('INCOME')) + '</span>' : '')
@@ -505,30 +505,31 @@
     var m = u.$('smart-paste-modal');
     if (!m) {
       m = document.createElement('div');
-      m.id = 'smart-paste-modal'; m.className = 'app-modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-3';
-      m.innerHTML = '<div class="bg-white rounded-xl shadow-2xl w-[960px] max-w-full max-h-[92vh] flex flex-col border border-slate-200 overflow-hidden">'
-        + '<div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-900 text-white"><h3 class="font-bold text-base flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> 카드 · 은행 내역 스마트 붙여넣기</h3>'
-        + '<button onclick="App.u.close(\'smart-paste-modal\')" aria-label="닫기" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button></div>'
-        + '<div class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">'
-        + '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end bg-slate-50 p-3.5 rounded-xl border border-slate-200"><div><label class="block text-xs font-semibold text-slate-700 mb-1">카드 내역의 결제수단 (은행 내역은 계좌이체)</label>'
-        + '<select id="paste-default-payment" onchange="App.paste.setAllPayments(this.value)" class="w-full border border-slate-300 rounded-lg p-2 text-xs bg-white font-bold text-slate-800"></select></div>'
-        + '<p class="text-[11px] text-slate-500 leading-relaxed">💡 카드사 <b>이용일 기준</b> 내역이나 은행 <b>거래내역</b>(입금/출금 열 또는 +/- 금액)을 붙여넣거나 엑셀 파일을 그대로 올리세요. 입금은 수입, 카드대금·본인 계좌 이체는 이체로 나뉘고, 이미 등록된 내역은 자동으로 걸러집니다.</p></div>'
-        + '<label id="paste-drop" class="flex items-center gap-3 border-2 border-dashed border-slate-300 hover:border-accent rounded-xl p-3 cursor-pointer bg-white transition"><i class="fa-solid fa-file-arrow-up text-2xl text-accent"></i>'
-        + '<span class="text-xs text-slate-600 leading-snug"><b class="text-slate-800">엑셀 · CSV 파일 선택</b> (또는 여기로 끌어놓기)<br><span id="paste-file-status" class="text-[11px] text-slate-400">카드사 · 은행에서 내려받은 .xlsx · .xls · .csv 파일의 첫 시트를 읽습니다.</span></span>'
+      m.id = 'smart-paste-modal'; m.className = 'app-modal fixed inset-0 bg-slate-900/40 flex items-center justify-center hidden z-50 p-3';
+      m.innerHTML = '<div class="modal-box bg-white rounded-2xl shadow-2xl w-[960px] max-w-full max-h-[92vh] flex flex-col overflow-hidden">'
+        + '<div class="px-6 pt-5 pb-3 flex justify-between items-center"><h3 class="text-lg font-bold text-slate-900">카드 · 은행 내역 넣기</h3>'
+        + '<button onclick="App.u.close(\'smart-paste-modal\')" aria-label="닫기" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button></div>'
+        + '<div class="px-6 pb-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar">'
+        + '<label id="paste-drop" class="flex items-center gap-3.5 border-2 border-dashed border-slate-300 hover:border-accent rounded-2xl p-4 cursor-pointer bg-white transition"><span class="add-ic"><i class="fa-solid fa-file-arrow-up"></i></span>'
+        + '<span class="text-[14px] text-slate-600 leading-snug"><b class="text-slate-900 text-[15px]">엑셀 · CSV 파일 올리기</b><br><span id="paste-file-status" class="text-[13px] text-slate-500">카드사 · 은행 앱에서 받은 파일을 고르거나 여기로 끌어 놓으세요. 비밀번호 걸린 파일도 열 수 있어요.</span></span>'
         + '<input type="file" id="paste-file" accept=".xlsx,.xls,.xlsm,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" onchange="App.paste.fileChosen(this)" class="hidden"></label>'
-        + '<div id="paste-pw-row" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-2"><div class="flex gap-2">'
-        + '<input type="password" id="paste-pw" autocomplete="off" placeholder="파일 비밀번호" onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.paste.unlock()}" class="flex-1 min-w-0 border border-slate-300 rounded-lg px-2.5 py-2 text-xs">'
-        + '<button type="button" id="paste-pw-btn" onclick="App.paste.unlock()" class="shrink-0 bg-slate-900 text-white px-3 py-2 rounded-lg text-xs font-semibold disabled:opacity-50"><i class="fa-solid fa-unlock mr-1"></i>열기</button></div>'
-        + '<div id="paste-pw-msg" class="text-[11px] text-amber-800 leading-snug"></div></div>'
-        + '<textarea id="paste-raw-text" rows="5" placeholder="붙여넣을 카드 승인 문자나 엑셀 · 은행 거래내역을 입력하세요.&#10;(예시:&#10;2026-10-02&#9;스타벅스 해운대점&#9;12,500&#10;2026-10-25&#9;급여&#9;+3,500,000)" class="w-full border border-slate-300 rounded-lg p-3 text-xs font-mono bg-slate-50/50"></textarea>'
-        + '<button onclick="App.paste.parse()" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:bg-slate-800">분석 및 자동분류 실행</button>'
+        + '<div id="paste-pw-row" class="hidden bg-amber-50 rounded-xl p-3 space-y-2"><div class="flex gap-2">'
+        + '<input type="password" id="paste-pw" autocomplete="off" placeholder="파일 비밀번호" onkeydown="if(event.key===\'Enter\'){event.preventDefault();App.paste.unlock()}" class="flex-1 min-w-0 border border-slate-300 rounded-lg px-3 py-2.5 text-sm">'
+        + '<button type="button" id="paste-pw-btn" onclick="App.paste.unlock()" class="btn pri disabled:opacity-50" style="height:42px">열기</button></div>'
+        + '<div id="paste-pw-msg" class="text-[13px] text-amber-800 leading-snug"></div></div>'
+        + '<div class="flex items-center gap-3 text-[13px] text-slate-400"><span class="flex-1 h-px bg-slate-200"></span>또는 복사한 내용 붙여넣기<span class="flex-1 h-px bg-slate-200"></span></div>'
+        + '<textarea id="paste-raw-text" rows="5" placeholder="카드 앱의 이용내역이나 은행 거래내역을 복사해 붙여넣으세요.&#10;예)&#10;10-02  스타벅스 해운대점  12,500&#10;10-25  급여  +3,500,000" class="w-full border border-slate-300 rounded-xl p-3.5 text-[14px] bg-slate-50"></textarea>'
+        + '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-end"><div><label class="block text-xs font-semibold text-slate-600 mb-1.5">어느 카드 내역인가요? <span class="font-normal text-slate-500">(은행 내역이면 계좌이체)</span></label>'
+        + '<select id="paste-default-payment" onchange="App.paste.setAllPayments(this.value)" class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm bg-white font-semibold text-slate-800"></select></div>'
+        + '<button onclick="App.paste.parse()" class="btn pri w-full">내역 읽기</button></div>'
+        + '<p class="text-[13px] text-slate-500 leading-relaxed">카드는 <b>이용일 기준</b> 내역이면 돼요. 들어온 돈은 수입, 카드대금 · 내 계좌끼리 옮긴 돈은 이체로 나누고, 이미 넣은 내역은 알아서 빼요.</p>'
         + '<div id="parse-result-wrapper" class="hidden space-y-3 border-t border-slate-200 pt-4"><div id="paste-dup-info" class="hidden"></div>'
-        + '<div id="paste-summary" class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-700"></div>'
-        + '<div class="max-h-72 overflow-y-auto border border-slate-200 rounded-lg custom-scrollbar"><table id="parse-table" class="w-full text-left text-xs"><thead><tr class="bg-slate-100 border-b border-slate-200 text-slate-600 font-semibold">'
-        + '<th class="p-2">날짜</th><th class="p-2">구분</th><th class="p-2">대분류 (자동)</th><th class="p-2">소분류 (자동)</th><th class="p-2">결제수단</th><th class="p-2">가맹점 / 메모</th><th class="p-2 text-right">금액</th><th class="p-2 text-center">삭제</th>'
+        + '<div id="paste-summary" class="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-slate-700"></div>'
+        + '<div class="max-h-72 overflow-y-auto border border-slate-200 rounded-xl custom-scrollbar"><table id="parse-table" class="w-full text-left text-xs"><thead><tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">'
+        + '<th class="p-2">날짜</th><th class="p-2">구분</th><th class="p-2">분류</th><th class="p-2">세부 분류</th><th class="p-2">결제수단</th><th class="p-2">가게 / 메모</th><th class="p-2 text-right">금액</th><th class="p-2 text-center">빼기</th>'
         + '</tr></thead><tbody id="parse-table-body" class="divide-y divide-slate-100"></tbody></table></div></div></div>'
-        + '<div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-2"><button onclick="App.u.close(\'smart-paste-modal\')" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg text-xs hover:bg-slate-300">취소</button>'
-        + '<button onclick="App.paste.import()" id="btn-import-parsed" disabled class="px-5 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg text-xs font-semibold disabled:opacity-50">가계부 등록</button></div></div>';
+        + '<div class="px-6 py-4 border-t border-slate-100 flex justify-end gap-2"><button onclick="App.u.close(\'smart-paste-modal\')" class="btn sec">취소</button>'
+        + '<button onclick="App.paste.import()" id="btn-import-parsed" disabled class="btn pri disabled:opacity-40">가계부에 넣기</button></div></div>';
       m.addEventListener('mousedown', function (e) { if (e.target === m) u.close('smart-paste-modal'); });
       document.body.appendChild(m);
       bindDrop(u.$('paste-drop'));
@@ -538,7 +539,7 @@
     pending = null; showPw(false);
     u.$('paste-file-status').innerHTML = '카드사 · 은행에서 내려받은 .xlsx · .xls · .csv 파일의 첫 시트를 읽습니다.';
     u.$('parse-result-wrapper').classList.add('hidden');
-    u.$('btn-import-parsed').disabled = true; u.$('btn-import-parsed').textContent = '가계부 등록';
+    u.$('btn-import-parsed').disabled = true; u.$('btn-import-parsed').textContent = '가계부에 넣기';
     u.$('paste-default-payment').innerHTML = C.payments().map(function (p) { return '<option value="' + u.esc(p) + '">' + u.esc(p) + '</option>'; }).join('');
     u.open('smart-paste-modal');
   };
