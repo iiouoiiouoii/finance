@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="가계부">
     <!-- Financial Core v15 : 할부 엔진 + 카테고리 재분류 엔진 (2026-10-12) -->
-<title>파이낸셜 코어 v26 -부부 통합 가계부 & 자산 관리</title>
+<title>파이낸셜 코어 v27 - 부부 통합 가계부 & 자산 관리</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -6653,7 +6653,8 @@
   var cfg = function () { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; } };
   var meta = function () { try { return JSON.parse(localStorage.getItem(MS)) || {}; } catch (e) { return {}; } };
   var setMeta = function (o) { localStorage.setItem(MS, JSON.stringify(Object.assign(meta(), o))); };
-  var pass = function (c) { return c.pass || mem.pass; };
+  /* v27 : 간편 로그인에서 '로그인 유지'를 끄면 암호는 이 탭(sessionStorage)에만 둔다 */
+  var pass = function (c) { var s = ''; try { s = sessionStorage.getItem('FC27_SESS') || ''; } catch (e) {} return c.pass || mem.pass || s; };
   var ready = function (c) { c = c || cfg(); return !!(c.repo && c.token && c.path && pass(c)); };
   var fmt = function (t) { return t ? new Date(t).toLocaleString('ko-KR') : '-'; };
   var toast = function (m, t) { if (window.showToast) showToast(m, t); };
@@ -8118,6 +8119,181 @@
   };
   window.FC26 = { open: open, close: close, save: save, del: del, fill: fill, preview: preview, compute: compute, checks: checks };
   safe('부트', function () { injectModal(); injectMobile(); renderPace(); })();
+})();
+</script>
+<script>
+/* ===== Financial Core v27 : 아이디·비밀번호 간편 로그인 =====
+   연결된 기기에서 [저장소·토큰·데이터 암호]를 로그인 비밀번호로 암호화해 fc-login.json을 만든다.
+   이 파일을 웹 가계부(index.html) 옆에 올려 두면, 다른 기기는 아이디·비밀번호만으로 연결 후 데이터를 불러온다.
+   아이디는 해시로만 저장되고, 비밀번호는 어디에도 저장되지 않는다. */
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var toast = function (m, t) { if (window.showToast) showToast(m, t); };
+  var esc = function (s) { return escapeHTML(s); };
+  var FILE = 'fc-login.json', ITER = 600000, LS = 'FC20_SYNC', MS = 'FC20_META', LK = 'FC27_LOGIN', SK = 'FC27_SESS', SKIP = 'FC27_SKIP';
+  var enc = new TextEncoder(), dec = new TextDecoder();
+  var IN = 'w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm';
+  var getJ = function (k) { try { return JSON.parse(localStorage.getItem(k)) || null; } catch (e) { return null; } };
+
+  function b64(u) { var s = ''; for (var i = 0; i < u.length; i += 8192) s += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(s); }
+  function unb64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function normId(id) { return String(id || '').trim().toLowerCase(); }
+  async function idKey(id) {
+    var h = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode('fc-login-v1|' + normId(id))));
+    return [].map.call(h, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('').slice(0, 40);
+  }
+  async function kdf(pw, salt, iter) {
+    var m = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: iter, hash: 'SHA-256' }, m, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  }
+  async function seal(obj, pw) {
+    var salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    var ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, await kdf(pw, salt, ITER), enc.encode(JSON.stringify(obj))));
+    return { s: b64(salt), i: b64(iv), d: b64(ct), n: ITER };
+  }
+  async function unseal(rec, pw) {
+    var pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(rec.i) }, await kdf(pw, unb64(rec.s), rec.n || ITER), unb64(rec.d));
+    return JSON.parse(dec.decode(pt));
+  }
+  async function fetchLogins() {
+    try {
+      var r = await fetch(FILE + '?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return null;
+      var j = await r.json(); return j && j.fcLogin === 1 && j.users ? j : null;
+    } catch (e) { return null; }
+  }
+  function guard() { if (!window.crypto || !crypto.subtle) throw new Error('이 주소에서는 암호화를 쓸 수 없습니다. https 주소로 여세요.'); }
+
+  /* ---------------- 로그인 ---------------- */
+  async function login() {
+    var id = $('fc27-id').value, pw = $('fc27-pw').value, keep = $('fc27-keep').checked, msg = $('fc27-msg'), btn = $('fc27-go');
+    var fail = function (t) { msg.className = 'text-xs text-red-600'; msg.innerText = t; btn.disabled = false; btn.innerText = '로그인'; };
+    if (!normId(id) || !pw) return fail('아이디와 비밀번호를 입력하세요.');
+    btn.disabled = true; btn.innerText = '확인 중...'; msg.className = 'text-xs text-slate-500'; msg.innerText = '';
+    try {
+      guard();
+      var L = await fetchLogins();
+      if (!L) return fail('로그인 파일(' + FILE + ')을 찾지 못했습니다. 웹 가계부와 같은 위치에 올렸는지 확인하세요.');
+      var rec = L.users[await idKey(id)], cfg = null;
+      if (rec) { try { cfg = await unseal(rec, pw); } catch (e) { cfg = null; } }
+      if (!cfg || !cfg.r || !cfg.t || !cfg.w) return fail('아이디 또는 비밀번호가 맞지 않습니다.');
+      var c = { repo: cfg.r, path: cfg.p || 'finance-data.enc.json', token: cfg.t, mode: cfg.m === 'ro' ? 'ro' : 'rw' };
+      if (keep) c.pass = cfg.w;
+      localStorage.setItem(LS, JSON.stringify(c)); localStorage.removeItem(MS); localStorage.removeItem(SKIP);
+      try { if (keep) sessionStorage.removeItem(SK); else sessionStorage.setItem(SK, cfg.w); } catch (e) {}
+      localStorage.setItem(LK, JSON.stringify({ id: normId(id), at: Date.now(), keep: keep, mode: c.mode }));
+      msg.className = 'text-xs text-emerald-700'; msg.innerText = '로그인되었습니다. 데이터를 불러옵니다...';
+      await FC20.pull(true);   /* 이 기기의 기존 데이터는 이전본(FC20_PREV)으로 보관된 뒤 저장소 데이터로 바뀌고 새로 고침된다 */
+      btn.disabled = false; btn.innerText = '로그인';
+    } catch (e) { fail(e.message || String(e)); }
+  }
+
+  /* ---------------- 로그아웃 ---------------- */
+  function logout() {
+    var info = getJ(LK) || {}, meta = getJ(MS) || {};
+    var go = function () {
+      var wipe = $('fc27-wipe') ? $('fc27-wipe').checked : true;
+      [LS, MS, LK].forEach(function (k) { localStorage.removeItem(k); });
+      try { sessionStorage.removeItem(SK); } catch (e) {}
+      if (wipe) { localStorage.removeItem('FINANCIAL_CORE_DB'); localStorage.removeItem('FC20_PREV'); }
+      localStorage.setItem(SKIP, ''); location.reload();
+    };
+    var m = $('fc27-out');
+    if (!m) { document.body.insertAdjacentHTML('beforeend', '<div id="fc27-out" class="fixed inset-0 z-[9998] bg-slate-900/60 flex items-center justify-center p-4"></div>'); m = $('fc27-out'); }
+    m.classList.remove('hidden');
+    m.innerHTML = '<div class="bg-white rounded-xl p-5 max-w-sm w-full space-y-3 shadow-2xl text-xs"><div class="text-sm font-bold text-slate-800"><i class="fa-solid fa-right-from-bracket mr-1.5 text-slate-500"></i>로그아웃</div>'
+      + '<p class="text-slate-600">' + esc(info.id || '') + ' 계정 연결을 이 기기에서 해제합니다. 저장소의 데이터는 그대로 남습니다.</p>'
+      + (meta.dirty ? '<p class="text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">아직 업로드되지 않은 변경이 있습니다. [업로드 후 로그아웃]을 누르세요.</p>' : '')
+      + '<label class="flex items-center gap-2"><input id="fc27-wipe" type="checkbox" ' + (info.keep ? '' : 'checked') + '> 이 기기에 남은 가계부 데이터도 지우기 (공용·남의 기기라면 꼭 체크)</label>'
+      + '<div class="flex flex-col gap-2">' + (meta.dirty ? '<button id="fc27-pushout" class="bg-accent text-white py-2 rounded-lg font-semibold">업로드 후 로그아웃</button>' : '')
+      + '<button id="fc27-doout" class="' + (meta.dirty ? 'border border-red-300 text-red-600' : 'bg-slate-900 text-white') + ' py-2 rounded-lg font-semibold">' + (meta.dirty ? '업로드하지 않고 로그아웃' : '로그아웃') + '</button>'
+      + '<button id="fc27-cancelout" class="border border-slate-300 text-slate-600 py-2 rounded-lg">취소</button></div></div>';
+    $('fc27-doout').onclick = go;
+    $('fc27-cancelout').onclick = function () { m.classList.add('hidden'); };
+    if ($('fc27-pushout')) $('fc27-pushout').onclick = async function () { this.disabled = true; this.innerText = '업로드 중...'; var ok = await FC20.push(false); if (ok) go(); else { this.disabled = false; this.innerText = '업로드 후 로그아웃'; toast('업로드하지 못했습니다. 동기화 상태를 확인하세요.', 'error'); } };
+  }
+
+  /* ---------------- 로그인 화면 ---------------- */
+  function gate(show) {
+    var g = $('fc27-gate');
+    if (!g) {
+      document.body.insertAdjacentHTML('beforeend', '<div id="fc27-gate" class="hidden fixed inset-0 z-[9990] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">'
+        + '<form id="fc27-form" class="bg-white rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl" autocomplete="on">'
+        + '<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-accent text-white flex items-center justify-center"><i class="fa-solid fa-house-chimney-window"></i></div><div><div class="font-bold text-slate-800">부부 가계부 로그인</div><div class="text-[11px] text-slate-500">아이디와 비밀번호로 내 데이터를 불러옵니다.</div></div></div>'
+        + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">아이디</label><input id="fc27-id" name="username" autocomplete="username" autocapitalize="none" class="' + IN + '"></div>'
+        + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">비밀번호</label><input id="fc27-pw" name="password" type="password" autocomplete="current-password" class="' + IN + '"></div>'
+        + '<label class="flex items-center gap-2 text-xs text-slate-600"><input id="fc27-keep" type="checkbox" checked> 이 기기에서 로그인 유지 (내 휴대폰·PC일 때만)</label>'
+        + '<div id="fc27-msg" class="text-xs"></div>'
+        + '<button id="fc27-go" type="submit" class="w-full bg-accent hover:bg-accent-hover text-white py-2.5 rounded-lg font-bold">로그인</button>'
+        + '<button type="button" onclick="FC27.skip()" class="w-full text-xs text-slate-500 hover:text-slate-800">로그인 없이 이 기기에서만 쓰기</button>'
+        + '</form></div>');
+      g = $('fc27-gate');
+      $('fc27-form').onsubmit = function (e) { e.preventDefault(); login(); };
+    }
+    g.classList.toggle('hidden', !show);
+    if (show) setTimeout(function () { $('fc27-id').focus(); }, 50);
+  }
+
+  /* ---------------- 로그인 파일 만들기 (연결된 기기에서) ---------------- */
+  async function makeFile() {
+    var f = function (id) { return ($(id) || {}).value || ''; };
+    var conf = { r: f('fc20-repo').trim(), p: f('fc20-path').trim() || 'finance-data.enc.json', t: f('fc20-token').trim(), w: f('fc20-pass') };
+    var id = f('fc27-new-id'), pw = f('fc27-new-pw'), pw2 = f('fc27-new-pw2'), mode = f('fc27-new-mode') || 'rw', out = $('fc27-mk-msg');
+    var say = function (t, cls) { out.className = 'text-[11px] ' + (cls || 'text-red-600'); out.innerHTML = t; };
+    if (!conf.r || !conf.t || !conf.w) return say('위의 저장소·토큰·암호화 암호를 먼저 채우고 연결을 저장하세요.');
+    if (!/^[a-z0-9._@-]{3,40}$/.test(normId(id))) return say('아이디는 영문·숫자·._@- 로 3~40자로 정하세요.');
+    if (pw.length < 10 || !/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return say('비밀번호는 10자 이상, 영문과 숫자를 섞어 주세요. 로그인 파일은 공개 주소에 올라가므로 쉬운 비밀번호는 위험합니다.');
+    if (pw !== pw2) return say('비밀번호 확인이 일치하지 않습니다.');
+    if (pw === conf.w) return say('로그인 비밀번호는 데이터 암호화 암호와 다르게 정하세요.');
+    try {
+      guard(); say('암호화하는 중...', 'text-slate-500');
+      var L = await fetchLogins(), merged = !!L;
+      L = L || { fcLogin: 1, users: {} };
+      conf.m = mode === 'ro' ? 'ro' : 'rw';
+      L.users[await idKey(id)] = await seal(conf, pw);
+      L.updatedAt = new Date().toISOString();
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(L, null, 1)], { type: 'application/json' })); a.download = FILE;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      say('<b>' + FILE + '</b>을 내려받았습니다 (아이디 ' + Object.keys(L.users).length + '개 포함' + (merged ? ', 웹에 있던 기존 아이디 유지' : '') + ').<br>이 파일을 <b>웹 가계부(index.html)와 같은 폴더</b>에 올리면 다른 기기에서 로그인할 수 있습니다.'
+        + (merged ? '' : '<br><span class="text-amber-700">웹의 기존 로그인 파일을 읽지 못해 새로 만들었습니다. 이미 다른 아이디를 올려 두었다면 이 기기에서 웹 주소로 열고 다시 만드세요.</span>'), 'text-emerald-700');
+      $('fc27-new-pw').value = ''; $('fc27-new-pw2').value = '';
+    } catch (e) { say(e.message || String(e)); }
+  }
+  function injectMaker() {
+    var m = $('fc20-modal'); if (!m || $('fc27-maker')) return;
+    m.firstElementChild.insertAdjacentHTML('beforeend', '<div id="fc27-maker" class="border-t border-slate-200 pt-4 space-y-2"><div class="font-bold text-slate-700"><i class="fa-solid fa-user-lock mr-1.5"></i>아이디·비밀번호 로그인 만들기</div>'
+      + '<p class="text-slate-500 leading-relaxed">위 연결 정보(저장소·토큰·암호화 암호)를 로그인 비밀번호로 암호화해 <b>' + FILE + '</b>을 만듭니다. 웹 가계부 옆에 올려 두면 다른 기기에서는 아이디·비밀번호만 넣으면 됩니다. 배우자용 아이디를 따로 만들 수도 있습니다.</p>'
+      + '<div class="grid grid-cols-2 gap-2"><input id="fc27-new-id" placeholder="아이디" autocomplete="off" autocapitalize="none" class="border border-slate-300 rounded-lg px-2.5 py-2">'
+      + '<select id="fc27-new-mode" class="border border-slate-300 rounded-lg px-2.5 py-2"><option value="rw">입력·수정 가능</option><option value="ro">조회 전용</option></select>'
+      + '<input id="fc27-new-pw" type="password" placeholder="로그인 비밀번호 (10자 이상)" autocomplete="new-password" class="border border-slate-300 rounded-lg px-2.5 py-2">'
+      + '<input id="fc27-new-pw2" type="password" placeholder="비밀번호 확인" autocomplete="new-password" class="border border-slate-300 rounded-lg px-2.5 py-2"></div>'
+      + '<button onclick="FC27.make()" class="bg-slate-800 text-white px-3.5 py-2 rounded-lg font-semibold">로그인 파일 만들기</button><div id="fc27-mk-msg" class="text-[11px]"></div>'
+      + '<p class="text-[11px] text-slate-400 leading-relaxed">※ 로그인 파일에는 토큰이 암호화되어 들어 있고, 웹에 공개됩니다. 비밀번호를 길게 정하고, 토큰은 가계부 저장소 하나만 쓰도록 만드세요. 비밀번호가 새었다면 GitHub에서 토큰을 지우고 새로 만든 뒤 로그인 파일을 다시 만들면 됩니다.</p></div>');
+  }
+  var _open = FC20.open;
+  FC20.open = function () { var r = _open.apply(this, arguments); try { injectMaker(); } catch (e) { console.error('[v27]', e); } return r; };
+
+  /* ---------------- 헤더 버튼 · 시작 ---------------- */
+  function renderBtn() {
+    var pk = $('global-month-picker'); if (!pk) return;
+    var b = $('fc27-btn');
+    if (!b) { pk.parentNode.insertAdjacentHTML('afterbegin', '<button id="fc27-btn" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-600 text-xs font-semibold shrink-0"></button>'); b = $('fc27-btn'); }
+    var info = getJ(LK);
+    if (info && getJ(LS)) { b.innerHTML = '<i class="fa-solid fa-user-check text-accent mr-1"></i><span class="hidden md:inline">' + esc(info.id) + '</span>'; b.title = info.id + ' 로그인됨 · 클릭하면 로그아웃'; b.onclick = logout; }
+    else { b.innerHTML = '<i class="fa-solid fa-right-to-bracket mr-1"></i><span class="hidden md:inline">로그인</span>'; b.title = '아이디·비밀번호로 내 데이터 불러오기'; b.onclick = function () { gate(true); }; }
+  }
+  window.FC27 = { login: login, logout: logout, make: makeFile, show: function () { gate(true); },
+    skip: function () { localStorage.setItem(SKIP, '1'); gate(false); toast('이 기기에서만 저장됩니다. 상단 [로그인]으로 언제든 연결할 수 있습니다.'); } };
+
+  try { renderBtn(); } catch (e) { console.error('[v27]', e); }
+  /* 아직 연결되지 않은 기기 + 웹에 로그인 파일이 있으면 로그인 화면을 먼저 보여 준다 */
+  if (!(getJ(LS) || {}).repo && localStorage.getItem(SKIP) !== '1') {
+    fetchLogins().then(function (L) { if (L && Object.keys(L.users).length) gate(true); });
+  }
+  /* 로그인 유지를 끈 상태에서 탭을 새로 열면(세션 암호 없음) 다시 로그인 */
+  var info0 = getJ(LK), c0 = getJ(LS) || {};
+  if (info0 && c0.repo && !c0.pass) { var s0 = ''; try { s0 = sessionStorage.getItem(SK) || ''; } catch (e) {} if (!s0) setTimeout(function () { gate(true); $('fc27-id').value = info0.id || ''; $('fc27-pw').focus(); }, 300); }
 })();
 </script>
 </body>
