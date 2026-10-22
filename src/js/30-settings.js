@@ -1,4 +1,4 @@
-/* 설정 : 부부 프로필 · 부부 재무 규칙(출생연도·용돈·분담) · 재분류/백업 도구 · 카테고리 */
+/* 설정 : 부부 프로필 · 부부 재무 규칙(출생연도·용돈) · 재분류/백업 도구 · 카테고리 */
 (function (App) {
   'use strict';
   var u = App.u, C = App.calc, ST = App.settings = {};
@@ -15,7 +15,6 @@
     var s = db().settings, by = function (id) { var v = parseInt(u.val(id), 10); return v > 1900 && v < 2100 ? v : null; };
     s.husbandBirthYear = by('set-by-h'); s.wifeBirthYear = by('set-by-w');
     s.allowanceH = u.P(u.val('set-allow-h')); s.allowanceW = u.P(u.val('set-allow-w'));
-    s.shareMode = u.val('set-share-mode'); s.shareH = Math.min(100, Math.max(0, parseFloat(u.val('set-share-h')) || 50));
     App.store.save(); u.toast('부부 재무 규칙이 저장되었습니다.');
   };
 
@@ -32,13 +31,11 @@
         + '<button onclick="App.settings.saveProfile()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">부부 정보 저장</button></div>'
         + '<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">' + person('h', '본인 (근로자 A)', 'fa-user text-accent', s) + person('w', '배우자 (근로자 B)', 'fa-user-tie text-amber-600', s) + '</div></div>'
         + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-3 flex-wrap"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-handshake text-accent"></i> 부부 재무 규칙</h3>'
-        + '<p class="text-xs text-slate-500 mt-0.5">각자 용돈 한도와 공동 생활비 분담 방식을 정해 두면 대시보드에서 사용·분담 현황과 정산액을 보여줍니다. 출생연도는 은퇴 시뮬레이터에 쓰입니다.</p></div>'
+        + '<p class="text-xs text-slate-500 mt-0.5">생활비는 부부 공동으로 관리합니다. 각자 용돈 한도를 정해 두면 대시보드에서 사용 현황을 보여줍니다. 출생연도는 은퇴 시뮬레이터에 쓰입니다.</p></div>'
         + '<button onclick="App.settings.saveRules()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">규칙 저장</button></div>'
         + '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">' + u.field('set-by-h', u.esc(C.short('H')) + ' 출생연도', { type: 'number', ph: '예: 1988' }) + u.field('set-by-w', u.esc(C.short('W')) + ' 출생연도', { type: 'number', ph: '예: 1990' })
         + u.field('set-allow-h', u.esc(C.short('H')) + ' 월 용돈 한도 (원)', { money: true }) + u.field('set-allow-w', u.esc(C.short('W')) + ' 월 용돈 한도 (원)', { money: true })
-        + '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">공동 생활비 분담 방식</label><select id="set-share-mode" class="' + u.IN + '"><option value="income">소득 비례 (월 정기 수입 기준)</option><option value="half">반반 (50:50)</option><option value="custom">직접 비율 지정</option></select></div>'
-        + u.field('set-share-h', u.esc(C.short('H')) + ' 분담 비율 (%, 직접 지정 시)', { type: 'number' })
-        + '<div class="col-span-2 text-[11px] text-slate-500 leading-relaxed self-end">공동 생활비 분담 = <b>공동 생활비로 지정한 지출을 각자 카드로 낸 금액</b> + <b>[이체 › 계좌이체 › 공동통장 입금]</b>으로 기록한 금액입니다. 개인으로 지정한 지출은 그 사람의 용돈 사용액으로 집계합니다.</div></div></div>'
+        + '<div class="col-span-2 lg:col-span-4 text-[11px] text-slate-500 leading-relaxed">지출은 기본으로 <b>공동 생활비</b>로 잡힙니다. 개인 용돈으로 쓴 것만 내역에서 사용자를 바꾸면 그 사람의 용돈 사용액으로 집계합니다.</div></div></div>'
         + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-2"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-tags text-accent"></i> 세분화 카테고리 체계</h3>'
         + '<p class="text-xs text-slate-500 mt-0.5">각 카테고리별 소분류와 자동 추론 키워드를 자유롭게 변경하고 신규 카테고리를 추가할 수 있습니다.</p></div><button onclick="App.cat.open()" class="bg-accent hover:bg-accent-hover text-white text-xs px-3.5 py-2 rounded-lg font-medium shrink-0">+ 카테고리 신규 추가</button></div>'
         + '<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3"><div class="flex items-start justify-between gap-3 flex-wrap"><div><div class="font-bold text-slate-800 text-sm">카테고리 규칙 일괄 재적용</div><div class="text-[11px] text-slate-500 mt-0.5">키워드를 수정한 뒤 기존 내역을 새 규칙으로 다시 분류합니다. '
@@ -54,7 +51,7 @@
       u.$('set-w-name').value = s.wifeName || '아내'; u.setMoney('set-w-income', s.wifeIncome); u.setMoney('set-w-annual', s.wifeAnnual); u.$('set-w-payday').value = s.wifePayday || 10;
       u.$('set-by-h').value = s.husbandBirthYear || ''; u.$('set-by-w').value = s.wifeBirthYear || '';
       u.setMoney('set-allow-h', s.allowanceH); u.setMoney('set-allow-w', s.allowanceW);
-      u.$('set-share-mode').value = s.shareMode || 'income'; u.$('set-share-h').value = s.shareH != null ? s.shareH : 50;
+
     }
   });
 })(window.App);

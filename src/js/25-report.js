@@ -16,7 +16,7 @@
     var T = C.savingTarget(mo), S = C.savedIn(mo), h = C.health(mo), n = C.netWorth(mo);
     var snapNow = db().snapshots[mo], snapPrev = db().snapshots[prev];
     var nwNow = snapNow ? snapNow.nw : n.nw, nwChange = snapPrev ? nwNow - snapPrev.nw : null;
-    var cpl = C.coupleStats(mo), sh = C.shareH(), tot = cpl.cH + cpl.cW, settle = tot > 0 ? cpl.cH - tot * sh : 0;
+    var cpl = C.coupleStats(mo);
     var inst = C.instSummary(mo), instNext = C.instSummary(u.addM(mo, 1));
     var ending = (db().installments || []).map(function (i) { return { i: i, c: C.calcInst(i, mo) }; }).filter(function (x) { return !x.c.settled && x.c.lastMonth === mo; });
     var fixedUnapplied = db().fixedExpenses.filter(function (f) { return f.type !== 'INCOME' && !App.fixed.isApplied(f, mo); });
@@ -25,7 +25,7 @@
       return { g: g, i: i, month: m };
     });
     var weekly = App.weekly.checks(mo).length;
-    return { mo: mo, prev: prev, inc: inc, exp: exp, surplus: inc - exp, rate: inc > 0 ? (inc - exp) / inc * 100 : null, cats: cats, T: T, S: S, h: h, n: n, nwNow: nwNow, nwChange: nwChange, cpl: cpl, sh: sh, settle: settle, tot: tot, inst: inst, instNext: instNext, ending: ending, fixedUnapplied: fixedUnapplied, goals: goals, weekly: weekly, budgetTotal: C.budgetTotal(mo), avail: C.incomeBase(mo).base - T };
+    return { mo: mo, prev: prev, inc: inc, exp: exp, surplus: inc - exp, rate: inc > 0 ? (inc - exp) / inc * 100 : null, cats: cats, T: T, S: S, h: h, n: n, nwNow: nwNow, nwChange: nwChange, cpl: cpl, inst: inst, instNext: instNext, ending: ending, fixedUnapplied: fixedUnapplied, goals: goals, weekly: weekly, budgetTotal: C.budgetTotal(mo), avail: C.incomeBase(mo).base - T };
   };
 
   /* 다음 달 조언 : 중요한 것부터 */
@@ -39,7 +39,6 @@
     if (over.length) a.push(['high', '예산 초과: ' + over.slice(0, 3).map(function (c) { return c.name + ' ' + u.K(c.s - c.b); }).join(', ') + '. 다음 달 이 항목들은 주간 점검 때 먼저 확인하세요.']);
     if (r.T > 0 && r.budgetTotal > r.avail) a.push(['mid', '예산 합계가 선저축 후 가용액보다 ' + u.K(r.budgetTotal - r.avail) + ' 많습니다. 예산을 줄이거나 저축 목표를 조정해야 둘 다 지킬 수 있습니다.']);
     ['H', 'W'].forEach(function (c) { var lim = +s[c === 'H' ? 'allowanceH' : 'allowanceW'] || 0, used = r.cpl.exp[c]; if (lim && used > lim) a.push(['mid', (c === 'H' ? H : W) + ' 용돈이 한도보다 ' + u.K(used - lim) + ' 많았습니다. 다음 달 한도를 다시 정하거나 개인 지출을 줄이기로 이야기해 보세요.']); });
-    if (r.tot > 0 && Math.abs(r.settle) >= 1000) a.push(['mid', '생활비 분담 정산: ' + (r.settle > 0 ? W + ' → ' + H : H + ' → ' + W) + ' ' + u.K(Math.abs(r.settle)) + ' 보내면 목표 비율(' + Math.round(r.sh * 100) + ':' + Math.round(100 - r.sh * 100) + ')이 맞습니다.']);
     if (r.ending.length) a.push(['good', '이번 달로 끝나는 할부 ' + r.ending.length + '건(월 ' + u.K(u.sum(r.ending, function (x) { return x.c.thisCharge; })) + ')이 있습니다. 다음 달부터 그만큼을 저축으로 돌리면 생활 수준을 바꾸지 않고 저축이 늘어납니다.']);
     if (r.fixedUnapplied.length && r.mo <= u.nowM()) a.push(['low', '지출에 반영하지 않은 고정비 ' + r.fixedUnapplied.length + '건(' + r.fixedUnapplied.slice(0, 3).map(function (f) { return f.name; }).join(', ') + ')이 있습니다. 실제로 나갔다면 [고정비] 화면에서 반영하세요.']);
     if (!r.weekly && r.mo === u.nowM()) a.push(['low', '이번 달 주간 점검 기록이 없습니다. 일주일에 한 번 카드 앱 누적액만 적어도 월중에 속도를 조절할 수 있습니다.']);
@@ -70,11 +69,10 @@
       }).join('') + '</tbody></table></div>'
       + (chg.length ? '<div class="text-[11px] text-slate-600">지난달보다 많이 달라진 항목: ' + chg.map(function (c) { return u.esc(c.name) + ' <b class="' + (c.d > 0 ? 'text-red-600' : 'text-emerald-700') + '">' + (c.d > 0 ? '+' : '') + u.K(c.d) + '</b>'; }).join(' · ') + '</div>' : '');
     var lim = function (c) { return +db().settings[c === 'H' ? 'allowanceH' : 'allowanceW'] || 0; };
-    var couple = '<div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">'
+    var couple = '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">'
       + '<div class="p-3 rounded-lg border border-slate-200"><div class="font-semibold text-slate-600 mb-1">지출 귀속</div>공동 생활비 <b>' + u.K(r.cpl.exp.J) + '</b><br>' + H + ' 개인 <b>' + u.K(r.cpl.exp.H) + '</b><br>' + W + ' 개인 <b>' + u.K(r.cpl.exp.W) + '</b></div>'
       + '<div class="p-3 rounded-lg border border-slate-200"><div class="font-semibold text-slate-600 mb-1">용돈 사용</div>' + ['H', 'W'].map(function (c) { var l = lim(c), used = r.cpl.exp[c]; return (c === 'H' ? H : W) + ' <b class="' + (l && used > l ? 'text-red-600' : '') + '">' + u.K(used) + '</b>' + (l ? ' / ' + u.K(l) : ' (한도 없음)'); }).join('<br>') + '</div>'
-      + '<div class="p-3 rounded-lg border border-slate-200"><div class="font-semibold text-slate-600 mb-1">공동 생활비 분담</div>' + H + ' ' + u.K(r.cpl.cH) + ' · ' + W + ' ' + u.K(r.cpl.cW) + '<br>목표 ' + Math.round(r.sh * 100) + ' : ' + Math.round(100 - r.sh * 100)
-      + (r.tot > 0 && Math.abs(r.settle) >= 1000 ? '<br><b class="text-amber-700">정산: ' + (r.settle > 0 ? W + ' → ' + H : H + ' → ' + W) + ' ' + u.K(Math.abs(r.settle)) + '</b>' : '<br><span class="text-emerald-700">정산할 금액 없음</span>') + '</div></div>';
+      + '</div>';
     var goals = r.goals.length ? '<div class="grid grid-cols-1 md:grid-cols-2 gap-2">' + r.goals.map(function (x) {
       return '<div class="p-3 rounded-lg border border-slate-200 text-xs"><div class="flex justify-between"><b>' + u.esc(x.g.name) + '</b><span class="text-accent font-bold">' + x.i.pc.toFixed(0) + '%</span></div>' + u.bar(x.i.pc, 'bg-accent')
         + '<div class="text-[11px] text-slate-500 mt-1">' + u.K(x.i.saved) + ' / ' + u.K(x.i.tgt) + ' · 이번 달 적립 ' + u.K(x.month) + (x.i.req ? ' · 필요 월 ' + u.K(x.i.req) : '') + '</div></div>';
@@ -82,7 +80,7 @@
     var cash = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + cell('고정비 (등록 기준)', u.K(C.fixedTotal()), db().fixedExpenses.filter(function (f) { return f.type !== 'INCOME'; }).length + '건') + cell('이번 달 할부 청구', u.K(r.inst.thisCharge), '잔액 ' + u.K(r.inst.remaining))
       + cell('다음 달 할부 청구', u.K(r.instNext.thisCharge), r.ending.length ? '이번 달 종료 ' + r.ending.length + '건' : '') + cell('대출 월 상환', u.K(C.loansMonthly(mo)), 'DSR ' + (r.h.dsr == null ? '-' : r.h.dsr.toFixed(0) + '%')) + '</div>';
     var advice = adv.length ? adv.map(function (x, i) { var t = TONE[x[0]]; return '<div class="flex gap-2 items-start px-3 py-2 rounded-lg border text-xs ' + t[0] + '"><i class="fa-solid ' + t[1] + ' mt-0.5"></i><span><b>' + (i + 1) + '.</b> ' + x[1] + '</span></div>'; }).join('') : '<div class="text-xs text-emerald-700">특별히 고칠 점이 없습니다. 이번 달처럼만 하세요.</div>';
-    var todo = '<ul class="text-xs text-slate-700 space-y-1">' + ['이번 달 카드 이용내역(1일~말일)을 모두 붙여넣었나요?', '정산할 금액을 보냈나요?', '다음 달 저축·투자 자동이체 금액을 확인했나요?', '예산을 넘은 항목의 다음 달 예산을 정했나요?', '할부·대출 중 이번 달에 끝나거나 새로 생긴 것이 있나요?']
+    var todo = '<ul class="text-xs text-slate-700 space-y-1">' + ['이번 달 카드 이용내역(1일~말일)을 모두 붙여넣었나요?', '다음 달 저축·투자 자동이체 금액을 확인했나요?', '예산을 넘은 항목의 다음 달 예산을 정했나요?', '할부·대출 중 이번 달에 끝나거나 새로 생긴 것이 있나요?']
       .map(function (t) { return '<li class="flex items-start gap-2"><span class="inline-block w-3.5 h-3.5 border border-slate-400 rounded-sm mt-0.5 shrink-0"></span>' + t + '</li>'; }).join('') + '</ul>';
     return '<div id="report-page" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-5 max-w-4xl mx-auto">' + head + kpi
       + sec('다음 달에 할 일 (중요한 순서)', 'fa-list-check', advice)
@@ -99,7 +97,6 @@
     L.push('순자산 ' + u.K(r.nwNow) + (r.nwChange == null ? '' : ' (전월 대비 ' + (r.nwChange >= 0 ? '+' : '') + u.K(r.nwChange) + ')'));
     var over = r.cats.filter(function (c) { return c.b > 0 && c.s > c.b; });
     if (over.length) L.push('예산 초과: ' + over.map(function (c) { return c.name + ' ' + u.K(c.s - c.b); }).join(', '));
-    if (r.tot > 0 && Math.abs(r.settle) >= 1000) L.push('정산: ' + (r.settle > 0 ? C.short('W') + ' → ' + C.short('H') : C.short('H') + ' → ' + C.short('W')) + ' ' + u.K(Math.abs(r.settle)));
     if (adv.length) { L.push(''); L.push('다음 달 할 일'); adv.forEach(function (x, i) { L.push((i + 1) + '. ' + x[1]); }); }
     return L.join('\n');
   };

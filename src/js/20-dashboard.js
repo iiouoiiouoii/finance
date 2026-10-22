@@ -58,17 +58,10 @@
       var lim = +s[c === 'H' ? 'allowanceH' : 'allowanceW'] || 0, used = r.exp[c], p = lim ? used / lim * 100 : 0;
       return line(u.esc(C.short(c)) + ' 용돈', u.K(used) + (lim ? ' / ' + u.K(lim) : ''), lim ? u.bar(p, p >= 100 ? 'bg-red-500' : p >= 80 ? 'bg-amber-500' : 'bg-accent') + (p >= 100 ? '<div class="text-[10px] text-red-600">한도 ' + u.K(used - lim) + ' 초과</div>' : '') : '<div class="text-[10px] text-slate-400">설정 탭에서 한도를 정하세요</div>');
     }).join('');
-    var tot = r.cH + r.cW, sh = C.shareH(), diff = r.cH - tot * sh, pH = tot ? r.cH / tot * 100 : 0;
-    var settle = tot <= 0 ? '<div class="text-[11px] text-slate-400">공동 생활비 지출이나 공동통장 입금 기록이 아직 없습니다.</div>'
-      : Math.abs(diff) < 1000 ? '<div class="text-[11px] text-emerald-700">목표 비율대로 분담되고 있습니다.</div>'
-      : '<div class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">정산: <b>' + u.esc(C.short(diff > 0 ? 'W' : 'H')) + '</b> → <b>' + u.esc(C.short(diff > 0 ? 'H' : 'W')) + '</b> ' + u.K(Math.abs(diff)) + ' 보내면 목표 비율이 됩니다.</div>';
-    var share = line(u.esc(C.short('H')) + ' 부담', u.K(r.cH)) + line(u.esc(C.short('W')) + ' 부담', u.K(r.cW))
-      + '<div class="h-2 rounded-full overflow-hidden flex mt-1"><div class="bg-sky-400" style="width:' + pH + '%"></div><div class="bg-rose-400 flex-1"></div></div>'
-      + '<div class="text-[10px] text-slate-500">실제 ' + Math.round(pH) + ' : ' + Math.round(100 - pH) + ' · 목표 ' + Math.round(sh * 100) + ' : ' + Math.round(100 - sh * 100) + ' (' + ({ income: '소득 비례', half: '반반', custom: '직접 지정' }[s.shareMode || 'income']) + ')</div>' + settle;
     var ownH = C.OW.map(function (c) { return line(C.badge(c) + ' 순자산', u.K(nw[c].a - nw[c].d)); }).join('') + '<div class="text-[10px] text-slate-400">명의를 지정하지 않은 자산·부채는 공동으로 집계합니다. 배우자 증여공제는 10년간 6억 원까지입니다.</div>';
     return '<div id="dash-couple" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex items-center justify-between"><h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-people-roof text-accent mr-1.5"></i>부부 재무 현황 <span class="text-[11px] text-slate-400 font-normal">(' + mo + ')</span></h3>'
-      + '<button onclick="App.ui.go(\'settings\')" class="text-[11px] text-slate-500 hover:text-accent">용돈·분담 규칙 설정 <i class="fa-solid fa-chevron-right"></i></button></div>'
-      + '<div class="grid grid-cols-1 lg:grid-cols-4 gap-3">' + box('지출 귀속', spend) + box('개인 용돈 사용', allow) + box('공동 생활비 분담', share) + box('명의별 순자산', ownH) + '</div></div>';
+      + '<button onclick="App.ui.go(\'settings\')" class="text-[11px] text-slate-500 hover:text-accent">용돈 한도 설정 <i class="fa-solid fa-chevron-right"></i></button></div>'
+      + '<div class="grid grid-cols-1 lg:grid-cols-3 gap-3">' + box('지출 귀속', spend) + box('개인 용돈 사용', allow) + box('명의별 순자산', ownH) + '</div></div>';
   }
   function kpiHtml(mo) {
     var n = C.netWorth(mo), inc = C.income(mo), exp = C.expense(mo), fixedT = C.fixedTotal() + C.instSummary(mo).thisCharge, inst = C.instSummary(mo).thisCharge;

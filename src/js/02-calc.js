@@ -46,13 +46,6 @@
   }
   /* 귀속(누구 몫) : 지정값 우선. 미지정 지출은 공동 생활비. 미지정 수입은 메모의 이름 → 카드 소유자 순으로 추정 */
   C.ownerOf = function (t) { return t.owner || (t.type === 'INCOME' ? memoOwner(t.memo) || C.cardOwner(t.payment) : null) || 'J'; };
-  /* 생활비 분담 목표 : 남편 몫 비율 */
-  C.shareH = function () {
-    var s = st(), mode = s.shareMode || 'income';
-    if (mode === 'half') return 0.5;
-    if (mode === 'custom') return Math.min(100, Math.max(0, +s.shareH || 50)) / 100;
-    var h = +s.husbandIncome || 0, w = +s.wifeIncome || 0; return h + w > 0 ? h / (h + w) : 0.5;
-  };
   var BC = { J: 'bg-slate-100 text-slate-600 border-slate-300', H: 'bg-sky-50 text-sky-700 border-sky-300', W: 'bg-rose-50 text-rose-700 border-rose-300' };
   /* 명의 배지 (inferred 이면 점선 : 직접 지정하지 않은 값) */
   C.badge = function (c, inferred) {
@@ -285,16 +278,14 @@
     (db().installments || []).forEach(function (i) { add(C.cardOwner(i.payment) || 'J', 'd', C.calcInst(i, mo).remaining); });
     return r;
   };
-  /* 이번 달 부부 지출 귀속 · 생활비 분담 */
+  /* 이번 달 부부 지출 귀속 (공동 생활비 / 각자 용돈) · 수입 */
   C.coupleStats = function (mo) {
-    var r = { exp: { J: 0, H: 0, W: 0 }, inc: { J: 0, H: 0, W: 0 }, paid: { J: 0, H: 0, W: 0 }, pool: { H: 0, W: 0 } };
+    var r = { exp: { J: 0, H: 0, W: 0 }, inc: { J: 0, H: 0, W: 0 } };
     C.monthTx(mo).forEach(function (t) {
       var o = C.ownerOf(t);
-      if (t.type === 'EXPENSE') { r.exp[o] += t.amount; if (o === 'J') r.paid[C.cardOwner(t.payment) || 'J'] += t.amount; }
+      if (t.type === 'EXPENSE') r.exp[o] += t.amount;
       else if (t.type === 'INCOME') r.inc[o] += t.amount;
-      else if (t.type === 'TRANSFER' && t.subcategory === '공동통장 입금' && (o === 'H' || o === 'W')) r.pool[o] += t.amount;
     });
-    r.cH = r.paid.H + r.pool.H; r.cW = r.paid.W + r.pool.W;
     return r;
   };
 
