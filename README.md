@@ -1,14 +1,15 @@
 # 부부 가계부 (Financial Core v29 재구성판)
 
-웹에 올리는 파일은 **`dist/index.html` 하나**입니다. 이 파일을 웹 주소의 `index.html` 자리에 올리면 됩니다.
+웹에 나가는 파일은 이 저장소 맨 위의 **`index.html`** 입니다 (GitHub Pages). 직접 올릴 필요 없이 `publish.ps1` 이 빌드·커밋·푸시를 한 번에 합니다.
 (간편 로그인을 쓰면 `fc-login.json`도 같은 폴더에 올립니다.)
 
 ## 폴더 구조
 
 ```
 app/
-├─ build.ps1            src 를 합쳐 dist/index.html 을 만든다
-├─ dist/index.html      ← 웹에 올리는 결과물
+├─ build.ps1            src 를 합쳐 index.html 을 만든다 (바탕화면 가계부\index.html 도 갱신)
+├─ publish.ps1          빌드 → 커밋 → GitHub 푸시 한 번에
+├─ index.html           ← 웹(GitHub Pages)에 나가는 결과물
 ├─ src/
 │  ├─ index.html        화면 뼈대 (사이드바 · 헤더 · 하단 바)
 │  ├─ styles.css        모바일 모드 · 인쇄 등 공통 스타일
@@ -49,8 +50,8 @@ app/
    ```
    powershell -ExecutionPolicy Bypass -File build.ps1
    ```
-3. 확인합니다. `powershell -ExecutionPolicy Bypass -File tools\serve.ps1` 를 실행한 뒤 브라우저에서 `http://localhost:8765/dist/index.html` 을 엽니다.
-4. git 으로 기록합니다. `git add -A` → `git commit -m "무엇을 바꿨는지"`
+3. 확인합니다. `powershell -ExecutionPolicy Bypass -File tools\serve.ps1` 를 실행한 뒤 브라우저에서 `http://localhost:8765/index.html` 을 엽니다.
+4. 웹에 반영합니다. `powershell -ExecutionPolicy Bypass -File publish.ps1 -Message "무엇을 바꿨는지"`
 
 ## 구조 원칙
 
