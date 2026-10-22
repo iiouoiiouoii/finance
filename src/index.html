@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0F172A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="가계부">
+  <!-- Financial Core v29 (재구성판) · build __BUILD__ · 소스: app/src -->
+  <title>파이낸셜 코어 v29 - 부부 통합 가계부 & 자산 관리</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <script>
+    tailwind.config = { theme: { extend: { colors: { accent: { DEFAULT: '#2E6F40', hover: '#245932', light: '#E8F3EB', border: '#A8D5B5' } } } } };
+  </script>
+  <style>
+/*__CSS__*/
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm">
+  <div id="toast-container" class="fixed top-5 right-5 z-[10050] flex flex-col gap-2 pointer-events-none"></div>
+  <div id="nav-overlay"></div>
+
+  <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 flex-shrink-0">
+    <div>
+      <div class="p-5 border-b border-slate-800 flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-accent text-white flex items-center justify-center shadow-sm"><i class="fa-solid fa-house-chimney-window"></i></div>
+        <div>
+          <h1 class="font-bold text-base text-white tracking-tight">COUPLE FINANCIAL</h1>
+          <p class="text-[11px] text-slate-400">부부 자산 관리 & 가계부</p>
+        </div>
+      </div>
+      <nav id="side-nav" class="p-3 space-y-1"></nav>
+    </div>
+    <div class="p-4 border-t border-slate-800 space-y-2">
+      <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1">
+        <span>데이터 상태</span><span id="data-status-badge" class="text-emerald-400 font-semibold">로컬 저장 완료</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="App.store.loadSample()" class="w-full py-1.5 px-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs border border-slate-700"><i class="fa-solid fa-folder-open mr-1"></i> 샘플 로드</button>
+        <button onclick="App.store.clearAll()" class="w-full py-1.5 px-2 bg-red-950/60 hover:bg-red-900/80 text-red-300 rounded text-xs border border-red-800/50"><i class="fa-solid fa-trash mr-1"></i> 전체 초기화</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+    <header id="app-header" class="min-h-16 bg-white border-b border-slate-200 px-8 py-2 flex items-center justify-between gap-3 flex-shrink-0 shadow-sm">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="burger" onclick="App.ui.toggleNav()" class="w-9 h-9 rounded-lg border border-slate-300 text-slate-600 shrink-0" aria-label="메뉴"><i class="fa-solid fa-bars"></i></button>
+        <h2 id="page-title" class="text-lg font-bold text-slate-800 truncate">대시보드</h2>
+      </div>
+      <div id="header-tools" class="flex items-center gap-2 flex-wrap justify-end"></div>
+    </header>
+    <div id="content" class="flex-1 overflow-y-auto p-8 custom-scrollbar"></div>
+  </main>
+
+  <nav id="mobile-bar" class="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 grid grid-cols-5 items-end" style="padding-bottom:env(safe-area-inset-bottom,0px)"></nav>
+
+  <script>
+/*__JS__*/
+  </script>
+</body>
+</html>

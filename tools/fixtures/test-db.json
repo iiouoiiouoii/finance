@@ -1,0 +1,71 @@
+{
+  "settings": { "goalText": "테스트", "targetNetWorth": 1000000000, "husbandName": "남편 (철수)", "husbandIncome": 4500000, "husbandAnnual": 54000000, "husbandPayday": 25, "wifeName": "아내 (영희)", "wifeIncome": 3800000, "wifeAnnual": 45000000, "wifePayday": 10,
+    "husbandBirthYear": 1988, "wifeBirthYear": 1990, "allowanceH": 300000, "allowanceW": 300000, "shareMode": "income", "saveMode": "amt", "saveTarget": 2000000, "budgetWarn": 80 },
+  "cards": [
+    { "id": 1, "name": "KB국민 톡톡 M", "owner": "남편", "type": "신용카드", "targetAmount": 300000, "benefits": "대중교통 10%, 온라인 5%" },
+    { "id": 2, "name": "신한 Deep Dream", "owner": "아내", "type": "신용카드", "targetAmount": 500000, "benefits": "전 가맹점 0.7% 기본 적립" },
+    { "id": 3, "name": "우리 체크", "owner": "아내", "type": "체크카드", "targetAmount": 0, "benefits": "" }
+  ],
+  "transactions": [
+    { "id": 101, "date": "2026-08-01", "type": "INCOME", "category": "급여", "subcategory": "급여/상여", "payment": "계좌이체", "amount": 4500000, "memo": "남편 8월 급여" },
+    { "id": 102, "date": "2026-08-10", "type": "INCOME", "category": "급여", "subcategory": "급여/상여", "payment": "계좌이체", "amount": 3800000, "memo": "아내 8월 급여" },
+    { "id": 103, "date": "2026-08-03", "type": "EXPENSE", "category": "식비", "subcategory": "식자재/장보기", "payment": "KB국민 톡톡 M (남편)", "amount": 210000, "memo": "이마트" },
+    { "id": 104, "date": "2026-08-05", "type": "EXPENSE", "category": "주거/통신", "subcategory": "월세/대출이자", "payment": "계좌이체", "amount": 650000, "memo": "[고정비] 월세" },
+    { "id": 105, "date": "2026-08-12", "type": "EXPENSE", "category": "식비", "subcategory": "외식/배달", "payment": "신한 Deep Dream (아내)", "amount": 180000, "memo": "배달의민족" },
+    { "id": 106, "date": "2026-08-20", "type": "EXPENSE", "category": "쇼핑/생활용품", "subcategory": "온라인쇼핑", "payment": "KB국민 톡톡 M (남편)", "amount": 320000, "memo": "쿠팡" },
+    { "id": 107, "date": "2026-08-25", "type": "EXPENSE", "category": "교통/차량", "subcategory": "대중교통", "payment": "KB국민 톡톡 M (남편)", "amount": 62000, "memo": "티머니" },
+    { "id": 201, "date": "2026-09-01", "type": "INCOME", "category": "급여", "subcategory": "급여/상여", "payment": "계좌이체", "amount": 4500000, "memo": "남편 9월 급여" },
+    { "id": 202, "date": "2026-09-10", "type": "INCOME", "category": "급여", "subcategory": "급여/상여", "payment": "계좌이체", "amount": 3800000, "memo": "아내 9월 급여" },
+    { "id": 203, "date": "2026-09-02", "type": "EXPENSE", "category": "식비", "subcategory": "식자재/장보기", "payment": "KB국민 톡톡 M (남편)", "amount": 260000, "memo": "홈플러스" },
+    { "id": 204, "date": "2026-09-05", "type": "EXPENSE", "category": "주거/통신", "subcategory": "월세/대출이자", "payment": "계좌이체", "amount": 650000, "memo": "[고정비] 월세" },
+    { "id": 205, "date": "2026-09-14", "type": "EXPENSE", "category": "식비", "subcategory": "외식/배달", "payment": "신한 Deep Dream (아내)", "amount": 520000, "memo": "결혼기념일 외식" },
+    { "id": 206, "date": "2026-09-18", "type": "EXPENSE", "category": "건강/의료", "subcategory": "병원/의원", "payment": "우리 체크 (아내)", "amount": 2500000, "memo": "치과" },
+    { "id": 207, "date": "2026-09-21", "type": "EXPENSE", "category": "취미/여가/문화", "subcategory": "운동/레저", "payment": "KB국민 톡톡 M (남편)", "amount": 380000, "memo": "골프", "owner": "H" },
+    { "id": 208, "date": "2026-09-25", "type": "TRANSFER", "category": "자산이동", "subcategory": "저축/적금 납입", "payment": "계좌이체", "amount": 1500000, "memo": "적금 납입" },
+    { "id": 301, "date": "2026-10-01", "type": "INCOME", "category": "급여", "subcategory": "급여/상여", "payment": "계좌이체", "amount": 4500000, "memo": "남편 10월 급여" },
+    { "id": 302, "date": "2026-10-10", "type": "INCOME", "category": "급여", "subcategory": "급여/상여", "payment": "계좌이체", "amount": 3800000, "memo": "아내 10월 급여" },
+    { "id": 303, "date": "2026-10-02", "type": "EXPENSE", "category": "식비", "subcategory": "식자재/장보기", "payment": "KB국민 톡톡 M (남편)", "amount": 125000, "memo": "이마트 해운대점" },
+    { "id": 304, "date": "2026-10-03", "type": "EXPENSE", "category": "교통/차량", "subcategory": "주유/충전", "payment": "KB국민 톡톡 M (남편)", "amount": 85000, "memo": "GS칼텍스" },
+    { "id": 305, "date": "2026-10-05", "type": "EXPENSE", "category": "주거/통신", "subcategory": "월세/대출이자", "payment": "계좌이체", "amount": 650000, "memo": "[고정비] 월세" },
+    { "id": 306, "date": "2026-10-07", "type": "EXPENSE", "category": "식비", "subcategory": "외식/배달", "payment": "신한 Deep Dream (아내)", "amount": 68000, "memo": "주말 외식" },
+    { "id": 307, "date": "2026-10-08", "type": "EXPENSE", "category": "쇼핑/생활용품", "subcategory": "뷰티/미용", "payment": "신한 Deep Dream (아내)", "amount": 34000, "memo": "올리브영 화장품 구매", "owner": "W" },
+    { "id": 308, "date": "2026-10-11", "type": "EXPENSE", "category": "교통/차량", "subcategory": "대중교통", "payment": "KB국민 톡톡 M (남편)", "amount": 45000, "memo": "티머니" },
+    { "id": 309, "date": "2026-10-12", "type": "EXPENSE", "category": "교육/자기계발", "subcategory": "도서/교재", "payment": "우리 체크 (아내)", "amount": 54000, "memo": "교보문고" },
+    { "id": 310, "date": "2026-10-12", "type": "TRANSFER", "category": "계좌이체", "subcategory": "공동통장 입금", "payment": "계좌이체", "amount": 1000000, "memo": "생활비", "owner": "W" },
+    { "id": 311, "date": "2026-10-13", "type": "EXPENSE", "category": "취미/여가/문화", "subcategory": "운동/레저", "payment": "KB국민 톡톡 M (남편)", "amount": 150000, "memo": "골프 연습장", "owner": "H" },
+    { "id": 312, "date": "2026-10-15", "type": "TRANSFER", "category": "자산이동", "subcategory": "목표적립", "payment": "계좌이체", "amount": 1500000, "memo": "[목표] 내 집 마련", "owner": "J", "goalId": 77 },
+    { "id": 313, "date": "2026-10-16", "type": "EXPENSE", "category": "식비", "subcategory": "카페/간식", "payment": "신한 Deep Dream (아내)", "amount": 23000, "memo": "스타벅스" },
+    { "id": 314, "date": "2026-10-18", "type": "EXPENSE", "category": "쇼핑/생활용품", "subcategory": "온라인쇼핑", "payment": "KB국민 톡톡 M (남편)", "amount": 410000, "memo": "쿠팡 가전" }
+  ],
+  "fixedExpenses": [ { "id": 1, "name": "월세", "day": 5, "amount": 650000 }, { "id": 2, "name": "아파트 관리비", "day": 20, "amount": 180000 }, { "id": 3, "name": "통신비 (부부 합산)", "day": 15, "amount": 120000 } ],
+  "installments": [
+    { "id": 1, "title": "아이폰 15 구입", "total": 1500000, "months": 10, "startMonth": "2026-05", "apr": 0, "prepayments": [], "prepayMode": "SHORTEN", "closedMonth": null, "payment": "KB국민 톡톡 M (남편)", "category": "쇼핑/생활용품", "subcategory": "온라인쇼핑", "billingDay": 15 },
+    { "id": 2, "title": "노트북", "total": 2400000, "months": 12, "startMonth": "2026-08", "apr": 12, "prepayments": [], "prepayMode": "SHORTEN", "closedMonth": null, "payment": "신한 Deep Dream (아내)", "category": "쇼핑/생활용품", "subcategory": "온라인쇼핑", "billingDay": 14 }
+  ],
+  "realEstates": [ { "id": 101, "name": "마포 자이 아파트 34평", "value": 950000000, "loanId": 1, "loanIds": [1], "kind": "아파트", "acquiredPrice": 800000000, "acquiredDate": "2021-05-01" } ],
+  "liabilities": [
+    { "id": 1, "type": "LIABILITY", "name": "마포 자이 주택담보대출", "amount": 350000000, "rate": 3.8, "debtType": "EQUAL_PAYMENT", "months": 240, "realEstateId": 101, "createdFrom": "REALESTATE" },
+    { "id": 2, "type": "LIABILITY", "name": "신용대출", "amount": 30000000, "rate": 6.5, "debtType": "EQUAL_PAYMENT", "months": 60, "startMonth": "2025-04", "principal": 30000000, "createdFrom": "MANUAL", "owner": "H" }
+  ],
+  "assets": [
+    { "id": 1, "type": "ASSET", "bankName": "신한", "subType": "입출금", "name": "주거래 생활비 통장", "amount": 15000000, "rate": 0.1, "months": 12 },
+    { "id": 2, "type": "ASSET", "bankName": "토스", "subType": "파킹", "name": "토스 비상금 파킹통장", "amount": 20000000, "rate": 2.0, "months": 12 },
+    { "id": 3, "type": "ASSET", "bankName": "KB국민", "subType": "예금", "name": "KB STAR 정기예금", "amount": 10000000, "rate": 3.5, "months": 12, "owner": "W" },
+    { "id": 4, "type": "ASSET", "bankName": "카카오", "subType": "적금", "name": "26주 자유적금", "amount": 500000, "rate": 4.2, "months": 12, "startMonth": "2026-03" },
+    { "id": 5, "type": "ASSET", "bankName": "기타", "subType": "국민연금", "name": "남편 국민연금", "amount": 0, "rate": 0, "months": 12, "owner": "H", "pensionMonthly": 1200000, "pensionStartAge": 65, "pensionPaid": 40000000 },
+    { "id": 6, "type": "ASSET", "bankName": "기타", "subType": "국민연금", "name": "아내 국민연금", "amount": 0, "rate": 0, "months": 12, "owner": "W", "pensionMonthly": 900000, "pensionStartAge": 65 },
+    { "id": 7, "type": "ASSET", "bankName": "신한", "subType": "IRP", "name": "남편 IRP", "amount": 12000000, "rate": 4, "months": 12, "owner": "H", "annualContrib": 3000000, "pensionStartAge": 65 },
+    { "id": 8, "type": "ASSET", "bankName": "KB국민", "subType": "연금저축", "name": "아내 연금저축", "amount": 5000000, "rate": 0, "months": 12, "owner": "W", "annualContrib": 2000000, "pensionStartAge": 65 }
+  ],
+  "investments": [
+    { "id": 1, "name": "삼성전자", "assetClass": "국내주식", "currency": "KRW", "fxRate": 1, "inputMode": "QTY", "qty": 100, "avgPrice": 70000, "curPrice": 85000, "dividend": 144000, "realized": 0, "fee": 0, "monthly": 0, "targetWeight": 30, "startDate": "2024-01-02", "trades": [], "owner": "H" },
+    { "id": 2, "name": "TIGER 미국S&P500", "assetClass": "ETF", "currency": "KRW", "fxRate": 1, "inputMode": "AMOUNT", "costCur": 20000000, "valueCur": 26000000, "dividend": 0, "realized": 0, "fee": 0, "monthly": 500000, "targetWeight": 50, "startDate": "2023-03-01", "trades": [] },
+    { "id": 3, "name": "VOO", "assetClass": "해외주식", "currency": "USD", "fxRate": 1380, "inputMode": "QTY", "qty": 10, "avgPrice": 400, "curPrice": 450, "dividend": 0, "realized": 0, "fee": 0, "monthly": 0, "targetWeight": 20, "startDate": "2025-01-10", "trades": [], "owner": "W" }
+  ],
+  "budgets": { "식비": 600000, "교통/차량": 250000, "주거/통신": 850000, "쇼핑/생활용품": 300000, "취미/여가/문화": 300000, "건강/의료": 150000, "경조사/선물": 100000, "교육/자기계발": 100000, "금융/보험/세금": 200000, "기타지출": 100000 },
+  "budgetsByMonth": { "2026-09": { "식비": 700000 } },
+  "goals": [ { "id": 77, "name": "내 집 마련", "owner": "J", "target": 100000000, "due": "2029-12", "initial": 20000000, "plan": 1500000 } ],
+  "weeklyChecks": { "2026-10": [ { "date": "2026-10-07", "byCard": { "1": 150000, "2": 90000 }, "other": 0 }, { "date": "2026-10-20", "byCard": { "1": 900000, "2": 160000, "3": 60000 }, "other": 0 } ] },
+  "snapshots": { "2026-09": { "nw": 1060000000, "assets": 1420000000, "debt": 360000000 } },
+  "ui": { "autoReclassify": false }
+}
