@@ -407,11 +407,12 @@
   }]);
 
   /* ---------- 시작 ---------- */
+  S.ready = function () { return !!ready(); };
   S.boot = function () {
     var c = cfg();
     state = c.repo ? (c.mode === 'ro' ? 'ro' : 'ok') : 'off';
     if (/^#fcs=/.test(location.hash)) { var h = location.hash.slice(5); try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} setTimeout(function () { S.applyCode(h); }, 800); }
-    if (ready()) setTimeout(S.check, 1200);
+    if (ready()) setTimeout(function () { Promise.resolve(S.check()).then(function () { App.emit('sync-checked'); }, function () { App.emit('sync-checked'); }); }, 1200);
     else if (c.repo && !c.pass && !getJ(LK)) setTimeout(function () { u.toast('동기화를 쓰려면 ☁ 버튼에서 암호를 다시 입력하세요.', 'warning'); }, 2500);
     /* 아직 연결되지 않은 기기 : 아이디가 있으면 로그인, 없으면 처음 시작 화면 */
     if (!c.repo && localStorage.getItem(SKIP) !== '1') fetchLogins().then(function (L) { gate(true, L && Object.keys(L.users).length ? 'login' : 'setup'); });

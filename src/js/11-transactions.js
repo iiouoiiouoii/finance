@@ -85,9 +85,15 @@
     var changed = !before || cat0 !== t.category || sub0 !== t.subcategory;
     if (t.type === 'EXPENSE' && !t.installmentId && changed) t.lockCategory = true;
     if (typeof t.lockCategory !== 'boolean') t.lockCategory = false;
+    /* 분류 학습 : 고친 분류(새 내역은 자동 추론과 다르게 고른 분류)를 이 가맹점의 규칙으로 기억 */
+    var learned = '';
+    if (t.type === 'EXPENSE' && !t.installmentId && t.memo) {
+      var guess = App.cat.predict(t.memo);
+      if (before ? changed : (guess.category !== t.category || guess.subcategory !== t.subcategory)) learned = App.cat.learn(t.memo, t.category, t.subcategory);
+    }
     if (!before) db().transactions.push(t);
     App.store.save(); u.close('transaction-modal');
-    u.toast(before ? '거래 내역이 수정되었습니다.' : '거래 내역이 등록되었습니다.');
+    u.toast((before ? '거래 내역이 수정되었습니다.' : '거래 내역이 등록되었습니다.') + App.cat.learnToast([learned], t.category, t.subcategory));
   };
   T.remove = function (id) {
     u.confirm('내역 삭제', '해당 거래 내역을 삭제하시겠습니까?', function () {
@@ -195,13 +201,20 @@
   T.bulkApply = function () {
     var ids = selIds(), c = u.val('bulk-cat'), s = u.val('bulk-sub'), p = u.val('bulk-pay'), o = u.val('bulk-owner'), d = u.val('bulk-date');
     if (!ids.length || !(c || p || d || o)) { u.toast('변경할 항목을 선택해 주세요.', 'warning'); return; }
-    var cat = db().categories.filter(function (x) { return x.name === c; })[0];
+    var cat = db().categories.filter(function (x) { return x.name === c; })[0], learned = [], sub = '';
     db().transactions.forEach(function (t) {
       if (!SEL[t.id]) return;
-      if (c) { t.category = c; t.subcategory = s || (cat && cat.subcategories[0] ? cat.subcategories[0].name : '기타'); }
+      if (c) {
+        t.category = c; t.subcategory = sub = s || (cat && cat.subcategories[0] ? cat.subcategories[0].name : '기타');
+        /* 일괄 편집도 가맹점별로 학습 (지출 · 할부/고정비 제외) */
+        if (t.type === 'EXPENSE' && !t.installmentId) {
+          t.lockCategory = true;
+          var k = App.cat.learn(t.memo, t.category, t.subcategory); if (k && learned.indexOf(k) < 0) learned.push(k);
+        }
+      }
       if (p) t.payment = p; if (d) t.date = d; if (o) t.owner = o;
     });
-    u.toast(ids.length + '건을 일괄 변경했습니다.'); App.store.save();
+    u.toast(ids.length + '건을 일괄 변경했습니다.' + App.cat.learnToast(learned, c, sub)); App.store.save();
   };
 
   /* ---------- CSV ---------- */

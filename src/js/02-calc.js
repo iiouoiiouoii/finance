@@ -79,7 +79,8 @@
     (db().transactions || []).forEach(function (t) { if (t.type === 'EXPENSE' && t.date) { var m = String(t.date).slice(0, 7); by[m] = (by[m] || 0) + (t.amount || 0); } });
     return by;
   };
-  C.fixedTotal = function () { return u.sum(db().fixedExpenses, function (f) { return f.amount; }); };
+  /* 고정 지출 합계 (고정 수입 항목은 제외) */
+  C.fixedTotal = function () { return u.sum((db().fixedExpenses || []).filter(function (f) { return f.type !== 'INCOME'; }), function (f) { return f.amount; }); };
   /* 최근 3개월(지출이 있는 달) 평균 지출. 기록이 없으면 고정비+할부 */
   C.avgExp = function (mo) {
     mo = mo || C.month();

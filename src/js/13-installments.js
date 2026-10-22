@@ -97,6 +97,24 @@
     if (!n) { u.toast('반영할 당월 청구분이 없습니다.', 'warning'); return; }
     App.store.save(); u.toast(n + '건 · ' + u.K(sum) + '이 당월 지출에 반영되었습니다.');
   };
+  /* 자동 반영용 : m 월에 청구일(uptoDay 이하)이 지난 진행 중 할부를 반영 (저장은 부르는 쪽) */
+  I.applyDue = function (m, uptoDay) {
+    var n = 0, sum = 0;
+    (db().installments || []).forEach(function (i) {
+      var c = C.calcInst(i, m);
+      if (c.thisCharge <= 0 || (c.status !== 'ACTIVE' && !c.settled) || chargedThisMonth(i, m) || applied(i.id, m)) return;
+      if (Math.min(28, i.billingDay || 15) > uptoDay) return;
+      pushCharge(i, m, c); n++; sum += c.thisCharge;
+    });
+    return { n: n, sum: sum };
+  };
+  I.setAuto = function (on) {
+    var a = db().ui.instAuto || (db().ui.instAuto = {});
+    a.on = !!on; if (on) { a.from = u.nowM(); delete a.last; }
+    App.store.save();
+    u.toast(on ? '진행 중 할부의 매달 청구분을 청구일이 지나면 자동으로 반영합니다.' : '할부 자동 반영을 껐습니다.');
+    if (on && App.fixed) App.fixed.autoRun();
+  };
 
   /* ---------- 등록 · 수정 ---------- */
   function modal() {

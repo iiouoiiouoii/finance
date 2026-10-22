@@ -27,6 +27,10 @@
     { re: /(편의점|CU|GS25|세븐일레븐)$/, cat: '식비', sub: '식자재/장보기' }
   ];
   cat.predict = function (merchant) {
+    if (merchant) { var r = cat.ruleFor(merchant); if (r) return r; }
+    return keywordPredict(merchant);
+  };
+  function keywordPredict(merchant) {
     var fallback = pick('기타지출', '기타') || { category: '기타지출', subcategory: '기타' };
     if (!merchant) return fallback;
     var m = String(merchant).trim(), norm = m.replace(/\s+/g, '').toLowerCase(), bestLen = 0, best = null;
@@ -46,6 +50,84 @@
       if (SUFFIX_RULES[j].re.test(clean)) { var r = pick(SUFFIX_RULES[j].cat, SUFFIX_RULES[j].sub); if (r) return r; }
     }
     return fallback;
+  }
+
+  /* ---------- 수입 · 이체 분류 (은행 거래내역 · 고정 수입) ---------- */
+  cat.predictIncome = function (memo) {
+    var m = String(memo || '');
+    if (/성과급|인센티브/.test(m)) return { category: '급여', subcategory: '성과급' };
+    if (/급여|월급|상여|보너스|salary|payroll/i.test(m)) return { category: '급여', subcategory: '급여/상여' };
+    if (/배당/.test(m)) return { category: '금융소득', subcategory: '배당금' };
+    if (/이자|결산/.test(m)) return { category: '금융소득', subcategory: '예적금이자' };
+    if (/환급|환불|반환/.test(m)) return { category: '부수입', subcategory: '환급금' };
+    if (/캐시백|포인트/.test(m)) return { category: '부수입', subcategory: '캐시백' };
+    if (/당근|중고|번개장터/.test(m)) return { category: '부수입', subcategory: '중고거래/당근' };
+    return { category: '부수입', subcategory: '부수입/기타' };
+  };
+  var CARD_CO = '(?:신한|국민|KB|삼성|현대|롯데|하나|우리|BC|비씨|농협|NH|씨티|IBK|기업|카카오뱅크|토스|케이뱅크)';
+  var CARD_PAY_RE = new RegExp('카드대금|카드결제|카드값|카드\\s*자동|자동이체\\s*\\(?\\s*카드|' + CARD_CO + '\\s*카드|' + CARD_CO + 'card', 'i');
+  /* 본인 계좌 간 이체 · 카드대금 결제 · 저축 → 이체 분류 (카드 내역과 이중 집계 방지). 아니면 null */
+  cat.predictTransfer = function (memo, dir) {
+    var m = String(memo || ''), st = db().settings || {};
+    if (dir !== 'IN' && CARD_PAY_RE.test(m)) return { category: '계좌이체', subcategory: '자신계좌이체' };
+    if (/본인계좌|내\s*계좌|자기계좌|본인이체|내계좌이체|계좌간이체/.test(m)) return { category: '계좌이체', subcategory: '자신계좌이체' };
+    if (/공동통장|생활비통장/.test(m)) return { category: '계좌이체', subcategory: '공동통장 입금' };
+    if (dir !== 'IN' && /적금|청약|정기예금|예금가입|IRP|연금저축/.test(m)) return { category: '자산이동', subcategory: /IRP|연금/.test(m) ? '연금 납입' : '저축/적금 납입' };
+    var names = [st.husbandName, st.wifeName].map(function (n) { return String(n || '').replace(/\s*\(.*?\)\s*/g, ' ').concat(' ', (String(n || '').match(/\(([^)]+)\)/) || [])[1] || ''); })
+      .join(' ').split(/\s+/).filter(function (n) { return n.length >= 2 && n !== '남편' && n !== '아내'; });
+    /* 받는/보낸 사람이 배우자 이름 그대로인 이체 (메모의 낱말 하나가 이름과 같을 때) */
+    var words = m.split(/\s+/).map(function (w) { return w.replace(/[^가-힣A-Za-z]/g, ''); });
+    if (names.some(function (n) { return words.indexOf(n) >= 0; })) return { category: '계좌이체', subcategory: '부부간이체' };
+    return null;
+  };
+
+  /* ---------- 분류 학습 : 직접 고친 분류를 가맹점별 규칙으로 기억 (db.merchantRules : 정규화 가맹점명 → 분류) ----------
+     지점명(…점)·회차·(주) 같은 꼬리는 떼고 비교하므로 '스타벅스 해운대점'에서 배운 규칙이 '스타벅스 센텀점'에도 적용된다. */
+  var rules = function () { var r = db().merchantRules; return r && typeof r === 'object' && !Array.isArray(r) ? r : (db().merchantRules = {}); };
+  cat.merchantKey = function (memo) {
+    var s = String(memo || '').replace(/^\s*\[[^\]]*\]\s*/, '').replace(/[(\[]\s*\d+\s*회?\s*\/\s*\d+\s*회?\s*[)\]]/g, ' ')
+      .replace(/\(주\)|㈜|주식회사|\(유\)|유한회사/g, ' ').replace(/\([^)]*\)/g, ' ').trim();
+    var toks = s.split(/\s+/).filter(function (t) { return t && !/^[\d\-.,:/]+$/.test(t); });
+    if (toks.length > 1 && /(점|지점|본점|호점|직영|센터)$/.test(toks[toks.length - 1])) toks.pop();
+    var k = toks.join('').toLowerCase().replace(/[^0-9a-z가-힣]/g, '');
+    return k.length >= 2 && k !== '붙여넣기내역' ? k : '';
+  };
+  cat.ruleFor = function (memo) {
+    var k = cat.merchantKey(memo); if (!k) return null;
+    var R = rules(), best = null;
+    if (R[k]) best = k;
+    else Object.keys(R).forEach(function (rk) { if (rk.length >= 2 && k.indexOf(rk) === 0 && (!best || rk.length > best.length)) best = rk; });
+    if (!best || !cat.subExists(R[best].category, R[best].subcategory)) return null;
+    return { category: R[best].category, subcategory: R[best].subcategory, rule: best };
+  };
+  /* 학습 : 키워드 추론과 같은 분류면 규칙을 따로 두지 않는다 (있던 규칙은 지움). 바뀐 규칙이면 키를 돌려준다 */
+  cat.learn = function (memo, category, subcategory) {
+    var k = cat.merchantKey(memo); if (!k || !cat.subExists(category, subcategory)) return '';
+    var R = rules(), kw = keywordPredict(memo), old = R[k];
+    if (kw.category === category && kw.subcategory === subcategory) { if (old) { delete R[k]; return k; } return ''; }
+    if (old && old.category === category && old.subcategory === subcategory) return '';
+    R[k] = { category: category, subcategory: subcategory, updated: u.today() };
+    return k;
+  };
+  cat.learnToast = function (keys, category, subcategory) {
+    keys = keys.filter(Boolean); if (!keys.length) return '';
+    return ' 앞으로 \'' + keys.slice(0, 2).join('\', \'') + '\'' + (keys.length > 2 ? ' 외 ' + (keys.length - 2) + '곳' : '') + '은(는) ' + category + ' › ' + subcategory + '(으)로 분류합니다.';
+  };
+  cat.removeRule = function (k) { delete rules()[k]; App.store.save(); u.toast('학습된 분류 규칙을 지웠습니다.'); };
+  cat.clearRules = function () {
+    var n = Object.keys(rules()).length; if (!n) return;
+    u.confirm('학습 규칙 모두 지우기', '학습된 가맹점 분류 규칙 ' + n + '개를 모두 지웁니다. 이미 분류된 내역은 바뀌지 않습니다.', function () { db().merchantRules = {}; App.store.save(); u.toast('학습 규칙 ' + n + '개를 지웠습니다.'); });
+  };
+  /* 설정 화면용 학습 규칙 목록 */
+  cat.rulesHtml = function () {
+    var R = rules(), keys = Object.keys(R).sort(function (a, b) { return String(R[b].updated || '').localeCompare(String(R[a].updated || '')) || a.localeCompare(b); });
+    if (!keys.length) return '<div class="text-[11px] text-slate-400 py-2">아직 학습된 규칙이 없습니다. 내역의 분류를 직접 고치면 여기에 쌓입니다.</div>';
+    return '<div class="max-h-64 overflow-y-auto border border-slate-200 rounded-lg bg-white custom-scrollbar"><table class="w-full text-[11px]"><thead><tr class="bg-slate-50 text-slate-500"><th class="p-2 text-left">가맹점 (정규화)</th><th class="p-2 text-left">분류</th><th class="p-2 text-left hidden sm:table-cell">학습일</th><th class="p-2 w-8"></th></tr></thead><tbody>'
+      + keys.map(function (k) {
+        var r = R[k], ok = cat.subExists(r.category, r.subcategory);
+        return '<tr class="border-t border-slate-100"><td class="p-2 font-mono text-slate-700 break-all">' + u.esc(k) + '</td><td class="p-2 font-semibold ' + (ok ? 'text-emerald-700' : 'text-slate-400 line-through') + '">' + u.esc(r.category) + ' › ' + u.esc(r.subcategory) + '</td>'
+          + '<td class="p-2 text-slate-400 hidden sm:table-cell">' + u.esc(r.updated || '') + '</td><td class="p-2 text-center"><button onclick="App.cat.removeRule(\'' + k + '\')" title="규칙 지우기" class="text-slate-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></td></tr>';
+      }).join('') + '</tbody></table></div>';
   };
 
   /* ---------- 재분류 계획 ---------- */
@@ -197,6 +279,7 @@
         db().transactions.forEach(function (t) { if (t.category === oldName) { t.category = name; moved++; } });
         (db().installments || []).forEach(function (i) { if (i.category === oldName) i.category = name; });
         renameBudgetKey(oldName, name);
+        Object.keys(rules()).forEach(function (k) { if (rules()[k].category === oldName) rules()[k].category = name; });
       }
       if (oldSubs.length === newSubs.length) {
         var map = {}; oldSubs.forEach(function (o, k) { if (o !== newSubs[k]) map[o] = newSubs[k]; });

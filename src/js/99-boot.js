@@ -10,6 +10,7 @@
       App.sync.boot();
       App.budget.boot();
       App.ui.render();
+      App.emit('booted');   /* 고정 항목 자동 반영 등 시작 뒤 작업 */
     } catch (e) {
       console.error('[시작]', e);
       document.getElementById('content').innerHTML = '<div class="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">가계부를 여는 중 오류가 났습니다: ' + App.u.esc(e.message) + '<br>데이터는 지워지지 않았습니다. 설정의 JSON 백업으로 내보낸 뒤 문의하세요.</div>';

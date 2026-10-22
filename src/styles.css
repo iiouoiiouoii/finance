@@ -94,3 +94,15 @@ body.fc-m table { white-space: nowrap; }
   #report-page { box-shadow: none !important; border: 0 !important; max-width: none !important; padding: 0 !important; }
   .rp-sec { break-inside: avoid; }
 }
+
+/* ---------- 스마트 붙여넣기 미리보기 : 모바일에서는 한 건을 카드처럼 ---------- */
+body.fc-m #parse-table thead { display: none; }
+body.fc-m #parse-table tr { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .5rem; padding: .5rem .6rem; }
+body.fc-m #parse-table td { padding: 0 !important; }
+body.fc-m #parse-table td.pt-memo { order: -2; flex: 1 1 calc(100% - 7rem); font-weight: 600; color: #1e293b; }
+body.fc-m #parse-table td.pt-amt { order: -1; margin-left: auto; }
+body.fc-m #parse-table td.pt-date { font-size: 11px; color: #64748b; }
+body.fc-m #parse-table td.pt-cat::after { content: ' ›'; color: #94a3b8; }
+body.fc-m #parse-table td.pt-pay select { max-width: 9.5rem; }
+body.fc-m #parse-table td.pt-del { margin-left: auto; }
+body.fc-m #parse-table select { min-height: 32px !important; font-size: 13px !important; padding: .15rem .3rem; }

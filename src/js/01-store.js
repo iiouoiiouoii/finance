@@ -155,7 +155,7 @@
     var db = App.db;
     if (!db.settings || typeof db.settings !== 'object') db.settings = emptyData().settings;
     ['transactions', 'fixedExpenses', 'installments', 'realEstates', 'assets', 'liabilities', 'investments', 'cards', 'goals'].forEach(arr);
-    ['budgets', 'budgetsByMonth', 'weeklyChecks', 'snapshots', 'ui'].forEach(obj);
+    ['budgets', 'budgetsByMonth', 'weeklyChecks', 'snapshots', 'ui', 'merchantRules'].forEach(obj);
     if (!Array.isArray(db.categories) || db.categories.length < 9) db.categories = store.defaultCategories();
     if (typeof db.ui.autoReclassify !== 'boolean') db.ui.autoReclassify = false;
 
@@ -168,6 +168,17 @@
         t.type = 'TRANSFER'; t.category = '자산이동'; t.subcategory = m.indexOf('[투자매수]') === 0 ? '투자매수' : '투자매도';
       }
     });
+
+    /* 고정 항목 (v30) : 구분(지출/수입) · 사용자 · 결제수단 · 매달 자동 반영. 예전 항목은 공동 지출 · 계좌이체 · 수동 */
+    db.fixedExpenses.forEach(function (f) {
+      if (f.type !== 'INCOME') f.type = 'EXPENSE';
+      if (['J', 'H', 'W'].indexOf(f.owner) < 0) f.owner = f.type === 'INCOME' ? 'H' : 'J';
+      if (!f.payment) f.payment = '계좌이체';
+      if (typeof f.auto !== 'boolean') f.auto = false;
+      f.day = Math.min(31, Math.max(1, parseInt(f.day, 10) || 1));
+      f.amount = Math.max(0, u.num(f.amount));
+    });
+    if (!db.ui.instAuto || typeof db.ui.instAuto !== 'object') db.ui.instAuto = { on: false };
 
     /* 할부 (v14) */
     db.installments.forEach(function (i) {

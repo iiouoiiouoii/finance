@@ -19,7 +19,7 @@
     var cpl = C.coupleStats(mo), sh = C.shareH(), tot = cpl.cH + cpl.cW, settle = tot > 0 ? cpl.cH - tot * sh : 0;
     var inst = C.instSummary(mo), instNext = C.instSummary(u.addM(mo, 1));
     var ending = (db().installments || []).map(function (i) { return { i: i, c: C.calcInst(i, mo) }; }).filter(function (x) { return !x.c.settled && x.c.lastMonth === mo; });
-    var fixedUnapplied = db().fixedExpenses.filter(function (f) { return !tx.some(function (t) { return t.memo === '[고정비] ' + f.name; }); });
+    var fixedUnapplied = db().fixedExpenses.filter(function (f) { return f.type !== 'INCOME' && !App.fixed.isApplied(f, mo); });
     var goals = (db().goals || []).map(function (g) {
       var i = C.goalInfo(g), m = u.sum(db().transactions.filter(function (t) { return t.goalId === g.id && String(t.date).indexOf(mo) === 0; }), function (t) { return t.amount; });
       return { g: g, i: i, month: m };
@@ -79,7 +79,7 @@
       return '<div class="p-3 rounded-lg border border-slate-200 text-xs"><div class="flex justify-between"><b>' + u.esc(x.g.name) + '</b><span class="text-accent font-bold">' + x.i.pc.toFixed(0) + '%</span></div>' + u.bar(x.i.pc, 'bg-accent')
         + '<div class="text-[11px] text-slate-500 mt-1">' + u.K(x.i.saved) + ' / ' + u.K(x.i.tgt) + ' · 이번 달 적립 ' + u.K(x.month) + (x.i.req ? ' · 필요 월 ' + u.K(x.i.req) : '') + '</div></div>';
     }).join('') + '</div>' : '<div class="text-xs text-slate-400">등록된 목표가 없습니다.</div>';
-    var cash = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + cell('고정비 (등록 기준)', u.K(C.fixedTotal()), db().fixedExpenses.length + '건') + cell('이번 달 할부 청구', u.K(r.inst.thisCharge), '잔액 ' + u.K(r.inst.remaining))
+    var cash = '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + cell('고정비 (등록 기준)', u.K(C.fixedTotal()), db().fixedExpenses.filter(function (f) { return f.type !== 'INCOME'; }).length + '건') + cell('이번 달 할부 청구', u.K(r.inst.thisCharge), '잔액 ' + u.K(r.inst.remaining))
       + cell('다음 달 할부 청구', u.K(r.instNext.thisCharge), r.ending.length ? '이번 달 종료 ' + r.ending.length + '건' : '') + cell('대출 월 상환', u.K(C.loansMonthly(mo)), 'DSR ' + (r.h.dsr == null ? '-' : r.h.dsr.toFixed(0) + '%')) + '</div>';
     var advice = adv.length ? adv.map(function (x, i) { var t = TONE[x[0]]; return '<div class="flex gap-2 items-start px-3 py-2 rounded-lg border text-xs ' + t[0] + '"><i class="fa-solid ' + t[1] + ' mt-0.5"></i><span><b>' + (i + 1) + '.</b> ' + x[1] + '</span></div>'; }).join('') : '<div class="text-xs text-emerald-700">특별히 고칠 점이 없습니다. 이번 달처럼만 하세요.</div>';
     var todo = '<ul class="text-xs text-slate-700 space-y-1">' + ['이번 달 카드 이용내역(1일~말일)을 모두 붙여넣었나요?', '정산할 금액을 보냈나요?', '다음 달 저축·투자 자동이체 금액을 확인했나요?', '예산을 넘은 항목의 다음 달 예산을 정했나요?', '할부·대출 중 이번 달에 끝나거나 새로 생긴 것이 있나요?']
