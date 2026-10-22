@@ -1,4 +1,4 @@
-/* 부동산 · 부채(대출) : 부동산-담보대출 연동 · LTV · 대출 잔액 자동 상환(시작월+최초 대출금) */
+/* 부동산 · 부채(대출) : 자가/전세 · 부동산-대출 연동 · LTV · 세입자 보증금 · 전세 만기 알림 · 대출 잔액 자동 상환(시작월+최초 대출금) */
 (function (App) {
   'use strict';
   var u = App.u, C = App.calc, RE = App.re = {}, L = App.loans = {};
@@ -11,11 +11,17 @@
 
   RE.detail = function (re, mo) {
     var loans = loanIds(re).map(loanById), st = loans.map(function (l) { return C.loanState(l, mo); });
-    var debt = u.sum(st, function (s) { return s.amount; }), value = u.num(re.value), acq = u.num(re.acquiredPrice);
+    var debt = u.sum(st, function (s) { return s.amount; }), value = u.num(re.value), jeonse = re.tenure === 'JEONSE', acq = jeonse ? 0 : u.num(re.acquiredPrice), tenant = C.reTenantDep(re);
     return {
-      loans: loans, states: st, debt: debt, monthly: u.sum(st, function (s) { return s.monthly; }), interest: u.sum(st, function (s) { return s.interest; }), value: value,
-      ltv: value > 0 ? debt / value : 0, equity: value - debt, gain: acq > 0 ? value - acq : null, gainRate: acq > 0 ? (value - acq) / acq : null
+      loans: loans, states: st, debt: debt, monthly: u.sum(st, function (s) { return s.monthly; }), interest: u.sum(st, function (s) { return s.interest; }), value: value, jeonse: jeonse, tenant: tenant,
+      ltv: value > 0 ? debt / value : 0, equity: value - debt - tenant, gain: acq > 0 ? value - acq : null, gainRate: acq > 0 ? (value - acq) / acq : null
     };
+  };
+  /* 전세 계약 만기까지 남은 날 (만기 6개월 전부터 갱신·이사 준비 알림) */
+  RE.leaseLeft = function (re) {
+    if (!re.leaseEnd) return null;
+    var p = String(re.leaseEnd).split('-'), end = new Date(+p[0], +p[1] - 1, +p[2] || 1), now = new Date(); now.setHours(0, 0, 0, 0);
+    return Math.round((end - now) / 864e5);
   };
   RE.ltvInfo = function (ltv) {
     if (ltv <= 0) return { label: '무차입', cls: 'bg-emerald-100 text-emerald-800 border-emerald-200', bar: 'bg-emerald-500' };
@@ -30,35 +36,47 @@
      ========================================================= */
   RE.listHtml = function () {
     var list = db().realEstates || [], mo = App.state.month;
-    if (!list.length) return '<div class="text-center text-slate-400 text-xs py-4">등록된 부동산이 없습니다.<br><span class="text-[11px]">담보대출이 있다면 <strong>부채를 먼저 등록</strong>한 뒤 연동하면 LTV가 자동 계산됩니다.</span></div>';
+    if (!list.length) return '<div class="text-center text-slate-400 text-xs py-4">등록된 부동산이 없습니다.<br><span class="text-[11px]">자가는 물론 <b>전세로 사는 집</b>도 등록할 수 있습니다. 대출이 있다면 <strong>부채를 먼저 등록</strong>한 뒤 연동하면 LTV가 자동 계산됩니다.</span></div>';
     return list.map(function (re) {
       var d = RE.detail(re, mo), info = RE.ltvInfo(d.ltv);
       var loans = d.loans.length ? d.loans.map(function (l, i) {
         return '<div class="flex items-center justify-between gap-1 bg-white border border-slate-200 rounded px-1.5 py-1"><span class="text-[10px] font-semibold text-slate-700 truncate flex-1">' + u.esc(l.name) + '</span>'
           + '<span class="text-[10px] text-red-500 font-bold">' + u.K(d.states[i].amount) + '</span><span class="text-[9px] text-slate-400">' + (C.DTYPE[l.debtType] || '') + ' ' + (l.rate || 0) + '%</span>'
           + '<button onclick="App.re.unlink(' + re.id + ',' + l.id + ')" class="text-slate-300 hover:text-red-500 text-[10px]" title="연동 해제"><i class="fa-solid fa-link-slash"></i></button></div>';
-      }).join('') : '<div class="text-[10px] text-slate-400 bg-white border border-dashed border-slate-200 rounded px-1.5 py-1 text-center">연동된 담보대출 없음</div>';
-      return '<div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5"><div class="flex justify-between items-center"><span class="font-bold text-slate-800 text-xs flex items-center gap-1 truncate"><i class="fa-solid fa-house-chimney text-amber-600"></i> ' + u.esc(re.name)
-        + ' <span class="text-[9px] font-semibold bg-white border border-slate-200 text-slate-500 px-1 rounded">' + u.esc(re.kind || '기타') + '</span> ' + C.badge(re.owner || 'J', !re.owner) + '</span>'
+      }).join('') : '<div class="text-[10px] text-slate-400 bg-white border border-dashed border-slate-200 rounded px-1.5 py-1 text-center">연동된 ' + (d.jeonse ? '전세자금대출' : '담보대출') + ' 없음</div>';
+      var row = function (l, v, cls) { return '<div class="text-[11px] text-slate-500 flex justify-between"><span>' + l + '</span><strong class="' + cls + '">' + v + '</strong></div>'; };
+      var left = d.jeonse ? RE.leaseLeft(re) : null;
+      var lease = d.jeonse && (re.leaseStart || re.leaseEnd) ? row('계약 기간', u.esc(re.leaseStart || '?') + ' ~ ' + u.esc(re.leaseEnd || '?'), 'text-slate-700')
+        + (left == null ? '' : left < 0 ? '<div class="text-[10px] text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">계약 만기가 지났습니다. 갱신했다면 만기일을 고쳐 주세요.</div>'
+          : left <= 183 ? '<div class="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">만기 D-' + left + ' · 갱신(계약갱신청구권) 또는 이사·보증금 반환을 준비할 때입니다.</div>' : '') : '';
+      return '<div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5"><div class="flex justify-between items-center"><span class="font-bold text-slate-800 text-xs flex items-center gap-1 truncate"><i class="fa-solid ' + (d.jeonse ? 'fa-key text-sky-600' : 'fa-house-chimney text-amber-600') + '"></i> ' + u.esc(re.name)
+        + ' <span class="text-[9px] font-semibold bg-white border border-slate-200 text-slate-500 px-1 rounded">' + u.esc(re.kind || '기타') + '</span>' + (d.jeonse ? ' <span class="text-[9px] font-bold bg-sky-50 border border-sky-200 text-sky-700 px-1 rounded">전세</span>' : '') + ' ' + C.badge(re.owner || 'J', !re.owner) + '</span>'
         + '<div class="flex items-center gap-1"><button onclick="App.re.open(' + re.id + ')" class="text-slate-400 hover:text-accent text-xs"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="App.re.remove(' + re.id + ')" class="text-slate-300 hover:text-red-500 text-xs"><i class="fa-solid fa-trash-can"></i></button></div></div>'
-        + '<div class="text-[11px] text-slate-500 flex justify-between"><span>평가 시세</span><strong class="text-amber-700">' + u.K(d.value) + '</strong></div>'
-        + (d.gain !== null ? '<div class="text-[11px] text-slate-500 flex justify-between"><span>취득 대비</span><strong class="' + (d.gain >= 0 ? 'text-emerald-700' : 'text-red-500') + '">' + (d.gain >= 0 ? '+' : '') + u.K(d.gain) + ' (' + (d.gainRate >= 0 ? '+' : '') + u.pct(d.gainRate) + ')</strong></div>' : '')
+        + (d.jeonse ? row('전세보증금', u.K(d.value), 'text-sky-700') + lease : row('평가 시세', u.K(d.value), 'text-amber-700'))
+        + (d.gain !== null ? row('취득 대비', (d.gain >= 0 ? '+' : '') + u.K(d.gain) + ' (' + (d.gainRate >= 0 ? '+' : '') + u.pct(d.gainRate) + ')', d.gain >= 0 ? 'text-emerald-700' : 'text-red-500') : '')
+        + (d.tenant > 0 ? row('세입자 보증금 (돌려줄 돈)', '-' + u.K(d.tenant), 'text-red-500') : '')
         + '<div class="space-y-1 pt-1">' + loans + '</div>'
-        + '<div class="flex items-center justify-between pt-1"><span class="text-[11px] text-slate-500">LTV <strong class="text-slate-800">' + u.pct(d.ltv) + '</strong></span><span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ' + info.cls + '">' + info.label + '</span></div>'
+        + '<div class="flex items-center justify-between pt-1"><span class="text-[11px] text-slate-500">' + (d.jeonse ? '보증금 대비 대출' : 'LTV') + ' <strong class="text-slate-800">' + u.pct(d.ltv) + '</strong></span><span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ' + info.cls + '">' + info.label + '</span></div>'
         + '<div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden"><div class="h-full ' + info.bar + '" style="width:' + Math.min(100, Math.round(d.ltv * 100)) + '%"></div></div>'
-        + (d.monthly > 0 ? '<div class="text-[11px] text-slate-500 flex justify-between"><span>월 상환액(이자 ' + u.K(d.interest) + ')</span><strong class="text-red-500">' + u.K(d.monthly) + '</strong></div>' : '')
-        + '<div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/80 flex justify-between"><span>순 자본금</span><strong class="text-emerald-700">' + u.K(d.equity) + '</strong></div></div>';
+        + (d.monthly > 0 ? '<div class="text-[11px] text-slate-500 flex justify-between"><span>월 ' + (d.jeonse ? '이자·상환' : '상환액') + '(이자 ' + u.K(d.interest) + ')</span><strong class="text-red-500">' + u.K(d.monthly) + '</strong></div>' : '')
+        + '<div class="text-[11px] text-slate-500 pt-1 border-t border-slate-200/80 flex justify-between"><span>' + (d.jeonse ? '내 돈 (보증금 - 대출)' : '순 자본금') + '</span><strong class="text-emerald-700">' + u.K(d.equity) + '</strong></div></div>';
     }).join('');
   };
 
   function reModal() {
     return u.modal('realestate-modal', u.modalHead('re-modal-title', '부동산 자산 등록', 'realestate-modal')
       + '<form onsubmit="App.re.save(event)" class="space-y-3"><input type="hidden" id="re-edit-id">'
+      + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">보유 형태</label><div class="flex gap-1.5">' + [['OWN', '자가 (내 소유)'], ['JEONSE', '전세 (빌려 사는 집)']].map(function (m) {
+        return '<label class="flex-1 flex items-center justify-center gap-1 p-2 border border-slate-300 rounded-lg cursor-pointer text-xs font-semibold bg-white hover:border-amber-400"><input type="radio" name="re-tenure" value="' + m[0] + '" class="accent-amber-600" onchange="App.re.tenure(\'' + m[0] + '\')"> ' + m[1] + '</label>';
+      }).join('') + '</div></div>'
       + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">명의 (공동명의는 공동)</label><select id="re-owner" class="' + u.IN + ' font-bold bg-sky-50/40"></select></div>'
       + '<div class="grid grid-cols-3 gap-2"><div class="col-span-2">' + u.field('re-name', '부동산 명칭', { ph: '예: 마포 래미안', attrs: 'required', cls: 'font-bold' }).replace('<div data-k', '<div data-x') + '</div>'
       + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">유형</label><select id="re-kind" class="' + u.IN + '">' + KINDS.map(function (k) { return '<option>' + k + '</option>'; }).join('') + '</select></div></div>'
-      + '<div class="grid grid-cols-3 gap-2">' + u.field('re-value', '현재 시세 (원)', { money: true, oninput: 'App.re.preview()', attrs: 'required' }) + u.field('re-acq-price', '취득가 (선택)', { money: true, oninput: 'App.re.preview()' }) + u.field('re-acq-date', '취득일 (선택)', { type: 'date' }) + '</div>'
-      + '<div class="pt-2 border-t border-slate-100"><div class="flex items-center justify-between mb-1.5"><label class="text-xs font-bold text-slate-700">담보 대출 연동</label>'
+      + '<div id="re-own-fields" class="space-y-2"><div class="grid grid-cols-3 gap-2">' + u.field('re-value', '현재 시세 (원)', { money: true, oninput: 'App.re.preview()' }) + u.field('re-acq-price', '취득가 (선택)', { money: true, oninput: 'App.re.preview()' }) + u.field('re-acq-date', '취득일 (선택)', { type: 'date' }) + '</div>'
+      + u.field('re-tenant-dep', '세입자 보증금 (전세·월세를 놓았을 때만, 선택)', { money: true, oninput: 'App.re.preview()', ph: '돌려줘야 할 돈이라 부채로 계산합니다' }) + '</div>'
+      + '<div id="re-jeonse-fields" class="hidden space-y-2"><div class="grid grid-cols-3 gap-2">' + u.field('re-dep', '전세보증금 (원)', { money: true, oninput: 'App.re.preview()' }) + u.field('re-lease-start', '계약 시작일', { type: 'date' }) + u.field('re-lease-end', '계약 만기일', { type: 'date' }) + '</div>'
+      + '<div class="text-[10px] text-slate-500 leading-relaxed">전세보증금은 순자산에 포함하지만 바로 쓸 수 없는 돈이라 비상자금에서는 빠집니다. 만기 6개월 전부터 갱신·이사 준비 알림을 보여줍니다.</div></div>'
+      + '<div class="pt-2 border-t border-slate-100"><div class="flex items-center justify-between mb-1.5"><label id="re-loan-label" class="text-xs font-bold text-slate-700">담보 대출 연동</label>'
       + '<button type="button" onclick="App.re.newDebtFirst()" class="text-[10px] bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 font-bold px-2 py-1 rounded"><i class="fa-solid fa-plus"></i> 부채 먼저 등록</button></div>'
       + '<div class="flex gap-1.5 mb-2">' + [['NONE', '대출 없음'], ['EXIST', '등록된 부채 연동'], ['NEW', '새 대출 입력']].map(function (m) {
         return '<label class="flex-1 flex items-center justify-center gap-1 p-1.5 border border-slate-300 rounded-lg cursor-pointer text-[11px] bg-white hover:border-amber-400"><input type="radio" name="re-link-mode" value="' + m[0] + '" class="accent-amber-600" onchange="App.re.mode(\'' + m[0] + '\')"> ' + m[1] + '</label>';
@@ -72,6 +90,17 @@
       + '<div class="pt-2 flex justify-end gap-2"><button type="button" onclick="App.u.close(\'realestate-modal\')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">취소</button><button type="submit" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">저장하기</button></div></form>', 560);
   }
   function curMode() { var r = document.querySelector('input[name="re-link-mode"]:checked'); return r ? r.value : 'NONE'; }
+  function curTenure() { var r = document.querySelector('input[name="re-tenure"]:checked'); return r ? r.value : 'OWN'; }
+  RE.tenure = function (t) {
+    var j = t === 'JEONSE';
+    u.qa('input[name="re-tenure"]').forEach(function (r) { r.checked = r.value === (j ? 'JEONSE' : 'OWN'); });
+    u.$('re-own-fields').classList.toggle('hidden', j); u.$('re-jeonse-fields').classList.toggle('hidden', !j);
+    u.$('re-loan-label').innerText = j ? '전세자금대출 연동' : '담보 대출 연동';
+    u.$('re-loan-name').placeholder = j ? '대출 명칭 (미입력 시 \'OO 전세자금대출\')' : '대출 명칭 (미입력 시 \'OO 담보대출\')';
+    /* 전세자금대출은 보통 만기 일시상환 · 2년 */
+    if (j && !u.val('re-loan-months')) { u.$('re-loan-type').value = 'BULLET'; u.$('re-loan-months').value = 24; }
+    RE.preview();
+  };
   function selectedIds() { return u.qa('.re-loan-cb').filter(function (c) { return c.checked; }).map(function (c) { return +c.value; }); }
   RE.mode = function (m) {
     u.qa('input[name="re-link-mode"]').forEach(function (r) { r.checked = r.value === m; });
@@ -93,22 +122,23 @@
   }
   RE.preview = function () {
     var box = u.$('re-preview'); if (!box) return;
-    var value = u.P(u.val('re-value')), acq = u.P(u.val('re-acq-price')), m = curMode(), debt = 0, monthly = 0;
+    var j = curTenure() === 'JEONSE', value = u.P(u.val(j ? 're-dep' : 're-value')), acq = j ? 0 : u.P(u.val('re-acq-price')), tenant = j ? 0 : u.P(u.val('re-tenant-dep')), m = curMode(), debt = 0, monthly = 0;
     if (m === 'EXIST') selectedIds().forEach(function (id) { var l = loanById(id); if (l) { var s = C.loanState(l); debt += s.amount; monthly += s.monthly; } });
     else if (m === 'NEW') { debt = u.P(u.val('re-loan-amount')); monthly = debt > 0 ? C.loanPayment(debt, parseFloat(u.val('re-loan-rate')) || 0, u.val('re-loan-type'), parseInt(u.val('re-loan-months'), 10) || 240) : 0; }
     if (value <= 0) { box.innerHTML = ''; return; }
-    var ltv = debt / value, info = RE.ltvInfo(ltv), eq = value - debt, lev = eq > 0 ? value / eq : null, gain = acq > 0 ? value - acq : null;
-    box.innerHTML = '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1"><div class="flex justify-between"><span class="text-slate-500">순자산(시세-부채)</span><strong class="text-emerald-700">' + u.K(eq) + '</strong></div>'
-      + '<div class="flex justify-between items-center"><span class="text-slate-500">LTV</span><span class="flex items-center gap-1"><strong class="text-slate-800">' + u.pct(ltv) + '</strong><span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ' + info.cls + '">' + info.label + '</span></span></div>'
+    var ltv = debt / value, info = RE.ltvInfo(ltv), eq = value - debt - tenant, lev = !j && eq > 0 ? value / eq : null, gain = acq > 0 ? value - acq : null;
+    box.innerHTML = '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 space-y-1"><div class="flex justify-between"><span class="text-slate-500">' + (j ? '내 돈 (보증금 - 대출)' : '순자산 (시세 - 대출' + (tenant ? ' - 세입자 보증금' : '') + ')') + '</span><strong class="text-emerald-700">' + u.K(eq) + '</strong></div>'
+      + '<div class="flex justify-between items-center"><span class="text-slate-500">' + (j ? '보증금 대비 대출' : 'LTV') + '</span><span class="flex items-center gap-1"><strong class="text-slate-800">' + u.pct(ltv) + '</strong><span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ' + info.cls + '">' + info.label + '</span></span></div>'
       + '<div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden"><div class="h-full ' + info.bar + '" style="width:' + Math.min(100, Math.round(ltv * 100)) + '%"></div></div>'
       + (monthly > 0 ? '<div class="flex justify-between"><span class="text-slate-500">월 상환액(추정)</span><strong class="text-red-500">' + u.K(monthly) + '</strong></div>' : '')
       + (lev ? '<div class="flex justify-between"><span class="text-slate-500">레버리지</span><strong class="text-slate-700">' + lev.toFixed(2) + '배</strong></div>' : '')
       + (gain !== null ? '<div class="flex justify-between"><span class="text-slate-500">취득 대비 평가차익</span><strong class="' + (gain >= 0 ? 'text-emerald-700' : 'text-red-500') + '">' + (gain >= 0 ? '+' : '') + u.K(gain) + '</strong></div>' : '')
-      + (ltv >= 0.7 ? '<div class="text-[10px] text-red-600 pt-1 border-t border-slate-200">LTV 70% 이상은 시세 하락 시 담보 부족 위험이 큽니다.</div>' : '') + '</div>';
+      + (!j && ltv >= 0.7 ? '<div class="text-[10px] text-red-600 pt-1 border-t border-slate-200">LTV 70% 이상은 시세 하락 시 담보 부족 위험이 큽니다.</div>' : '') + '</div>';
   };
   var draft = null, debtReturn = false;
   RE.newDebtFirst = function () {
-    draft = { editId: u.val('re-edit-id'), name: u.val('re-name'), kind: u.val('re-kind'), value: u.val('re-value'), acqPrice: u.val('re-acq-price'), acqDate: u.val('re-acq-date'), owner: u.val('re-owner'), sel: selectedIds() };
+    draft = { editId: u.val('re-edit-id'), tenure: curTenure(), name: u.val('re-name'), kind: u.val('re-kind'), value: u.val('re-value'), acqPrice: u.val('re-acq-price'), acqDate: u.val('re-acq-date'), owner: u.val('re-owner'), sel: selectedIds(),
+      tenant: u.val('re-tenant-dep'), dep: u.val('re-dep'), leaseStart: u.val('re-lease-start'), leaseEnd: u.val('re-lease-end') };
     debtReturn = true; u.close('realestate-modal'); L.open(null);
     u.toast('부채를 먼저 등록하면 부동산 화면으로 돌아가 자동 연동됩니다.');
   };
@@ -118,14 +148,21 @@
     var re = id ? u.byId(db().realEstates, id) : (d && d.editId ? u.byId(db().realEstates, d.editId) : null);
     u.$('re-owner').innerHTML = C.ownerOptions(false);
     u.$('re-edit-id').value = re ? re.id : '';
-    u.$('re-modal-title').innerText = re ? '부동산 자산 수정' : '부동산 자산 등록';
+    u.$('re-modal-title').innerText = re ? '부동산 수정' : '부동산 등록 (자가 · 전세)';
     u.$('re-owner').value = re && re.owner ? re.owner : (d && d.owner) || 'J';
     u.$('re-name').value = re ? re.name : (d ? d.name : '');
     u.$('re-kind').value = re && re.kind ? re.kind : (d && d.kind) || '아파트';
     u.$('re-value').value = re ? u.n0(re.value) : (d ? d.value : '');
     u.$('re-acq-price').value = re && re.acquiredPrice ? u.n0(re.acquiredPrice) : (d ? d.acqPrice : '');
     u.$('re-acq-date').value = re && re.acquiredDate ? re.acquiredDate : (d ? d.acqDate : '');
+    var jeonse = re ? re.tenure === 'JEONSE' : !!(d && d.tenure === 'JEONSE');
+    if (re && jeonse) u.$('re-value').value = '';
+    u.$('re-tenant-dep').value = re && re.tenantDeposit ? u.n0(re.tenantDeposit) : (d ? d.tenant || '' : '');
+    u.$('re-dep').value = re && jeonse ? u.n0(re.value) : (d ? d.dep || '' : '');
+    u.$('re-lease-start').value = re && re.leaseStart ? re.leaseStart : (d ? d.leaseStart || '' : '');
+    u.$('re-lease-end').value = re && re.leaseEnd ? re.leaseEnd : (d ? d.leaseEnd || '' : '');
     ['re-loan-name', 're-loan-amount', 're-loan-rate', 're-loan-months'].forEach(function (k) { u.$(k).value = ''; });
+    RE.tenure(jeonse ? 'JEONSE' : 'OWN');
     var sel = re ? loanIds(re) : (d ? d.sel : []);
     if (presetLoanId) sel = sel.concat([presetLoanId]);
     sel = sel.filter(function (x, i, a) { return a.indexOf(x) === i; });
@@ -134,16 +171,17 @@
   };
   RE.save = function (e) {
     e.preventDefault();
-    var editId = u.val('re-edit-id') ? +u.val('re-edit-id') : null, name = u.val('re-name').trim(), value = u.P(u.val('re-value'));
+    var jeonse = curTenure() === 'JEONSE', editId = u.val('re-edit-id') ? +u.val('re-edit-id') : null, name = u.val('re-name').trim(), value = u.P(u.val(jeonse ? 're-dep' : 're-value'));
     if (!name) { u.toast('부동산 명칭을 입력하세요.', 'warning'); return; }
-    if (!(value > 0)) { u.toast('현재 시세를 입력하세요.', 'warning'); return; }
+    if (!(value > 0)) { u.toast(jeonse ? '전세보증금을 입력하세요.' : '현재 시세를 입력하세요.', 'warning'); return; }
+    if (jeonse && u.val('re-lease-start') && u.val('re-lease-end') && u.val('re-lease-end') <= u.val('re-lease-start')) { u.toast('계약 만기일이 시작일보다 뒤여야 합니다.', 'warning'); return; }
     var mode = curMode(), ids = [];
     if (mode === 'EXIST') ids = selectedIds();
     else if (mode === 'NEW') {
       var amt = u.P(u.val('re-loan-amount'));
       if (amt > 0) {
         var nid = u.uid();
-        db().liabilities.push({ id: nid, type: 'LIABILITY', name: u.val('re-loan-name').trim() || name + ' 담보대출', amount: amt, rate: parseFloat(u.val('re-loan-rate')) || 0, debtType: u.val('re-loan-type') || 'EQUAL_PAYMENT', months: parseInt(u.val('re-loan-months'), 10) || 240, createdFrom: 'REALESTATE', owner: u.val('re-owner') || 'J' });
+        db().liabilities.push({ id: nid, type: 'LIABILITY', name: u.val('re-loan-name').trim() || name + (jeonse ? ' 전세자금대출' : ' 담보대출'), amount: amt, rate: parseFloat(u.val('re-loan-rate')) || 0, debtType: u.val('re-loan-type') || 'EQUAL_PAYMENT', months: parseInt(u.val('re-loan-months'), 10) || 240, createdFrom: 'REALESTATE', owner: u.val('re-owner') || 'J' });
         ids = [nid];
       }
     }
@@ -154,10 +192,15 @@
       if (mode === 'NEW' && ids.length) ids = loanIds(re).concat(ids);
     } else { re = { id: u.uid() }; db().realEstates.push(re); }
     re.name = name; re.kind = u.val('re-kind'); re.value = value; re.owner = u.val('re-owner') || 'J';
-    re.acquiredPrice = u.P(u.val('re-acq-price')) || null; re.acquiredDate = u.val('re-acq-date') || null;
+    re.tenure = jeonse ? 'JEONSE' : 'OWN';
+    re.acquiredPrice = jeonse ? null : u.P(u.val('re-acq-price')) || null; re.acquiredDate = jeonse ? null : u.val('re-acq-date') || null;
+    re.tenantDeposit = jeonse ? null : u.P(u.val('re-tenant-dep')) || null;
+    re.leaseStart = jeonse ? u.val('re-lease-start') || null : null; re.leaseEnd = jeonse ? u.val('re-lease-end') || null : null;
     re.loanIds = ids.filter(function (id, i, a) { return a.indexOf(id) === i && !!loanById(id); }); re.loanId = re.loanIds[0] || null;
     App.store.syncLoanRefs(); App.store.save(); u.close('realestate-modal');
-    u.toast('부동산 \'' + name + '\' 이(가) 저장되었습니다. (연동 부채 ' + re.loanIds.length + '건)');
+    u.toast((jeonse ? '전세 ' : '부동산 ') + '\'' + name + '\' 이(가) 저장되었습니다. (연동 대출 ' + re.loanIds.length + '건)');
+    /* 예적금 탭에 같은 전세보증금을 따로 넣어 두었다면 두 번 계산되므로 알려준다 */
+    if (jeonse && (db().assets || []).some(function (a) { return a.subType === '전세보증금'; })) setTimeout(function () { u.toast('[예적금 · 연금 · 보증금]에도 전세보증금이 있습니다. 같은 집이면 한쪽을 지워야 순자산이 두 번 계산되지 않습니다.', 'warning'); }, 600);
   };
   RE.unlink = function (reId, loanId) {
     var re = u.byId(db().realEstates, reId); if (!re) return;

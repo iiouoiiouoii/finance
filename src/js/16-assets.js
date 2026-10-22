@@ -143,8 +143,8 @@
       ];
       el.innerHTML = '<div class="bg-slate-900 text-white p-6 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-md"><div><div class="text-xs text-slate-400">종합 순자산 (Net Worth)</div><div id="asset-summary-networth" class="text-3xl font-extrabold mt-1">' + u.K(n.nw) + '</div></div>'
         + '<div class="flex flex-wrap gap-8 border-l border-slate-800 pl-8 text-xs"><div><div class="text-slate-400">총 자산 (부동산 포함)</div><div id="asset-summary-total" class="text-base font-bold text-slate-200 mt-0.5">' + u.K(n.assets) + '</div></div>'
-        + '<div><div class="text-slate-400">부동산 평가액</div><div id="asset-summary-realestate" class="text-base font-bold text-amber-300 mt-0.5">' + u.K(n.re) + '</div></div>'
-        + '<div><div class="text-slate-400">총 부채 (담보대출 포함)</div><div id="asset-summary-debt" class="text-base font-bold text-red-400 mt-0.5">' + u.K(n.debt) + '</div></div></div></div>'
+        + '<div><div class="text-slate-400">부동산 (시세 · 전세금)</div><div id="asset-summary-realestate" class="text-base font-bold text-amber-300 mt-0.5">' + u.K(n.re) + '</div></div>'
+        + '<div><div class="text-slate-400">총 부채 (대출 · 세입자 보증금 포함)</div><div id="asset-summary-debt" class="text-base font-bold text-red-400 mt-0.5">' + u.K(n.debt) + '</div></div></div></div>'
         + '<div class="grid grid-cols-2 lg:grid-cols-6 gap-3">' + C.OW.map(function (c) { return cell(C.badge(c) + ' 명의 순자산', u.K(nw[c].a - nw[c].d), '자산 ' + u.K(nw[c].a) + ' · 부채 ' + u.K(nw[c].d), nw[c].a - nw[c].d < 0 ? 'text-red-600' : 'text-slate-800'); }).join('')
         + cell('연금 적립금 (퇴직·연금저축·IRP)', u.K(pen), '비상자금 제외 · 은퇴자산 포함', 'text-indigo-700') + cell('국민연금 예상 (부부 합산)', '월 ' + u.K(nps), '현재가치 · 순자산 제외', 'text-indigo-700') + cell('전세·월세 보증금', u.K(lease), '순자산 포함 · 비상자금 제외', 'text-amber-700') + '</div>'
         + '<div class="flex flex-wrap gap-2">' + TABS.map(function (t, i) {

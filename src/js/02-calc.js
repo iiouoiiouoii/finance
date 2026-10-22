@@ -248,11 +248,14 @@
      ========================================================= */
   C.investTotal = function () { return u.sum(db().investments, function (i) { return i.value; }); };
   C.reTotal = function () { return u.sum(db().realEstates, function (r) { return r.value; }); };
+  /* 내 집을 전세·월세로 놓고 받은 세입자 보증금 : 돌려줘야 할 돈이라 부채로 본다 (전세로 사는 집에는 없음) */
+  C.reTenantDep = function (r) { return r.tenure === 'JEONSE' ? 0 : u.num(r.tenantDeposit); };
+  C.reTenantTotal = function () { return u.sum(db().realEstates, C.reTenantDep); };
   C.netWorth = function (mo) {
     mo = mo || C.month();
     var liquid = C.assetsTotal(mo), inv = C.investTotal(), re = C.reTotal(), inst = C.instSummary(mo);
-    var assets = liquid + inv + re, debt = C.loansTotal(mo) + inst.remaining;
-    return { liquid: liquid, invest: inv, re: re, assets: assets, loans: C.loansTotal(mo), instRemaining: inst.remaining, debt: debt, nw: assets - debt };
+    var tenant = C.reTenantTotal(), assets = liquid + inv + re, debt = C.loansTotal(mo) + inst.remaining + tenant;
+    return { liquid: liquid, invest: inv, re: re, assets: assets, loans: C.loansTotal(mo), instRemaining: inst.remaining, tenantDep: tenant, debt: debt, nw: assets - debt };
   };
   C.health = function (mo) {
     mo = mo || C.month();
@@ -273,7 +276,7 @@
     var r = { J: { a: 0, d: 0 }, H: { a: 0, d: 0 }, W: { a: 0, d: 0 } }, add = function (o, k, v) { r[r[o] ? o : 'J'][k] += Number(v) || 0; };
     (db().assets || []).forEach(function (a) { add(a.owner, 'a', C.assetValue(a, mo)); });
     (db().investments || []).forEach(function (i) { add(i.owner, 'a', i.value); });
-    (db().realEstates || []).forEach(function (x) { add(x.owner, 'a', x.value); });
+    (db().realEstates || []).forEach(function (x) { add(x.owner, 'a', x.value); add(x.owner, 'd', C.reTenantDep(x)); });
     (db().liabilities || []).forEach(function (l) { add(l.owner, 'd', C.loanBalance(l, mo)); });
     (db().installments || []).forEach(function (i) { add(C.cardOwner(i.payment) || 'J', 'd', C.calcInst(i, mo).remaining); });
     return r;
