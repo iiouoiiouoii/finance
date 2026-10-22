@@ -1,7 +1,7 @@
 # 부부 가계부 (Financial Core v29 재구성판)
 
 웹에 나가는 파일은 이 저장소 맨 위의 **`index.html`** 입니다 (GitHub Pages). 직접 올릴 필요 없이 `publish.ps1` 이 빌드·커밋·푸시를 한 번에 합니다.
-(간편 로그인을 쓰면 `fc-login.json`도 같은 폴더에 올립니다.)
+데이터와 로그인 파일(`fc-login.json`)은 같은 저장소의 **`data` 브랜치**에 앱이 직접 올립니다. 처음 한 번 [처음 시작]에서 아이디·비밀번호·토큰을 넣으면 그 뒤로는 아이디·비밀번호만 씁니다.
 
 ## 폴더 구조
 
@@ -36,7 +36,7 @@ app/
 │     ├─ 25-report.js       월말 한 장 리포트
 │     ├─ 26-loan-advisor.js 대출 상환 판단 도우미
 │     ├─ 30-settings.js     설정
-│     ├─ 31-sync.js         GitHub 동기화 · 설정 코드 · 간편 로그인
+│     ├─ 31-sync.js         GitHub 동기화 · 아이디/비밀번호 로그인 · 처음 시작
 │     └─ 99-boot.js         시작
 └─ tools/
    ├─ serve.ps1           로컬 확인용 웹 서버
