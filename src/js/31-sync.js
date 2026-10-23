@@ -43,7 +43,9 @@
   /* ---------- GitHub API ---------- */
   async function gh(c, path, method, body, accept) {
     var h = { Authorization: 'Bearer ' + c.token, Accept: accept || 'application/vnd.github+json' }; if (body) h['Content-Type'] = 'application/json';
-    var r = await fetch('https://api.github.com/repos/' + c.repo + path, { method: method || 'GET', headers: h, body: body ? JSON.stringify(body) : undefined });
+    /* cache: 'no-store' : GitHub 응답은 브라우저가 60초 캐시한다. 캐시된 옛 sha 로 비교·업로드하면
+       '다른 기기의 변경' 오탐과 409(sha 불일치)가 난다. 항상 저장소의 지금 값을 읽는다 */
+    var r = await fetch('https://api.github.com/repos/' + c.repo + path, { method: method || 'GET', headers: h, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
     if (r.status === 404) return null;
     if (!r.ok) { var e = {}; try { e = await r.json(); } catch (x) {} throw new Error('GitHub ' + r.status + (e.message ? ': ' + e.message : '')); }
     return r;
@@ -83,9 +85,18 @@
           [{ label: '저장소 데이터 불러오기 (이 기기 변경은 이전 데이터로 보관)', value: 'pull' }, { label: '이 기기 데이터로 덮어쓰기', value: 'force' }, { label: '보류', value: 'hold' }]);
         if (ch === 'pull') { busy = false; return S.pull(true); }
         if (ch !== 'force') { setSt('warn'); return; }
+        force = true;   /* 덮어쓰기로 정함 : 아래 409 재시도에서 다시 묻지 않는다 */
       }
-      var at = Date.now(), body = await seal({ savedAt: at, db: App.db }, pass(c));
-      var j = await (await gh(c, '/contents/' + encodeURI(c.path), 'PUT', { message: 'backup ' + new Date(at).toISOString(), content: b64(enc.encode(body)), sha: rm ? rm.sha : undefined, branch: c.branch || undefined })).json();
+      var at = Date.now(), body = await seal({ savedAt: at, db: App.db }, pass(c)), j;
+      var put = function (sha) { return gh(c, '/contents/' + encodeURI(c.path), 'PUT', { message: 'backup ' + new Date(at).toISOString(), content: b64(enc.encode(body)), sha: sha, branch: c.branch || undefined }); };
+      try { j = await (await put(rm ? rm.sha : undefined)).json(); }
+      catch (e) {
+        /* 409 : 읽은 뒤 올리기 직전에 다른 기기가 먼저 저장함. 덮어쓰기로 정했으면 최신 sha 로 한 번 더, 아니면 다시 확인 */
+        if (!/GitHub 409/.test(e.message)) throw e;
+        var now = await remote(c);
+        if (!force) { busy = false; return await S.push(false); }
+        j = await (await put(now ? now.sha : undefined)).json();
+      }
       setMeta({ sha: j.content.sha, savedAt: at, dirty: false }); setSt('ok'); return true;
     } catch (e) { setSt('err', '<span class="text-red-600">' + u.esc(e.message) + '</span>'); u.toast('동기화 실패: ' + e.message, 'error'); }
     finally { busy = false; }
