@@ -53,33 +53,48 @@
   /* ---------- 2. 지금 할 일 : 눌러서 바로 처리할 수 있는 것만 ---------- */
   function todos(mo) {
     var out = [], cur = mo === u.nowM(), tx = C.monthTx(mo);
-    if (cur && !tx.some(function (t) { return t.type === 'EXPENSE'; })) out.push(['fa-paste', '이번 달 카드 내역이 아직 없어요', '카드 앱 이용내역을 복사해 붙여넣으면 한 번에 들어가요.', 'App.paste.open()', '넣기']);
+    if (cur && !tx.some(function (t) { return t.type === 'EXPENSE'; })) out.push(['fa-paste', '이번 달 카드 내역이 아직 없어요', '카드 앱 이용내역을 복사해 붙여넣으면 한 번에 들어가요.', 'App.paste.open()', '넣기', 'paste:' + mo]);
     var fx = (db().fixedExpenses || []).filter(function (f) { return !App.fixed.isApplied(f, mo); });
-    if (fx.length) out.push(['fa-rotate', '고정비 · 정기 수입 ' + fx.length + '건이 이번 달에 아직 안 들어갔어요', fx.slice(0, 3).map(function (f) { return f.name; }).join(', ') + (fx.length > 3 ? ' 외' : ''), 'App.ui.go(\'fixed\')', '확인']);
+    if (fx.length) out.push(['fa-rotate', '고정비 · 정기 수입 ' + fx.length + '건이 이번 달에 아직 안 들어갔어요', fx.slice(0, 3).map(function (f) { return f.name; }).join(', ') + (fx.length > 3 ? ' 외' : ''), 'App.ui.go(\'fixed\')', '확인', 'fixed:' + mo + ':' + fx.length]);
     /* 새 할부 : 예산에서 빠지는 만큼, 첫 청구 달에는 산 사실을 한 번 보여 준다 */
     (db().installments || []).filter(function (i) { return i.startMonth === mo && !C.instSettledOn(i); }).forEach(function (i) {
-      out.push(['fa-cart-shopping', '새 할부: ' + i.title + ' ' + won(i.total) + ' (' + i.months + '개월)', '매달 ' + won(C.calcInst(i, mo).thisCharge) + '씩 나가요 · 예산 대신 고정비처럼 따로 묶어요', 'App.ui.go(\'fixed\')', '보기']);
+      out.push(['fa-cart-shopping', '새 할부: ' + i.title + ' ' + won(i.total) + ' (' + i.months + '개월)', '매달 ' + won(C.calcInst(i, mo).thisCharge) + '씩 나가요 · 예산 대신 고정비처럼 따로 묶어요', 'App.ui.go(\'fixed\')', '보기', 'newinst:' + i.id]);
     });
-    App.budget.alerts(mo).filter(function (a) { return a.lv === 'over'; }).slice(0, 2).forEach(function (a) { out.push(['fa-triangle-exclamation', a.c + ' 예산을 ' + won(a.s - a.b) + ' 넘었어요', '예산 ' + won(a.b) + ' · 쓴 돈 ' + won(a.s), 'App.ui.go(\'budget\')', '예산 보기']); });
-    if (cur) { var ng = App.weekly.nag(); if (ng.nag) out.push(['fa-gauge-high', '이번 주 점검을 아직 안 했어요', '카드 앱의 이번 달 이용금액만 옮겨 적으면 돼요. 1분이면 끝나요.', 'App.weekly.open()', '점검하기']); }
+    App.budget.alerts(mo).filter(function (a) { return a.lv === 'over'; }).slice(0, 2).forEach(function (a) { out.push(['fa-triangle-exclamation', a.c + ' 예산을 ' + won(a.s - a.b) + ' 넘었어요', '예산 ' + won(a.b) + ' · 쓴 돈 ' + won(a.s), 'App.ui.go(\'budget\')', '예산 보기', 'budget:' + mo + ':' + a.c]); });
+    if (cur) { var ng = App.weekly.nag(); if (ng.nag) out.push(['fa-gauge-high', '이번 주 점검을 아직 안 했어요', '카드 앱의 이번 달 이용금액만 옮겨 적으면 돼요. 1분이면 끝나요.', 'App.weekly.open()', '점검하기', 'weekly:' + weekKey()]); }
     (db().realEstates || []).forEach(function (re) {
       if (re.tenure !== 'JEONSE') return; var d = App.re.leaseLeft(re);
-      if (d != null && d <= 183) out.push(['fa-key', re.name + ' 전세 만기 ' + (d < 0 ? '지남' : 'D-' + d), d < 0 ? '갱신했다면 만기일을 고쳐 주세요.' : '갱신하거나 이사·보증금 반환을 준비할 때예요.', 'App.ui.go(\'assets\')', '보기']);
+      if (d != null && d <= 183) out.push(['fa-key', re.name + ' 전세 만기 ' + (d < 0 ? '지남' : 'D-' + d), d < 0 ? '갱신했다면 만기일을 고쳐 주세요.' : '갱신하거나 이사·보증금 반환을 준비할 때예요.', 'App.ui.go(\'assets\')', '보기', 'lease:' + re.id + ':' + re.leaseEnd]);
     });
     /* 카드값 : 결제일 3일 전부터, 아직 안 냈을 때 */
     if (cur) App.cards.upcoming().forEach(function (x) {
       if (x.b.paid || x.b.left > 3 || x.b.left < 0) return;
-      out.push(['fa-credit-card', x.c.name + ' 카드값 ' + (x.b.left === 0 ? '오늘' : x.b.left + '일 뒤') + ' 나가요', '약 ' + won(x.b.total) + (x.c.payAccount ? ' · ' + x.c.payAccount + ' 잔액을 확인하세요' : ' · 결제 계좌 잔액을 확인하세요'), 'App.ui.go(\'cards\')', '보기']);
+      out.push(['fa-credit-card', x.c.name + ' 카드값 ' + (x.b.left === 0 ? '오늘' : x.b.left + '일 뒤') + ' 나가요', '약 ' + won(x.b.total) + (x.c.payAccount ? ' · ' + x.c.payAccount + ' 잔액을 확인하세요' : ' · 결제 계좌 잔액을 확인하세요'), 'App.ui.go(\'cards\')', '보기', 'card:' + x.c.id + ':' + x.b.P]);
     });
-    if (cur && App.sync.backupDue()) out.push(['fa-cloud-arrow-up', '데이터가 이 기기에만 있어요', '로그인해 두면 휴대폰 · PC에서 같이 보고, 기기를 바꿔도 안전해요.', 'App.sync.showLogin()', '로그인']);
+    if (cur && App.sync.backupDue()) out.push(['fa-cloud-arrow-up', '데이터가 이 기기에만 있어요', '로그인해 두면 휴대폰 · PC에서 같이 보고, 기기를 바꿔도 안전해요.', 'App.sync.showLogin()', '로그인', 'backup:' + mo]);
     return out;
   }
+  /* 이번 주(월요일 시작) 표시 : 주간 점검 할 일은 주마다 새로 */
+  function weekKey() { var d = new Date(); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.getFullYear() + '-' + u.pad(d.getMonth() + 1) + '-' + u.pad(d.getDate()); }
+  function doneMap() { var ui = db().ui || (db().ui = {}); if (!ui.todoDone || typeof ui.todoDone !== 'object') ui.todoDone = {}; return ui.todoDone; }
+  /* 끝냈어요 : 이 할 일을 숨긴다 (기기끼리 같이 동기화). 90일 지난 기록은 정리 */
+  D.done = function (key) {
+    var m = doneMap(), cut = Date.now() - 90 * 864e5; m[key] = Date.now();
+    Object.keys(m).forEach(function (k) { if (m[k] < cut) delete m[k]; });
+    App.store.save(); u.toast('할 일을 끝냈어요.');
+  };
+  D.restore = function () {
+    var m = doneMap(), keys = todos(App.state.month).map(function (t) { return t[5]; });
+    keys.forEach(function (k) { delete m[k]; }); App.store.save();
+  };
   function todoHtml(mo) {
-    var L = todos(mo);
-    return '<div class="card" style="order:2"><div class="card-h"><h3>지금 할 일' + (L.length ? ' <span class="text-accent">' + L.length + '</span>' : '') + '</h3></div>'
+    var all = todos(mo), m = doneMap(), L = all.filter(function (t) { return !m[t[5]]; }), hid = all.length - L.length;
+    return '<div class="card" style="order:2"><div class="card-h"><h3>지금 할 일' + (L.length ? ' <span class="text-accent">' + L.length + '</span>' : '') + '</h3>'
+      + (hid ? '<button onclick="App.dash.restore()" class="more">끝낸 일 ' + hid + '개 다시 보기</button>' : '') + '</div>'
       + (L.length ? L.map(function (t) {
-        return '<button onclick="' + t[3] + '" class="todo"><span class="dotc bg-white text-slate-500"><i class="fa-solid ' + t[0] + '"></i></span><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><span class="go">' + t[4] + '</span></button>';
-      }).join('') : '<div class="empty">지금은 할 일이 없어요.</div>') + '</div>';
+        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main"><span class="dotc bg-white text-slate-500"><i class="fa-solid ' + t[0] + '"></i></span><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><span class="go">' + t[4] + '</span></button>'
+          + '<button onclick="App.dash.done(\'' + u.esc(t[5]).replace(/'/g, '') + '\')" class="todo-x" title="끝냈어요 (숨기기)" aria-label="끝냈어요"><i class="fa-regular fa-circle-check"></i></button></div>';
+      }).join('') : '<div class="empty">' + (hid ? '할 일을 모두 끝냈어요.' : '지금은 할 일이 없어요.') + '</div>') + '</div>';
   }
 
   /* ---------- 3. 이번 달 수입 · 지출 · 남은 돈 ---------- */

@@ -295,3 +295,9 @@ button.bg-slate-900.text-white:hover, button.bg-slate-800.text-white:hover { bac
 
 /* 넓은 표는 판 안에서 옆으로 밀어 보기 (화면 전체가 옆으로 밀리지 않게) */
 #content .bg-white:has(> table), #content .card:has(> table) { overflow-x: auto; }
+
+/* ---------- 지금 할 일 : 왼쪽은 바로 처리, 오른쪽 체크는 끝냈어요(숨기기) ---------- */
+.todo { padding: 0; gap: 0; }
+.todo-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: .8rem; padding: .8rem .4rem .8rem .9rem; text-align: left; border-radius: 14px 0 0 14px; }
+.todo-x { width: 46px; align-self: stretch; flex-shrink: 0; color: #B0B8C1; font-size: 21px; border-radius: 0 14px 14px 0; }
+.todo-x:hover { color: #0B7A57; background: #E6F4EE; }
