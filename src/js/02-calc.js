@@ -43,12 +43,25 @@
     var startMo = S <= +card.payDay ? prev : u.addM(P, -2), endMo = u.addM(startMo, 1);
     return { from: d(startMo, S), to: d(endMo, S - 1) };
   };
-  /* 그 달 청구 예상 : 이용기간 안의 이 카드 일시불 지출 + 그 달 할부 청구분 */
+  /* 할부 회차별 청구 날짜 : 각 회차를 '그 달 청구일(구매일)'에 쓴 돈처럼 본다 → 일시불과 똑같이 이용기간으로 묶는다.
+     완납(전액 선결제) 처리한 할부는 완납한 날 이후 회차를 뺀다. 부분 선결제로 줄어든 회차는 줄어든 금액으로. */
+  C.instSettledOn = function (i) { var pre = i.prepayments || []; return i.closedMonth && pre.length ? pre.map(function (p) { return String(p.date || ''); }).sort().pop() || null : null; };
+  C.instCharges = function (i) {
+    var bd = Math.min(28, +i.billingDay || 15);
+    return C.instSchedule(i, true).filter(function (r) { return r.charge > 0; })
+      .map(function (r) { return { date: r.month + '-' + u.pad(bd), amount: r.charge + r.interest, round: r.round }; });
+  };
+  /* 그 달 청구 예상 : 이용기간 안의 이 카드 일시불 지출 + 이용기간 안에 걸린 할부 회차 */
   C.cardBill = function (card, P) {
-    var per = C.cardPeriod(card, P), mine = function (pay) { var c = C.cardOf(pay); return c && c.id === card.id; };
-    var spend = u.sum((db().transactions || []).filter(function (t) { return t.type === 'EXPENSE' && !t.installmentId && t.date >= per.from && t.date <= per.to && mine(t.payment); }), function (t) { return t.amount; });
-    var inst = u.sum((db().installments || []).filter(function (i) { return mine(i.payment); }), function (i) { return C.calcInst(i, P).thisCharge; });
-    return { P: P, period: per, payDate: C.cardPayDate(card, P), spend: spend, inst: inst, total: spend + inst, open: per.to >= u.today() };
+    var per = C.cardPeriod(card, P), mine = function (pay) { var c = C.cardOf(pay); return c && c.id === card.id; }, inPer = function (d) { return d >= per.from && d <= per.to; };
+    var spend = u.sum((db().transactions || []).filter(function (t) { return t.type === 'EXPENSE' && !t.installmentId && inPer(t.date) && mine(t.payment); }), function (t) { return t.amount; });
+    var items = [], payDate = C.cardPayDate(card, P);
+    (db().installments || []).filter(function (i) { return mine(i.payment); }).forEach(function (i) {
+      var done = C.instSettledOn(i); if (done && payDate >= done) return;   /* 완납 처리한 뒤에 나가는 카드값에는 넣지 않는다 */
+      C.instCharges(i).forEach(function (x) { if (inPer(x.date)) items.push({ title: i.title, round: x.round, months: i.months, amount: x.amount }); });
+    });
+    var inst = u.sum(items, function (x) { return x.amount; });
+    return { P: P, period: per, payDate: C.cardPayDate(card, P), spend: spend, inst: inst, instItems: items, total: spend + inst, open: per.to >= u.today() };
   };
   /* 냈는지 : 직접 표시했거나, 결제일 앞뒤 7일 안에 이 카드 이름(첫 낱말)이 적힌 이체 · 지출이 계좌에서 나갔으면 */
   C.cardPaid = function (card, P) {
