@@ -7,7 +7,12 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="가계부">
-  <!-- 우리집 가계부 · build 2026-10-23 09:25 · 소스: app/src -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- 홈 화면에 추가할 때 쓰는 아이콘 · 웹앱 설정 (저장소 맨 위에 있는 파일) -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <!-- 우리집 가계부 · build 2026-10-23 09:29 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -3109,7 +3114,7 @@ window.App = window.App || {};
         var pill = b.paid ? '<span class="pill ok">냈어요</span>' : soon ? '<span class="pill warn">' + (b.left <= 0 ? '오늘' : 'D-' + b.left) + '</span>' : '<span class="pill mute">D-' + b.left + '</span>';
         return '<div class="row items-start"><div class="t"><b>' + u.esc(c.name) + ' <span class="text-[13px] font-normal text-slate-500">· ' + u.esc(c.owner || '') + '</span></b>'
           + '<small>' + md(b.payDate) + ' 결제 · ' + md(b.period.from) + '~' + md(b.period.to) + ' 사용분' + (b.open ? ' (아직 쓰는 중)' : '') + (c.payAccount ? ' · ' + u.esc(c.payAccount) : '') + '</small>'
-          + (b.inst ? '<small>일시불 ' + u.n0(b.spend) + '원 + 할부 ' + u.n0(b.inst) + '원 (' + b.instItems.map(function (x) { return u.esc(x.title) + ' ' + x.round + '/' + x.months + '회 ' + u.n0(x.amount) + '원'; }).join(', ') + ')</small>' : '')
+          + '<small>일시불 <span class="font-semibold text-slate-700">' + u.n0(b.spend) + '원</span> · 할부 <span class="font-semibold text-slate-700">' + u.n0(b.inst) + '원</span></small>'
           + (prev.total || prevPaid ? '<small>지난달(' + md(prev.payDate) + ') ' + u.n0(prevPaid && prevPaid.amount ? prevPaid.amount : prev.total) + '원 · ' + (prevPaid ? '<span class="text-accent">냄' + (prevPaid.by === 'auto' ? ' (계좌 내역 확인)' : '') + '</span>' : '<span class="text-amber-700">낸 기록 없음</span> <button onclick="App.cards.markPaid(' + c.id + ',\'' + prevP + '\',true)" class="more">낸 걸로 표시</button>') + '</small>' : '')
           + '</div><div class="text-right shrink-0"><div class="v">' + (b.open ? '약 ' : '') + u.n0(b.total) + '원</div><div class="mt-1">' + pill + '</div>'
           + (b.paid ? (b.paid.by === 'mark' ? '<button onclick="App.cards.markPaid(' + c.id + ',\'' + b.P + '\',false)" class="text-[12px] text-slate-400 mt-1">표시 취소</button>' : '') : '<button onclick="App.cards.markPaid(' + c.id + ',\'' + b.P + '\',true)" class="text-[13px] font-semibold text-accent mt-1">낸 걸로 표시</button>') + '</div></div>';

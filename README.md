@@ -10,6 +10,7 @@ app/
 ├─ build.ps1            src 를 합쳐 index.html 을 만든다 (바탕화면 가계부\index.html 도 갱신)
 ├─ publish.ps1          빌드 → 커밋 → GitHub 푸시 한 번에
 ├─ index.html           ← 웹(GitHub Pages)에 나가는 결과물
+├─ manifest.webmanifest · icon-180/192/512.png   휴대폰 홈 화면에 추가할 때의 이름 · 아이콘 (직접 고친다)
 ├─ src/
 │  ├─ index.html        화면 뼈대 (사이드바 · 헤더 · 하단 바)
 │  ├─ styles.css        모바일 모드 · 인쇄 등 공통 스타일
