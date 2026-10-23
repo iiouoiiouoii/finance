@@ -62,6 +62,11 @@
       if (re.tenure !== 'JEONSE') return; var d = App.re.leaseLeft(re);
       if (d != null && d <= 183) out.push(['fa-key', re.name + ' 전세 만기 ' + (d < 0 ? '지남' : 'D-' + d), d < 0 ? '갱신했다면 만기일을 고쳐 주세요.' : '갱신하거나 이사·보증금 반환을 준비할 때예요.', 'App.ui.go(\'assets\')', '보기']);
     });
+    /* 카드값 : 결제일 3일 전부터, 아직 안 냈을 때 */
+    if (cur) App.cards.upcoming().forEach(function (x) {
+      if (x.b.paid || x.b.left > 3 || x.b.left < 0) return;
+      out.push(['fa-credit-card', x.c.name + ' 카드값 ' + (x.b.left === 0 ? '오늘' : x.b.left + '일 뒤') + ' 나가요', '약 ' + won(x.b.total) + (x.c.payAccount ? ' · ' + x.c.payAccount + ' 잔액을 확인하세요' : ' · 결제 계좌 잔액을 확인하세요'), 'App.ui.go(\'cards\')', '보기']);
+    });
     if (cur && App.sync.backupDue()) out.push(['fa-cloud-arrow-up', '데이터가 이 기기에만 있어요', '로그인해 두면 휴대폰 · PC에서 같이 보고, 기기를 바꿔도 안전해요.', 'App.sync.showLogin()', '로그인']);
     return out;
   }

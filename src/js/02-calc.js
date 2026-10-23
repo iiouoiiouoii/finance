@@ -28,6 +28,45 @@
     var p = String(payment || '');
     return (db().cards || []).filter(function (c) { return c.name && p.indexOf(c.name) >= 0; })[0];
   };
+  /* =========================================================
+     카드 결제일 · 이용기간 · 청구 예상액
+     - 이용기간 시작일 기본값은 대부분 카드사의 표준 (결제일 14일 → 전월 1일~말일, 25일 → 전월 12일~당월 11일, 1일 → 전전월 18일~전월 17일)
+     - P : 결제일이 있는 달(YYYY-MM)
+     ========================================================= */
+  C.cardStartDefault = function (payDay) { var o = (+payDay || 14) - 13; return o >= 1 ? o : 30 + o; };
+  C.cardStart = function (card) { return +card.periodStart || C.cardStartDefault(card.payDay); };
+  C.isCredit = function (card) { return card && card.type !== '체크카드' && +card.payDay > 0; };
+  C.cardPayDate = function (card, P) { return P + '-' + u.pad(Math.min(+card.payDay, u.dim(P))); };
+  C.cardPeriod = function (card, P) {
+    var S = C.cardStart(card), d = function (mo, day) { return mo + '-' + u.pad(Math.min(day, u.dim(mo))); }, prev = u.addM(P, -1);
+    if (S === 1) return { from: d(prev, 1), to: d(prev, 31) };
+    var startMo = S <= +card.payDay ? prev : u.addM(P, -2), endMo = u.addM(startMo, 1);
+    return { from: d(startMo, S), to: d(endMo, S - 1) };
+  };
+  /* 그 달 청구 예상 : 이용기간 안의 이 카드 일시불 지출 + 그 달 할부 청구분 */
+  C.cardBill = function (card, P) {
+    var per = C.cardPeriod(card, P), mine = function (pay) { var c = C.cardOf(pay); return c && c.id === card.id; };
+    var spend = u.sum((db().transactions || []).filter(function (t) { return t.type === 'EXPENSE' && !t.installmentId && t.date >= per.from && t.date <= per.to && mine(t.payment); }), function (t) { return t.amount; });
+    var inst = u.sum((db().installments || []).filter(function (i) { return mine(i.payment); }), function (i) { return C.calcInst(i, P).thisCharge; });
+    return { P: P, period: per, payDate: C.cardPayDate(card, P), spend: spend, inst: inst, total: spend + inst, open: per.to >= u.today() };
+  };
+  /* 냈는지 : 직접 표시했거나, 결제일 앞뒤 7일 안에 이 카드 이름(첫 낱말)이 적힌 이체 · 지출이 계좌에서 나갔으면 */
+  C.cardPaid = function (card, P) {
+    var mark = (card.paid || {})[P]; if (mark) return { by: 'mark', amount: mark.amount || null };
+    var pd = new Date(C.cardPayDate(card, P) + 'T00:00:00'), word = String(card.name || '').split(/\s+/)[0].replace(/^KB/i, '') || card.name;
+    var t = (db().transactions || []).filter(function (x) {
+      if (x.type === 'INCOME' || C.cardOf(x.payment) || !x.memo || String(x.memo).indexOf(word) < 0 || !/카드|결제|대금/.test(x.memo + ' ' + (x.subcategory || ''))) return false;
+      return Math.abs(new Date(x.date + 'T00:00:00') - pd) <= 7 * 864e5;
+    })[0];
+    return t ? { by: 'auto', amount: t.amount, date: t.date } : null;
+  };
+  /* 다가오는 결제 : 오늘이 결제일을 지났으면 다음 달 결제 */
+  C.cardNext = function (card) {
+    var now = u.nowM(), P = u.today() <= C.cardPayDate(card, now) ? now : u.addM(now, 1);
+    var b = C.cardBill(card, P); b.left = u.daysBetween(u.today(), b.payDate); b.paid = C.cardPaid(card, P);
+    return b;
+  };
+
   /* 결제수단의 주인 (카드 소유자, 없으면 "(이름)" 꼬리표) */
   C.cardOwner = function (payment) {
     var c = C.cardOf(payment);
