@@ -56,6 +56,10 @@
     if (cur && !tx.some(function (t) { return t.type === 'EXPENSE'; })) out.push(['fa-paste', '이번 달 카드 내역이 아직 없어요', '카드 앱 이용내역을 복사해 붙여넣으면 한 번에 들어가요.', 'App.paste.open()', '넣기']);
     var fx = (db().fixedExpenses || []).filter(function (f) { return !App.fixed.isApplied(f, mo); });
     if (fx.length) out.push(['fa-rotate', '고정비 · 정기 수입 ' + fx.length + '건이 이번 달에 아직 안 들어갔어요', fx.slice(0, 3).map(function (f) { return f.name; }).join(', ') + (fx.length > 3 ? ' 외' : ''), 'App.ui.go(\'fixed\')', '확인']);
+    /* 새 할부 : 예산에서 빠지는 만큼, 첫 청구 달에는 산 사실을 한 번 보여 준다 */
+    (db().installments || []).filter(function (i) { return i.startMonth === mo && !C.instSettledOn(i); }).forEach(function (i) {
+      out.push(['fa-cart-shopping', '새 할부: ' + i.title + ' ' + won(i.total) + ' (' + i.months + '개월)', '매달 ' + won(C.calcInst(i, mo).thisCharge) + '씩 나가요 · 예산 대신 고정비처럼 따로 묶어요', 'App.ui.go(\'fixed\')', '보기']);
+    });
     App.budget.alerts(mo).filter(function (a) { return a.lv === 'over'; }).slice(0, 2).forEach(function (a) { out.push(['fa-triangle-exclamation', a.c + ' 예산을 ' + won(a.s - a.b) + ' 넘었어요', '예산 ' + won(a.b) + ' · 쓴 돈 ' + won(a.s), 'App.ui.go(\'budget\')', '예산 보기']); });
     if (cur) { var ng = App.weekly.nag(); if (ng.nag) out.push(['fa-gauge-high', '이번 주 점검을 아직 안 했어요', '카드 앱의 이번 달 이용금액만 옮겨 적으면 돼요. 1분이면 끝나요.', 'App.weekly.open()', '점검하기']); }
     (db().realEstates || []).forEach(function (re) {
@@ -91,7 +95,7 @@
   function catHtml(mo) {
     var sp = {}, tot = 0, b = C.budgetFor(mo), color = {};
     (db().categories || []).forEach(function (c) { color[c.name] = c.color; });
-    C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') { sp[t.category] = (sp[t.category] || 0) + t.amount; tot += t.amount; } });
+    var bs = C.budgetSpend(mo); sp = bs.byCat; tot = bs.total;
     var keys = Object.keys(sp).sort(function (a, c) { return sp[c] - sp[a]; });
     var body = keys.length ? keys.slice(0, 7).map(function (k) {
       var bud = b[k] || 0, pc = bud ? sp[k] / bud * 100 : 0;
@@ -99,7 +103,8 @@
         + '<div class="t"><b>' + u.esc(k) + '</b><small>' + (bud ? '예산 ' + won(bud) + ' 중 <span class="' + (pc > 100 ? 'text-red-600 font-semibold' : '') + '">' + Math.round(pc) + '%</span>' : '지출의 ' + Math.round(sp[k] / tot * 100) + '%') + '</small>'
         + (bud ? '<div class="track mt-1.5" style="height:5px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:' + (pc > 100 ? '#E5484D' : pc >= 80 ? '#E8A10A' : (color[k] || '#0B7A57')) + '"></div></div>' : '') + '</div>'
         + '<div class="v">' + won(sp[k]) + '</div></div>';
-    }).join('') : '<div class="empty">이번 달 지출 기록이 없어요.</div>';
+    }).join('') : (bs.inst ? '' : '<div class="empty">이번 달 지출 기록이 없어요.</div>');
+    if (bs.inst) body += '<div class="row"><span class="dotc bg-slate-100 text-slate-500"><i class="fa-solid fa-rotate text-[12px]"></i></span><div class="t"><b>카드 할부</b><small>이미 정해진 돈이라 예산과 남은 생활비에서는 뺐어요</small></div><div class="v text-slate-500">' + won(bs.inst) + '</div></div>';
     return '<div class="card" style="order:4"><div class="card-h"><h3>어디에 썼나</h3><button onclick="App.ui.go(\'budget\')" class="more">예산</button></div>' + body + '</div>';
   }
 

@@ -20,7 +20,7 @@
   function srcEst(mo, src, list, varOnly) {
     var actual = 0, L = 0, n = 0;
     C.monthTx(mo).forEach(function (t) {
-      if (t.type !== 'EXPENSE' || (varOnly && C.FIXEDCAT.test(t.category || '')) || srcOf(t) !== src) return;
+      if (t.type !== 'EXPENSE' || (varOnly && (C.FIXEDCAT.test(t.category || '') || C.isInstTx(t))) || srcOf(t) !== src) return;
       actual += Number(t.amount) || 0; n++; if (dayOf(t.date) > L) L = dayOf(t.date);
     });
     var pts = [{ d: 0, v: 0 }];

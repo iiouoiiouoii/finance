@@ -4,7 +4,7 @@
   var u = App.u, C = App.calc, RP = App.report = {};
   var db = function () { return App.db; };
 
-  function catSums(mo) { var s = {}; C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') s[t.category] = (s[t.category] || 0) + t.amount; }); return s; }
+  function catSums(mo) { return C.budgetSpend(mo).byCat; }   /* 할부 회차 제외 (예산과 같은 기준) */
 
   /* 한 달 데이터를 모은다 (화면 · 텍스트가 같이 쓴다) */
   RP.build = function (mo) {

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-10-23 09:29 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-10-23 09:56 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -957,6 +957,18 @@ window.App = window.App || {};
      ========================================================= */
   C.monthTx = function (mo) { mo = mo || C.month(); return (db().transactions || []).filter(function (t) { return t.date && String(t.date).indexOf(mo) === 0; }); };
   C.sumType = function (list, type) { return u.sum(list.filter(function (t) { return t.type === type; }), function (t) { return t.amount; }); };
+  /* 예산에 들어가는 지출 : 할부 회차(완납 포함)는 고정비처럼 따로 묶어 분류 예산 · 남은 생활비에서 뺀다.
+     나간 돈 합계 · 리포트의 수입/지출 · 카드값 예상에는 그대로 들어간다. */
+  C.isInstTx = function (t) { return !!(t && t.installmentId); };
+  C.budgetSpend = function (mo) {
+    var r = { byCat: {}, total: 0, inst: 0 };
+    C.monthTx(mo).forEach(function (t) {
+      if (t.type !== 'EXPENSE') return;
+      if (C.isInstTx(t)) { r.inst += t.amount; return; }
+      r.byCat[t.category] = (r.byCat[t.category] || 0) + t.amount; r.total += t.amount;
+    });
+    return r;
+  };
   C.income = function (mo) { return C.sumType(C.monthTx(mo), 'INCOME'); };
   C.expense = function (mo) { return C.sumType(C.monthTx(mo), 'EXPENSE'); };
   C.expenseByMonth = function () {
@@ -3947,7 +3959,7 @@ window.App = window.App || {};
   B.alerts = function (mo) {
     mo = mo || App.state.month;
     var warn = +(db().settings.budgetWarn) || 80, b = C.budgetFor(mo), sp = {}, out = [], d = new Date(), cur = mo === u.nowM(), day = d.getDate(), dim = u.dim(mo);
-    C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') sp[t.category] = (sp[t.category] || 0) + t.amount; });
+    sp = C.budgetSpend(mo).byCat;   /* 할부 회차는 예산 밖 (고정비처럼) */
     Object.keys(b).forEach(function (c) {
       var bud = b[c]; if (!(bud > 0)) return;
       var s = sp[c] || 0, pc = s / bud * 100, lv = pc >= 100 ? 'over' : pc >= warn ? 'warn' : null;
@@ -4025,7 +4037,7 @@ window.App = window.App || {};
     u.confirm('이 달 전용 예산 해제', mo + '의 전용 예산을 지우고 기본 예산을 적용합니다.', function () { delete db().budgetsByMonth[mo]; App.store.save(); u.toast(mo + '에 기본 예산을 적용했습니다.'); });
   };
   B.recommend = function () {
-    var mo = App.state.month, prev = u.addM(mo, -1), tx = C.monthTx(prev).filter(function (t) { return t.type === 'EXPENSE'; });
+    var mo = App.state.month, prev = u.addM(mo, -1), tx = C.monthTx(prev).filter(function (t) { return t.type === 'EXPENSE' && !C.isInstTx(t); });
     if (!tx.length) { u.toast('지난달(' + prev + ') 지출 데이터가 없습니다.', 'warning'); return; }
     var ch = {};
     db().categories.forEach(function (c) { var s = u.sum(tx.filter(function (t) { return t.category === c.name; }), function (t) { return t.amount; }); if (s > 0) ch[c.name] = Math.ceil(s * 1.05 / 1000) * 1000; });
@@ -4043,7 +4055,7 @@ window.App = window.App || {};
     render: function (el) {
       var mo = App.state.month, bud = C.budgetFor(mo), ov = C.monthOverride(mo), n = Object.keys(ov).length;
       var T = C.savingTarget(mo), base = C.incomeBase(mo).base, avail = base - T, tot = C.budgetTotal(mo), over = tot - avail;
-      var spent = {}, spentAll = 0; C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') { spent[t.category] = (spent[t.category] || 0) + t.amount; spentAll += t.amount; } });
+      var bs = C.budgetSpend(mo), spent = bs.byCat, spentAll = bs.total;
       var left = tot - spentAll, pc = tot ? Math.min(100, spentAll / tot * 100) : 0, m = parseInt(mo.slice(5), 10);
       var won = function (v) { return u.n0(v) + '원'; };
       var plan = !T ? '<p class="text-[14px] text-slate-600 mt-4 leading-relaxed">저축 목표를 먼저 정해 두면, 예산이 <b>쓸 수 있는 돈</b> 안에 들어오는지 알려 드려요. <button onclick="App.ui.go(\'goals\')" class="more">저축 목표 정하기</button></p>'
@@ -4060,6 +4072,7 @@ window.App = window.App || {};
         + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub mt-1">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
           + '<div class="track mt-4"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
           : '<div class="big mt-1">아직 예산이 없어요</div><p class="sub mt-2">아래 항목에 금액을 넣거나, 지난달 쓴 만큼으로 한 번에 채울 수 있어요.</p>')
+        + (bs.inst ? '<p class="text-[13px] text-slate-500 mt-3">카드 할부 ' + won(bs.inst) + '은 이미 정해진 돈이라 고정비처럼 따로 묶고, 예산에는 넣지 않았어요.</p>' : '')
         + plan + '</div>'
         + '<div class="card"><div class="card-h"><h3>항목별 예산</h3><button onclick="App.budget.recommend()" class="btn sec" style="height:38px"><i class="fa-solid fa-wand-magic-sparkles"></i>지난달 쓴 만큼 채우기</button></div>'
         + '<p class="text-[13px] text-slate-500 -mt-2 mb-2">금액을 고치면 이 달만 바꿀지, 이 달부터 계속 쓸지 물어봐요.' + (n ? ' 지금 이 달만 다르게 정한 항목이 ' + n + '개 있어요. <button onclick="App.budget.resetMonth()" class="more">기본 예산으로 되돌리기</button>' : '') + '</p>'
@@ -4128,6 +4141,10 @@ window.App = window.App || {};
     if (cur && !tx.some(function (t) { return t.type === 'EXPENSE'; })) out.push(['fa-paste', '이번 달 카드 내역이 아직 없어요', '카드 앱 이용내역을 복사해 붙여넣으면 한 번에 들어가요.', 'App.paste.open()', '넣기']);
     var fx = (db().fixedExpenses || []).filter(function (f) { return !App.fixed.isApplied(f, mo); });
     if (fx.length) out.push(['fa-rotate', '고정비 · 정기 수입 ' + fx.length + '건이 이번 달에 아직 안 들어갔어요', fx.slice(0, 3).map(function (f) { return f.name; }).join(', ') + (fx.length > 3 ? ' 외' : ''), 'App.ui.go(\'fixed\')', '확인']);
+    /* 새 할부 : 예산에서 빠지는 만큼, 첫 청구 달에는 산 사실을 한 번 보여 준다 */
+    (db().installments || []).filter(function (i) { return i.startMonth === mo && !C.instSettledOn(i); }).forEach(function (i) {
+      out.push(['fa-cart-shopping', '새 할부: ' + i.title + ' ' + won(i.total) + ' (' + i.months + '개월)', '매달 ' + won(C.calcInst(i, mo).thisCharge) + '씩 나가요 · 예산 대신 고정비처럼 따로 묶어요', 'App.ui.go(\'fixed\')', '보기']);
+    });
     App.budget.alerts(mo).filter(function (a) { return a.lv === 'over'; }).slice(0, 2).forEach(function (a) { out.push(['fa-triangle-exclamation', a.c + ' 예산을 ' + won(a.s - a.b) + ' 넘었어요', '예산 ' + won(a.b) + ' · 쓴 돈 ' + won(a.s), 'App.ui.go(\'budget\')', '예산 보기']); });
     if (cur) { var ng = App.weekly.nag(); if (ng.nag) out.push(['fa-gauge-high', '이번 주 점검을 아직 안 했어요', '카드 앱의 이번 달 이용금액만 옮겨 적으면 돼요. 1분이면 끝나요.', 'App.weekly.open()', '점검하기']); }
     (db().realEstates || []).forEach(function (re) {
@@ -4163,7 +4180,7 @@ window.App = window.App || {};
   function catHtml(mo) {
     var sp = {}, tot = 0, b = C.budgetFor(mo), color = {};
     (db().categories || []).forEach(function (c) { color[c.name] = c.color; });
-    C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') { sp[t.category] = (sp[t.category] || 0) + t.amount; tot += t.amount; } });
+    var bs = C.budgetSpend(mo); sp = bs.byCat; tot = bs.total;
     var keys = Object.keys(sp).sort(function (a, c) { return sp[c] - sp[a]; });
     var body = keys.length ? keys.slice(0, 7).map(function (k) {
       var bud = b[k] || 0, pc = bud ? sp[k] / bud * 100 : 0;
@@ -4171,7 +4188,8 @@ window.App = window.App || {};
         + '<div class="t"><b>' + u.esc(k) + '</b><small>' + (bud ? '예산 ' + won(bud) + ' 중 <span class="' + (pc > 100 ? 'text-red-600 font-semibold' : '') + '">' + Math.round(pc) + '%</span>' : '지출의 ' + Math.round(sp[k] / tot * 100) + '%') + '</small>'
         + (bud ? '<div class="track mt-1.5" style="height:5px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:' + (pc > 100 ? '#E5484D' : pc >= 80 ? '#E8A10A' : (color[k] || '#0B7A57')) + '"></div></div>' : '') + '</div>'
         + '<div class="v">' + won(sp[k]) + '</div></div>';
-    }).join('') : '<div class="empty">이번 달 지출 기록이 없어요.</div>';
+    }).join('') : (bs.inst ? '' : '<div class="empty">이번 달 지출 기록이 없어요.</div>');
+    if (bs.inst) body += '<div class="row"><span class="dotc bg-slate-100 text-slate-500"><i class="fa-solid fa-rotate text-[12px]"></i></span><div class="t"><b>카드 할부</b><small>이미 정해진 돈이라 예산과 남은 생활비에서는 뺐어요</small></div><div class="v text-slate-500">' + won(bs.inst) + '</div></div>';
     return '<div class="card" style="order:4"><div class="card-h"><h3>어디에 썼나</h3><button onclick="App.ui.go(\'budget\')" class="more">예산</button></div>' + body + '</div>';
   }
 
@@ -4684,7 +4702,7 @@ window.App = window.App || {};
   function srcEst(mo, src, list, varOnly) {
     var actual = 0, L = 0, n = 0;
     C.monthTx(mo).forEach(function (t) {
-      if (t.type !== 'EXPENSE' || (varOnly && C.FIXEDCAT.test(t.category || '')) || srcOf(t) !== src) return;
+      if (t.type !== 'EXPENSE' || (varOnly && (C.FIXEDCAT.test(t.category || '') || C.isInstTx(t))) || srcOf(t) !== src) return;
       actual += Number(t.amount) || 0; n++; if (dayOf(t.date) > L) L = dayOf(t.date);
     });
     var pts = [{ d: 0, v: 0 }];
@@ -4866,7 +4884,7 @@ window.App = window.App || {};
   var u = App.u, C = App.calc, RP = App.report = {};
   var db = function () { return App.db; };
 
-  function catSums(mo) { var s = {}; C.monthTx(mo).forEach(function (t) { if (t.type === 'EXPENSE') s[t.category] = (s[t.category] || 0) + t.amount; }); return s; }
+  function catSums(mo) { return C.budgetSpend(mo).byCat; }   /* 할부 회차 제외 (예산과 같은 기준) */
 
   /* 한 달 데이터를 모은다 (화면 · 텍스트가 같이 쓴다) */
   RP.build = function (mo) {

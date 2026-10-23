@@ -117,6 +117,18 @@
      ========================================================= */
   C.monthTx = function (mo) { mo = mo || C.month(); return (db().transactions || []).filter(function (t) { return t.date && String(t.date).indexOf(mo) === 0; }); };
   C.sumType = function (list, type) { return u.sum(list.filter(function (t) { return t.type === type; }), function (t) { return t.amount; }); };
+  /* 예산에 들어가는 지출 : 할부 회차(완납 포함)는 고정비처럼 따로 묶어 분류 예산 · 남은 생활비에서 뺀다.
+     나간 돈 합계 · 리포트의 수입/지출 · 카드값 예상에는 그대로 들어간다. */
+  C.isInstTx = function (t) { return !!(t && t.installmentId); };
+  C.budgetSpend = function (mo) {
+    var r = { byCat: {}, total: 0, inst: 0 };
+    C.monthTx(mo).forEach(function (t) {
+      if (t.type !== 'EXPENSE') return;
+      if (C.isInstTx(t)) { r.inst += t.amount; return; }
+      r.byCat[t.category] = (r.byCat[t.category] || 0) + t.amount; r.total += t.amount;
+    });
+    return r;
+  };
   C.income = function (mo) { return C.sumType(C.monthTx(mo), 'INCOME'); };
   C.expense = function (mo) { return C.sumType(C.monthTx(mo), 'EXPENSE'); };
   C.expenseByMonth = function () {
