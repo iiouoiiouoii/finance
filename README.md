@@ -36,6 +36,7 @@ app/
 │     ├─ 24-weekly.js       주간 빠른 점검
 │     ├─ 25-report.js       월말 한 장 리포트
 │     ├─ 26-loan-advisor.js 대출 상환 판단 도우미
+│     ├─ 27-inbox.js        카드 알림 자동 기록 (단축어가 ?add&d=날짜&m=가맹점&a=금액&c=카드 주소를 열면 기록)
 │     ├─ 30-settings.js     설정
 │     ├─ 31-sync.js         GitHub 동기화 · 아이디/비밀번호 로그인 · 처음 시작
 │     └─ 99-boot.js         시작

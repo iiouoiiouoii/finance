@@ -122,7 +122,7 @@
       if (!rm) { if (c.mode !== 'ro' && hasLocal) return S.push(); return setSt('warn', '저장소에 파일이 없습니다. [지금 업로드]로 첫 백업을 만드세요.'); }
       if (rm.sha === m.sha) { setSt(c.mode === 'ro' ? 'ro' : 'ok'); return m.dirty && c.mode !== 'ro' ? S.push() : 0; }
       if (c.mode === 'ro') return S.pull(true);
-      if (m.sha && !m.dirty) { var ch = await u.choose('동기화 확인', '다른 기기에서 저장한 더 최신 데이터가 있습니다. 불러올까요?', [{ label: '불러오기', value: 'pull' }, { label: '나중에', value: 'no' }]); if (ch === 'pull') S.pull(true); return; }
+      if (m.sha && !m.dirty) return S.pull(true);   /* 이 기기에 안 올린 변경이 없으면 묻지 않고 최신으로 */
       if (hasLocal || m.dirty) return S.push(); return S.pull(true);
     } catch (e) { setSt('err', '<span class="text-red-600">' + u.esc(e.message) + '</span>'); }
   };
@@ -339,7 +339,7 @@
     u.$('login-msg').innerText = '';
   };
   S.showLogin = function () { gate(true); };
-  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); u.toast('이 기기에서만 저장됩니다. 상단 [로그인]으로 언제든 연결할 수 있습니다.'); };
+  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장됩니다. 상단 [로그인]으로 언제든 연결할 수 있습니다.'); };
   function gateUi() {
     var msg = u.$('login-msg'), btn = u.$('login-go'), label = btn.innerText;
     return {
@@ -366,7 +366,7 @@
       ui.ok('아이디를 만들었습니다. 이 기기 데이터를 올리는 중...');
       var ok = await S.push(true);
       ui.done();
-      if (ok) { gate(false); u.toast('준비가 끝났습니다. 다른 기기에서는 아이디·비밀번호만 넣으면 됩니다.'); }
+      if (ok) { gate(false); if (App.inbox) App.inbox.drain(); u.toast('준비가 끝났습니다. 다른 기기에서는 아이디·비밀번호만 넣으면 됩니다.'); }
       else ui.fail('아이디는 만들었지만 첫 업로드에 실패했습니다. ☁ 버튼에서 [지금 업로드]를 눌러 주세요.');
       App.ui.render();
     } catch (e) { ui.fail(friendly(e)); }
@@ -384,6 +384,7 @@
       connect(id, conf, keep);
       ui.ok('로그인되었습니다. 데이터를 불러옵니다...');
       var ok = await S.pull(true);   /* 이 기기의 기존 데이터는 이전본(FC20_PREV)으로 보관 */
+      if (ok && App.inbox) App.inbox.drain();   /* 카드 알림으로 받아 둔 내역 */
       ui.done();
       if (ok) gate(false);
       App.ui.render();

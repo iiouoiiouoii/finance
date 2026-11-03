@@ -258,6 +258,8 @@
       if (c) {
         c.forEach(function (x) { if (!hit && !x.used && typeEq(x.t.type, p.type) && x.memo === pm && looseEq(x.pay, pp)) hit = x; });
         c.forEach(function (x) { if (!hit && !x.used && typeEq(x.t.type, p.type) && looseEq(x.memo, pm) && looseEq(x.pay, pp)) hit = x; });
+        /* 카드 알림으로 들어온 내역 : 알림의 가맹점 이름은 명세서와 다르게 적히곤 하니 날짜 · 금액 · 카드만 맞으면 같은 거래 */
+        c.forEach(function (x) { if (!hit && !x.used && x.t.src === 'push' && typeEq(x.t.type, p.type) && looseEq(x.pay, pp)) hit = x; });
       }
       /* 자동 반영된 고정 항목 · 할부 청구분 : 날짜가 며칠 달라도 같은 달 · 같은 금액 · 이름이 겹치면 같은 거래 */
       if (!hit) (byMonth[String(p.date).slice(0, 7) + '|' + (Number(p.amount) || 0)] || []).forEach(function (x) { if (!hit && !x.used && typeEq(x.t.type, p.type) && looseEq(x.memo, pm)) hit = x; });
