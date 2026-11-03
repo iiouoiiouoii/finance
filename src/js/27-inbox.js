@@ -27,6 +27,10 @@
   IN.amount = function (s) { var m = String(s || '').match(/-?\s*[\d,]+/); return m ? Math.abs(parseInt(m[0].replace(/[^\d]/g, ''), 10) || 0) : 0; };
   /* 세 값이 한 글에 들어온 경우 : 줄바꿈 · 탭 · | · 쉼표(천 단위 쉼표 제외)로 나눠 날짜 · 금액 · 나머지(가맹점)로 */
   IN.fromText = function (t) {
+    /* '날짜: 11/03, 가맹점: 스타벅스, 금액: 12,500원' 처럼 이름표가 붙은 글 (단축어의 AI 모델 출력) */
+    var s = String(t || ''), lab = function (re) { var m = s.match(re); return m ? m[1].trim() : null; };
+    var LD = lab(/(?:날짜|일시|승인일(?:시)?|이용일(?:시)?)\s*[:：]\s*([^,\n|]+)/), LM = lab(/(?:가맹점(?:명)?|사용처|이용처|상호|내용)\s*[:：]\s*([^,\n|]+)/), LA = lab(/(?:금액|승인금액|이용금액|결제금액)\s*[:：]\s*(-?\s*[\d,]+\s*원?)/);
+    if (LA && (LD || LM)) return { date: IN.date(LD || s), memo: (LM || '').replace(/^[\[\]'"]+|[\[\]'"]+$/g, '').trim(), amount: IN.amount(LA), cancel: /취소/.test(s) };
     var parts = String(t || '').split(/\r?\n|\t|\||,(?!\d{3}(?!\d))/).map(function (x) { return x.trim(); }).filter(Boolean), d = null, a = 0, rest = [];
     parts.forEach(function (p) {
       if (!d && (DATE_FULL.test(p) || /^\d{1,2}\s*(월|[\/.\-])\s*\d{1,2}/.test(p))) { d = IN.date(p); return; }
