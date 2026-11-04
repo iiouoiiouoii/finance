@@ -132,7 +132,11 @@
     var c = cfg(); if (!ready(c) || c.mode === 'ro') return;
     setMeta({ dirty: true }); setSt('warn'); clearTimeout(timer); timer = setTimeout(function () { S.push(false); }, 5000);
   });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && Date.now() - lastCheck > 30000) S.check(); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden || Date.now() - lastCheck <= 30000) return;
+    /* 확인이 끝나면 알림 수신함 등 뒤따르는 작업이 이어 받는다 */
+    Promise.resolve(S.check()).then(function () { App.emit('sync-polled'); }, function () { App.emit('sync-polled'); });
+  });
 
   /* ---------- 변경 이력 ---------- */
   S.history = async function () {
@@ -366,7 +370,7 @@
       ui.ok('아이디를 만들었습니다. 이 기기 데이터를 올리는 중...');
       var ok = await S.push(true);
       ui.done();
-      if (ok) { gate(false); if (App.inbox) App.inbox.drain(); u.toast('준비가 끝났습니다. 다른 기기에서는 아이디·비밀번호만 넣으면 됩니다.'); }
+      if (ok) { gate(false); if (App.inbox) { App.inbox.drain(); App.inbox.pull(); } u.toast('준비가 끝났습니다. 다른 기기에서는 아이디·비밀번호만 넣으면 됩니다.'); }
       else ui.fail('아이디는 만들었지만 첫 업로드에 실패했습니다. ☁ 버튼에서 [지금 업로드]를 눌러 주세요.');
       App.ui.render();
     } catch (e) { ui.fail(friendly(e)); }
@@ -384,7 +388,7 @@
       connect(id, conf, keep);
       ui.ok('로그인되었습니다. 데이터를 불러옵니다...');
       var ok = await S.pull(true);   /* 이 기기의 기존 데이터는 이전본(FC20_PREV)으로 보관 */
-      if (ok && App.inbox) App.inbox.drain();   /* 카드 알림으로 받아 둔 내역 */
+      if (ok && App.inbox) { App.inbox.drain(); App.inbox.pull(); }   /* 카드 알림으로 받아 둔 내역 */
       ui.done();
       if (ok) gate(false);
       App.ui.render();
@@ -419,6 +423,9 @@
 
   /* ---------- 시작 ---------- */
   S.ready = function () { return !!ready(); };
+  /* 다른 저장소(알림 수신함 등)를 같은 토큰으로 부르기 : 응답(404 는 null)을 돌려준다 */
+  S.home = HOME_REPO;
+  S.api = function (repo, path, method, body) { var c = cfg(); if (!c.token) return Promise.reject(new Error('로그인이 필요합니다.')); return gh({ repo: repo, token: c.token }, path, method, body); };
   S.boot = function () {
     var c = cfg();
     state = c.repo ? (c.mode === 'ro' ? 'ro' : 'ok') : 'off';

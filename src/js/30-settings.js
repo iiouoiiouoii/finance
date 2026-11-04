@@ -28,6 +28,7 @@
     var row = function (t, d, right) { return '<div class="flex items-center justify-between gap-4 flex-wrap py-4 border-t border-slate-100 first:border-0"><div class="min-w-0"><div class="font-semibold text-slate-900 text-[15px]">' + t + '</div><div class="text-[13px] text-slate-500 mt-0.5">' + d + '</div></div><div class="flex gap-2 flex-wrap">' + right + '</div></div>'; };
     return '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm"><h3 class="font-bold text-slate-900 text-base mb-1">데이터 · 화면</h3>'
       + row('여러 기기에서 같이 쓰기', '아이디로 로그인하면 휴대폰 · PC · 배우자 기기가 같은 데이터를 봅니다.', '<button onclick="App.sync.open()" class="btn sec">동기화 · 아이디 관리</button>')
+      + row('카드 · 통장 알림 자동 기록', (db().settings.inboxRepo ? '연결됨 · ' + App.u.esc(db().settings.inboxRepo) + ' · ' : '') + '결제 · 입출금 알림이 오면 휴대폰 단축어가 화면 없이 수신함에 쌓아 두고, 가계부를 열 때 기록합니다.', '<button onclick="App.inbox.open()" class="btn sec">설정 · 단축어 만드는 법</button>')
       + row('파일로 백업', '이 브라우저 데이터를 파일 하나로 내려받거나, 받아 둔 파일로 되돌립니다.', '<button onclick="App.store.exportBackup()" class="btn sec">백업 파일 받기</button><label class="btn sec cursor-pointer">백업에서 되돌리기<input type="file" accept="application/json" onchange="App.store.importBackup(this)" class="hidden"></label>')
       + row('화면 크기', '보통은 기기에 맞춤으로 두면 됩니다.', App.ui.modeHtml())
       + row('예시 데이터로 둘러보기', '지금 데이터를 지우고 예시 데이터를 넣습니다. 먼저 백업하세요.', '<button onclick="App.store.loadSample()" class="btn sec">예시 데이터 넣기</button>')

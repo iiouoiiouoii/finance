@@ -1,4 +1,4 @@
-/* 알림 자동 기록 : 휴대폰 단축어가 카드 알림을 읽어 가계부 주소에 실어 열면, 받아서 내역에 넣는다
+/* 알림 자동 기록 : 휴대폰 단축어가 카드 · 통장 알림을 보내면 내역에 넣는다. 두 가지 길 : ① 가계부 주소에 실어 열기 ② 화면 없이 GitHub 비공개 수신함(이슈)에 쌓기
    주소 형식 (둘 중 하나, ? 대신 # 도 됨)
      https://…/finance/?add&d=11/03&m=스타벅스&a=12,500&c=하나   ← 날짜 · 가맹점 · 금액 · 카드(이름 첫 낱말, 빼도 됨)
      https://…/finance/?add&t=11/03, 스타벅스, 12,500원&c=하나    ← 단축어가 만든 글 그대로 (줄바꿈 · 쉼표로 나뉜 세 값)
@@ -131,10 +131,76 @@
     if (removed.length) msg += (msg ? ' · ' : '') + '결제 취소 ' + removed.length + '건을 지웠어요.';
     u.toast(msg);
   };
-  /* 시작 뒤 : 동기화를 쓰면 최신 데이터를 받은 다음에, 아니면 바로 */
+  /* =========================================================
+     화면 없이 쌓아 두기 : GitHub 비공개 저장소(수신함)의 이슈
+     - 단축어가 알림마다 이슈 하나를 만든다 (제목 = 카드 · 은행 이름 첫 낱말, 본문 = 알림 제목 + 본문)
+     - 가계부는 열 때 · 다시 볼 때 열린 이슈를 읽어 기록하고 이슈를 닫는다 (닫지 못해도 다음에 중복으로 걸러진다)
+     - 읽기 · 닫기는 동기화 토큰을 쓴다 → 그 토큰에 수신함 저장소의 Issues 권한을 더해야 한다
+     ========================================================= */
+  var pulling = false;
+  IN.repo = function () { return (db().settings || {}).inboxRepo || ''; };
+  IN.owner = function () { return String(App.sync.home || '').split('/')[0] || 'iiouoiiouoii'; };
+  IN.pull = async function (manual) {
+    var repo = IN.repo(); if (!repo || !App.sync.ready() || pulling) return; pulling = true;
+    try {
+      var r = await App.sync.api(repo, '/issues?state=open&per_page=100&sort=created&direction=asc');
+      if (!r) throw new Error('수신함(' + repo + ')을 찾지 못했어요. 저장소 이름과, 가계부 토큰에 이 저장소 Issues 권한이 있는지 확인하세요.');
+      var list = (await r.json()).filter(function (x) { return !x.pull_request; }), L = queue(), bad = [];
+      db().ui.inboxLast = { at: Date.now(), n: list.length };
+      if (!list.length) { if (manual) u.toast('수신함에 새 알림이 없어요.'); return; }
+      list.forEach(function (x) {
+        var body = String(x.body || '').trim(), it = IN.fromText(body);
+        it.card = String(x.title || '').trim(); it.raw = body; it.at = Date.now();
+        if (it.amount) L.push(it); else bad.push(body.slice(0, 40));
+      });
+      setQueue(L); IN.drain();
+      await Promise.all(list.map(function (x) { return App.sync.api(repo, '/issues/' + x.number, 'PATCH', { state: 'closed' }).catch(function () {}); }));
+      if (bad.length) setTimeout(function () { u.toast('못 읽은 알림 ' + bad.length + '건: ' + u.esc(bad[0]), 'warning'); }, 600);
+    } catch (e) { if (manual) u.toast(e.message, 'error'); else console.warn('[알림 수신함]', e); }
+    finally { pulling = false; if (u.isOpen && u.isOpen('inbox-modal')) IN.fill(); }
+  };
+
+  /* ---------- 설정 창 : 수신함 연결 · 단축어 만드는 법 ---------- */
+  function copyBtn(text) { return '<button type="button" onclick="App.inbox.copy(this)" data-v="' + u.esc(text) + '" class="text-[13px] font-semibold text-accent shrink-0">복사</button>'; }
+  IN.copy = function (b) { var v = b.getAttribute('data-v'), ok = function () { u.toast('복사했어요.'); }; if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(v).then(ok, function () { prompt('복사하세요', v); }); else prompt('복사하세요', v); };
+  IN.open = function () {
+    u.modal('inbox-modal', u.modalHead('inbox-title', '카드 · 통장 알림 자동 기록', 'inbox-modal') + '<div id="inbox-body" class="space-y-4 text-[14px] text-slate-700"></div>', 560);
+    IN.fill(); u.open('inbox-modal');
+  };
+  IN.fill = function () {
+    var box = u.$('inbox-body'); if (!box) return;
+    var o = IN.owner(), repo = IN.repo() || o + '/finance-inbox', on = !!IN.repo(), last = db().ui.inboxLast, ready = App.sync.ready();
+    var api = 'https://api.github.com/repos/' + repo + '/issues';
+    var step = function (n, t, body) { return '<div class="flex gap-3"><span class="w-6 h-6 rounded-full bg-accent text-white text-[12px] font-bold flex items-center justify-center shrink-0 mt-0.5">' + n + '</span><div class="min-w-0 flex-1 space-y-1.5"><div class="font-semibold text-slate-900">' + t + '</div>' + body + '</div></div>'; };
+    var kv = function (k, v, copy) { return '<div class="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2"><span class="text-[12px] text-slate-500 shrink-0 w-14">' + k + '</span><code class="text-[12.5px] text-slate-800 break-all flex-1">' + u.esc(v) + '</code>' + (copy ? copyBtn(v) : '') + '</div>'; };
+    box.innerHTML = '<p class="text-slate-600 leading-relaxed">결제 · 입출금 알림이 오면 휴대폰 단축어가 내용을 <b>나만 보는 GitHub 비공개 저장소(수신함)</b>에 보내 둡니다. 화면은 아무것도 안 뜨고, 가계부를 열 때 쌓인 걸 가져와 기록합니다.</p>'
+      + (!ready ? '<div class="p-3 rounded-xl bg-amber-50 text-amber-900">먼저 이 기기에서 아이디로 로그인해 주세요. 수신함은 로그인 토큰으로 읽습니다.</div>' : '')
+      + '<div class="p-3 rounded-xl ' + (on ? 'bg-accent-light text-accent-hover' : 'bg-slate-100 text-slate-600') + '">' + (on ? '연결됨: <b>' + u.esc(repo) + '</b>' + (last ? ' · 마지막 확인 ' + new Date(last.at).toLocaleString('ko-KR') : '') : '아직 연결하지 않았어요. 아래 순서대로 한 번만 준비하면 됩니다.') + '</div>'
+      + step(1, '비공개 저장소 만들기', '<p>이름 <b>finance-inbox</b>, 공개 범위 <b>Private</b>으로 만듭니다. (아래 버튼을 누르면 거의 채워져 있어요)</p><a target="_blank" rel="noopener" href="https://github.com/new?name=finance-inbox&visibility=private&description=' + encodeURIComponent('가계부 알림 수신함') + '" class="btn sec" style="height:38px">GitHub에서 저장소 만들기</a>')
+      + step(2, '가계부 토큰에 권한 더하기', '<p>처음 가계부를 만들 때 쓴 토큰을 열어 <b>Edit</b> → Repository access에 <b>finance-inbox</b>를 더하고, Permissions의 <b>Issues</b>를 <b>Read and write</b>로 바꾼 뒤 저장합니다. 토큰 값은 그대로라 가계부는 다시 로그인할 필요가 없어요.</p><a target="_blank" rel="noopener" href="https://github.com/settings/personal-access-tokens" class="btn sec" style="height:38px">내 토큰 목록 열기</a>')
+      + step(3, '수신함 연결', '<div class="flex gap-2"><input id="inbox-repo" value="' + u.esc(repo) + '" class="' + u.IN + '"><button type="button" onclick="App.inbox.connect()" class="btn pri"' + (ready ? '' : ' disabled') + '>연결 확인</button></div>' + (on ? '<div class="flex gap-3"><button type="button" onclick="App.inbox.pull(true)" class="more">지금 가져오기</button><button type="button" onclick="App.inbox.disconnect()" class="text-[13px] text-slate-400">연결 끊기</button></div>' : ''))
+      + step(4, '단축어용 토큰 만들기', '<p>휴대폰 단축어가 쓸 토큰을 따로 만듭니다. Repository access는 <b>finance-inbox만</b>, Permissions는 <b>Issues: Read and write</b>, Expiration은 <b>No expiration</b>. 만든 토큰(github_pat_…)은 5번의 Authorization 값에 한 번 붙여넣고 끝이에요.</p><a target="_blank" rel="noopener" href="https://github.com/settings/personal-access-tokens/new?name=' + encodeURIComponent('가계부-단축어') + '&description=' + encodeURIComponent('카드 · 통장 알림 보내기') + '&target_name=' + encodeURIComponent(o) + '&expires_in=none&issues=write" class="btn sec" style="height:38px">단축어용 토큰 만들기</a>')
+      + step(5, '단축어 바꾸기', '<p>지금 쓰는 단축어에서 <b>URL 인코딩 · 텍스트(주소) · URL 열기</b>를 지우고, <b>[제목] [본문]</b> 텍스트 아래에 <b>"URL 내용 가져오기"</b> 하나만 넣어 이렇게 설정합니다.</p>'
+        + kv('URL', api, true) + kv('방법', 'POST', false) + kv('헤더 1', 'Authorization', true) + kv('값', 'Bearer 여기에_단축어용_토큰', true) + kv('헤더 2', 'Accept', true) + kv('값', 'application/vnd.github+json', true)
+        + '<p>요청 본문은 <b>JSON</b>으로 바꾸고 텍스트 항목 두 개를 넣습니다.</p>' + kv('title', '하나  (카드 · 은행 이름 첫 낱말: 하나 / 현대 / 국민)', false) + kv('body', '[제목] [본문] 텍스트 변수', false)
+        + '<p class="text-[13px] text-slate-500">현대카드 · 통장 단축어도 같고 title만 다릅니다. 결제할 때 아무 화면도 안 뜨면 정상이에요.</p>');
+  };
+  IN.connect = async function () {
+    var repo = String(u.val('inbox-repo') || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return u.toast('저장소를 "계정/이름" 형식으로 넣어 주세요.', 'warning');
+    try {
+      var r = await App.sync.api(repo, '/issues?state=open&per_page=1');
+      if (!r) return u.toast('저장소를 찾지 못했어요. 이름이 맞는지, 2번(토큰에 finance-inbox · Issues 권한)을 했는지 확인하세요.', 'error');
+      db().settings.inboxRepo = repo; App.store.save(); u.toast('수신함을 연결했어요.'); IN.fill(); IN.pull(true);
+    } catch (e) { u.toast(/403/.test(e.message) ? '토큰에 Issues 권한이 없어요. 2번에서 Issues를 Read and write로 바꿔 주세요.' : e.message, 'error'); }
+  };
+  IN.disconnect = function () { u.confirm('수신함 연결 끊기', '이 가계부가 수신함을 더 이상 읽지 않아요. 저장소와 쌓인 알림은 그대로 남습니다.', function () { delete db().settings.inboxRepo; App.store.save(); IN.fill(); }); };
+
+  /* 시작 뒤 : 동기화로 최신 데이터를 받은 다음 → 주소로 받아 둔 것 넣기 → 수신함 가져오기 */
   App.on('booted', function () {
-    if (!queue().length) return;
-    if (App.sync && App.sync.ready && App.sync.ready()) { var done = false, go = function () { if (!done) { done = true; IN.drain(); } }; App.on('sync-checked', go); setTimeout(go, 12000); }
-    else { var skip = null; try { skip = localStorage.getItem('FC27_SKIP'); } catch (e) {} if (skip === '1') IN.drain(); }   /* 로그인 화면이 뜨는 경우엔 로그인 · '로그인 없이'를 고른 뒤에 넣는다 */
+    if (App.sync && App.sync.ready && App.sync.ready()) { var done = false, go = function () { if (done) return; done = true; IN.drain(); IN.pull(); }; App.on('sync-checked', go); setTimeout(go, 12000); }
+    else if (queue().length) { var skip = null; try { skip = localStorage.getItem('FC27_SKIP'); } catch (e) {} if (skip === '1') IN.drain(); }   /* 로그인 화면이 뜨는 경우엔 로그인 · '로그인 없이'를 고른 뒤에 넣는다 */
   });
+  /* 다시 볼 때 (탭 · 앱으로 돌아오면) : 동기화 확인이 끝난 뒤 수신함 */
+  App.on('sync-polled', function () { IN.pull(); });
 })(window.App);
