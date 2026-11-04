@@ -156,7 +156,7 @@
       setQueue(L); IN.drain();
       await Promise.all(list.map(function (x) { return App.sync.api(repo, '/issues/' + x.number, 'PATCH', { state: 'closed' }).catch(function () {}); }));
       if (bad.length) setTimeout(function () { u.toast('못 읽은 알림 ' + bad.length + '건: ' + u.esc(bad[0]), 'warning'); }, 600);
-    } catch (e) { if (manual) u.toast(e.message, 'error'); else console.warn('[알림 수신함]', e); }
+    } catch (e) { if (manual || /GitHub 401/.test(e.message)) App.sync.failToast(e, ''); else console.warn('[알림 수신함]', e); }
     finally { pulling = false; if (u.isOpen && u.isOpen('inbox-modal')) IN.fill(); }
   };
 
@@ -177,7 +177,7 @@
       + (!ready ? '<div class="p-3 rounded-xl bg-amber-50 text-amber-900">먼저 이 기기에서 아이디로 로그인해 주세요. 수신함은 로그인 토큰으로 읽습니다.</div>' : '')
       + '<div class="p-3 rounded-xl ' + (on ? 'bg-accent-light text-accent-hover' : 'bg-slate-100 text-slate-600') + '">' + (on ? '연결됨: <b>' + u.esc(repo) + '</b>' + (last ? ' · 마지막 확인 ' + new Date(last.at).toLocaleString('ko-KR') : '') : '아직 연결하지 않았어요. 아래 순서대로 한 번만 준비하면 됩니다.') + '</div>'
       + step(1, '비공개 저장소 만들기', '<p>이름 <b>finance-inbox</b>, 공개 범위 <b>Private</b>으로 만듭니다. (아래 버튼을 누르면 거의 채워져 있어요)</p><a target="_blank" rel="noopener" href="https://github.com/new?name=finance-inbox&visibility=private&description=' + encodeURIComponent('가계부 알림 수신함') + '" class="btn sec" style="height:38px">GitHub에서 저장소 만들기</a>')
-      + step(2, '가계부 토큰에 권한 더하기', '<p>처음 가계부를 만들 때 쓴 토큰을 열어 <b>Edit</b> → Repository access에 <b>finance-inbox</b>를 더하고, Permissions의 <b>Issues</b>를 <b>Read and write</b>로 바꾼 뒤 저장합니다. 토큰 값은 그대로라 가계부는 다시 로그인할 필요가 없어요.</p><a target="_blank" rel="noopener" href="https://github.com/settings/personal-access-tokens" class="btn sec" style="height:38px">내 토큰 목록 열기</a>')
+      + step(2, '가계부 토큰에 권한 더하기', '<p>처음 가계부를 만들 때 쓴 토큰을 열어 <b>Edit</b> → Repository access에 <b>finance-inbox</b>를 더하고, Permissions의 <b>Issues</b>를 <b>Read and write</b>로 바꾼 뒤 저장합니다. 토큰 값은 그대로라 가계부는 다시 로그인할 필요가 없어요. (<b>Regenerate</b>는 누르지 마세요. 누르면 가계부 토큰이 바뀌어 <button type="button" onclick="App.sync.tokenOpen()" class="more">토큰 바꾸기</button>를 해야 해요.)</p><a target="_blank" rel="noopener" href="https://github.com/settings/personal-access-tokens" class="btn sec" style="height:38px">내 토큰 목록 열기</a>')
       + step(3, '수신함 연결', '<div class="flex gap-2"><input id="inbox-repo" value="' + u.esc(repo) + '" class="' + u.IN + '"><button type="button" onclick="App.inbox.connect()" class="btn pri"' + (ready ? '' : ' disabled') + '>연결 확인</button></div>' + (on ? '<div class="flex gap-3"><button type="button" onclick="App.inbox.pull(true)" class="more">지금 가져오기</button><button type="button" onclick="App.inbox.disconnect()" class="text-[13px] text-slate-400">연결 끊기</button></div>' : ''))
       + step(4, '단축어용 토큰 만들기', '<p>휴대폰 단축어가 쓸 토큰을 따로 만듭니다. Repository access는 <b>finance-inbox만</b>, Permissions는 <b>Issues: Read and write</b>, Expiration은 <b>No expiration</b>. 만든 토큰(github_pat_…)은 5번의 Authorization 값에 한 번 붙여넣고 끝이에요.</p><a target="_blank" rel="noopener" href="https://github.com/settings/personal-access-tokens/new?name=' + encodeURIComponent('가계부-단축어') + '&description=' + encodeURIComponent('카드 · 통장 알림 보내기') + '&target_name=' + encodeURIComponent(o) + '&expires_in=none&issues=write" class="btn sec" style="height:38px">단축어용 토큰 만들기</a>')
       + step(5, '단축어 바꾸기', '<p>지금 쓰는 단축어에서 <b>URL 인코딩 · 텍스트(주소) · URL 열기</b>를 지우고, <b>[제목] [본문]</b> 텍스트 아래에 <b>"URL 내용 가져오기"</b> 하나만 넣어 이렇게 설정합니다.</p>'
@@ -192,7 +192,7 @@
       var r = await App.sync.api(repo, '/issues?state=open&per_page=1');
       if (!r) return u.toast('저장소를 찾지 못했어요. 이름이 맞는지, 2번(토큰에 finance-inbox · Issues 권한)을 했는지 확인하세요.', 'error');
       db().settings.inboxRepo = repo; App.store.save(); u.toast('수신함을 연결했어요.'); IN.fill(); IN.pull(true);
-    } catch (e) { u.toast(/403/.test(e.message) ? '토큰에 Issues 권한이 없어요. 2번에서 Issues를 Read and write로 바꿔 주세요.' : e.message, 'error'); }
+    } catch (e) { if (/403/.test(e.message)) u.toast('토큰에 Issues 권한이 없어요. 2번에서 Issues를 Read and write로 바꿔 주세요.', 'error'); else App.sync.failToast(e, ''); }
   };
   IN.disconnect = function () { u.confirm('수신함 연결 끊기', '이 가계부가 수신함을 더 이상 읽지 않아요. 저장소와 쌓인 알림은 그대로 남습니다.', function () { delete db().settings.inboxRepo; App.store.save(); IN.fill(); }); };
 
