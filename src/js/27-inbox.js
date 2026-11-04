@@ -31,6 +31,18 @@
     var s = String(t || ''), lab = function (re) { var m = s.match(re); return m ? m[1].trim() : null; };
     var LD = lab(/(?:날짜|일시|승인일(?:시)?|이용일(?:시)?)\s*[:：]\s*([^,\n|]+)/), LM = lab(/(?:가맹점(?:명)?|사용처|이용처|상호|내용)\s*[:：]\s*([^,\n|]+)/), LA = lab(/(?:금액|승인금액|이용금액|결제금액)\s*[:：]\s*(-?\s*[\d,]+\s*원?)/);
     if (LA && (LD || LM)) return { date: IN.date(LD || s), memo: (LM || '').replace(/^[\[\]'"]+|[\[\]'"]+$/g, '').trim(), amount: IN.amount(LA), cancel: /취소/.test(s) };
+    /* 카드사 알림 원문 : '/' 로 나뉜 형식 (하나카드 예: 정상승인 (2*7*)박*영님 11/04 09:48/일시불/승인/8,180원/쿠팡/누적이용금액 7,595,988원)
+       금액 칸 = 처음 나오는 'N원' 칸, 가맹점 = 금액 다음 칸 중 안내 문구가 아닌 첫 칸 (없으면 금액 앞쪽에서) */
+    if (s.indexOf('/') >= 0) {
+      var seg = s.split('/').map(function (x) { return x.trim(); }), ai = -1, memo = '', skip = /누적|잔액|한도|이용금액|일시불|할부|승인|취소|체크|신용|개월|^[\d\s:.\-]+$/;
+      for (var i = 0; i < seg.length; i++) if (/^-?[\d,]+\s*원$/.test(seg[i])) { ai = i; break; }
+      if (ai >= 0) {
+        for (var j = ai + 1; j < seg.length && !memo; j++) if (seg[j] && !skip.test(seg[j])) memo = seg[j];
+        for (var k = ai - 1; k >= 0 && !memo; k--) if (seg[k] && !skip.test(seg[k]) && !/님|\*/.test(seg[k])) memo = seg[k];
+        var mon = s.match(/(\d{1,2})\s*개월/);
+        return { date: IN.date(s), memo: memo, amount: IN.amount(seg[ai]), cancel: /취소/.test(s), months: mon && !/일시불/.test(s) ? +mon[1] : 0 };
+      }
+    }
     var parts = String(t || '').split(/\r?\n|\t|\||,(?!\d{3}(?!\d))/).map(function (x) { return x.trim(); }).filter(Boolean), d = null, a = 0, rest = [];
     parts.forEach(function (p) {
       if (!d && (DATE_FULL.test(p) || /^\d{1,2}\s*(월|[\/.\-])\s*\d{1,2}/.test(p))) { d = IN.date(p); return; }
@@ -65,8 +77,10 @@
   /* ---------- 쌓인 것 넣기 ---------- */
   IN.drain = function () {
     var L = queue(); if (!L.length || !App.db) return;
-    var added = [], removed = [], skipped = 0, tx = db().transactions;
+    var added = [], removed = [], skipped = 0, inst = [], tx = db().transactions;
     L.forEach(function (it) {
+      /* 할부 결제 : 전액을 지출로 넣으면 예산이 틀어진다 → 명세서 붙여넣기 때 할부로 들어가도록 넘긴다 */
+      if (it.months > 1 && !it.cancel) { inst.push(it); return; }
       var pay = payFor(it.card, it.raw), same = function (t) { return t.type === 'EXPENSE' && Number(t.amount) === it.amount && String(t.payment || '').replace(/\s+/g, '') === pay.replace(/\s+/g, ''); };
       if (it.cancel) {
         var lim = u.addM(it.date.slice(0, 7), -1) + '-01', hit = tx.filter(function (t) { return same(t) && t.src === 'push' && t.date >= lim && t.date <= it.date; }).pop();
@@ -79,6 +93,7 @@
       tx.push(t); added.push(t);
     });
     setQueue([]);
+    if (inst.length) setTimeout(function () { u.toast(inst.map(function (x) { return u.esc(x.memo) + ' ' + u.n0(x.amount) + '원 ' + x.months + '개월 할부'; }).join(', ') + '는 월말 명세서를 붙여넣을 때 할부로 들어가요.', 'warning'); }, 400);
     if (!added.length && !removed.length) { if (skipped) u.toast('이미 기록된 알림이라 넘어갔어요.'); return; }
     App.store.save();
     var msg = added.length === 1 ? '알림으로 기록했어요: ' + u.esc(added[0].memo) + ' ' + u.n0(added[0].amount) + '원 (' + u.esc(added[0].category) + ')' : added.length ? '알림으로 ' + added.length + '건 기록했어요.' : '';
