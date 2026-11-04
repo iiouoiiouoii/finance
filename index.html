@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-04 11:52 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-04 12:02 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -5172,9 +5172,28 @@ window.App = window.App || {};
   };
   IN.amount = function (s) { var m = String(s || '').match(/-?\s*[\d,]+/); return m ? Math.abs(parseInt(m[0].replace(/[^\d]/g, ''), 10) || 0) : 0; };
   /* 세 값이 한 글에 들어온 경우 : 줄바꿈 · 탭 · | · 쉼표(천 단위 쉼표 제외)로 나눠 날짜 · 금액 · 나머지(가맹점)로 */
+  /* 알림 글에서 안내 문구를 걷어내고 가게 · 보낸 사람 이름만 남긴다 (띄어쓰기로 이어진 카드 알림 · 통장 알림) */
+  var BANKS = '국민은행|KB국민|KB스타|신한은행|하나은행|우리은행|농협|NH농협|기업은행|IBK|카카오뱅크|토스뱅크|케이뱅크|SC제일|씨티|새마을|우체국|신협|수협|부산은행|대구은행|iM뱅크|경남은행|광주은행|전북은행|제주은행';
+  var CARDS = '현대카드|하나카드|신한카드|국민카드|KB국민카드|삼성카드|롯데카드|우리카드|BC카드|비씨카드|NH카드|농협카드|씨티카드';
+  /* bank : 통장 알림이면 카드사 이름 · '자동이체'는 남긴다 (카드대금 이체 구분 · 카드값 '냈어요' 자동 확인에 쓰인다) */
+  IN.cleanMemo = function (s, bank) {
+    s = String(s || '')
+      .replace(/누적\s*(이용)?\s*(금액)?\s*[:：]?\s*[\d,]+\s*원?/g, ' ').replace(/잔액\s*[:：]?\s*-?[\d,]+\s*원?/g, ' ')
+      .replace(/\d{2,6}-[\d*]+(-[\d*]+)*/g, ' ')   /* 계좌번호 562102-**-***535 */
+      .replace(/\[[^\]]*\]/g, ' ').replace(/\(?[가-힣A-Za-z0-9]*\*[가-힣A-Za-z0-9*]*\)?\s*님?/g, ' ')   /* [현대카드] · 박*영님 · (2*7*) */
+      .replace(/(20\d{2}[.\/\-])?\d{1,2}[.\/\-]\d{1,2}(\s*\d{1,2}:\d{2}(:\d{2})?)?/g, ' ').replace(/\d{1,2}:\d{2}(:\d{2})?/g, ' ')
+      .replace(/-?[\d,]+\s*원/g, ' ').replace(/(^|\s)-?[\d,]{2,}(?=\s|$)/g, ' ')
+      .replace(new RegExp(bank ? BANKS : BANKS + '|' + CARDS, 'g'), ' ');
+    s = bank ? s.replace(/전자금융|인터넷뱅킹|인터넷|모바일|스마트폰|스마트|타행|오픈뱅킹|CMS|FBS|(입금|출금|지급|인출)(?=\s|$)/g, ' ')
+      : s.replace(/(정상)?승인(취소)?|일시불|\d+\s*개월|할부|체크카드|체크|신용|님(?=\s|$)/g, ' ');
+    return s.replace(/\(\s*\)/g, ' ').replace(/[\/|,·:]+/g, ' ').replace(/\s+/g, ' ').trim();
+  };
   IN.fromText = function (t) {
     /* '날짜: 11/03, 가맹점: 스타벅스, 금액: 12,500원' 처럼 이름표가 붙은 글 (단축어의 AI 모델 출력) */
     var s = String(t || ''), lab = function (re) { var m = s.match(re); return m ? m[1].trim() : null; };
+    /* 통장 입출금 알림 (KB국민은행 예: 입금 10,000원 박*영님 11/04 11:23 562102-**-***535 부흥중학교 전자금융입금 10,000 잔액5,602,864) */
+    var bank = /잔액/.test(s) && s.match(/(입금|출금|지급|인출)\s*[:：]?\s*([\d,]+)\s*원?/);
+    if (bank) return { date: IN.date(s), memo: IN.cleanMemo(s, true), amount: IN.amount(bank[2]), dir: bank[1] === '입금' ? 'IN' : 'OUT', cancel: false };
     var LD = lab(/(?:날짜|일시|승인일(?:시)?|이용일(?:시)?)\s*[:：]\s*([^,\n|]+)/), LM = lab(/(?:가맹점(?:명)?|사용처|이용처|상호|내용)\s*[:：]\s*([^,\n|]+)/), LA = lab(/(?:금액|승인금액|이용금액|결제금액)\s*[:：]\s*(-?\s*[\d,]+\s*원?)/);
     if (LA && (LD || LM)) return { date: IN.date(LD || s), memo: (LM || '').replace(/^[\[\]'"]+|[\[\]'"]+$/g, '').trim(), amount: IN.amount(LA), cancel: /취소/.test(s) };
     /* 카드사 알림 원문 : '/' 로 나뉜 형식 (하나카드 예: 정상승인 (2*7*)박*영님 11/04 09:48/일시불/승인/8,180원/쿠팡/누적이용금액 7,595,988원)
@@ -5197,7 +5216,9 @@ window.App = window.App || {};
       rest.push(p);
     });
     if (!a) { var m = String(t || '').match(/([\d,]{2,})\s*원/); if (m) a = IN.amount(m[1]); }
-    return { date: d || IN.date(t), memo: rest.join(' ').replace(/\s+/g, ' ').trim(), amount: a, cancel: /취소/.test(t) };
+    /* 한 줄로 띄어 쓴 카드 알림 (현대카드 등) : 안내 문구를 걷어낸 나머지가 가맹점 */
+    var mm = s.match(/(\d{1,2})\s*개월/), one = parts.length <= 1;
+    return { date: d || IN.date(t), memo: IN.cleanMemo(one ? s : rest.join(' ')), amount: a, cancel: /취소/.test(t), months: one && mm && !/일시불/.test(s) ? +mm[1] : 0 };
   };
   /* 카드 찾기 : c(카드 이름 첫 낱말) → 등록 카드의 결제수단 이름 */
   function payFor(c, text) {
@@ -5227,6 +5248,15 @@ window.App = window.App || {};
     L.forEach(function (it) {
       /* 할부 결제 : 전액을 지출로 넣으면 예산이 틀어진다 → 명세서 붙여넣기 때 할부로 들어가도록 넘긴다 */
       if (it.months > 1 && !it.cancel) { inst.push(it); return; }
+      /* 통장 입출금 : 명세서 붙여넣기와 같은 규칙으로 수입 · 지출 · 이체(카드대금 · 내 계좌 · 저축) 구분 */
+      if (it.dir) {
+        var bt = { date: it.date, amount: it.amount, memo: it.memo || (it.dir === 'IN' ? '입금' : '출금') }, text = it.memo + ' ' + it.raw;
+        var tr = App.cat.predictTransfer(text, it.dir), bp = tr || (it.dir === 'IN' ? App.cat.predictIncome(text) : App.cat.predict(bt.memo));
+        bt.type = tr ? 'TRANSFER' : it.dir === 'IN' ? 'INCOME' : 'EXPENSE';
+        if (tx.some(function (t) { return t.type === bt.type && Number(t.amount) === it.amount && t.date === it.date && t.payment === '계좌이체'; })) { skipped++; return; }
+        var b = { id: u.uid(), date: it.date, type: bt.type, category: bp.category, subcategory: bp.subcategory, payment: '계좌이체', amount: it.amount, memo: bt.memo, owner: 'J', lockCategory: false, src: 'push' };
+        tx.push(b); added.push(b); return;
+      }
       var pay = payFor(it.card, it.raw), same = function (t) { return t.type === 'EXPENSE' && Number(t.amount) === it.amount && String(t.payment || '').replace(/\s+/g, '') === pay.replace(/\s+/g, ''); };
       if (it.cancel) {
         var lim = u.addM(it.date.slice(0, 7), -1) + '-01', hit = tx.filter(function (t) { return same(t) && t.src === 'push' && t.date >= lim && t.date <= it.date; }).pop();
@@ -5242,7 +5272,8 @@ window.App = window.App || {};
     if (inst.length) setTimeout(function () { u.toast(inst.map(function (x) { return u.esc(x.memo) + ' ' + u.n0(x.amount) + '원 ' + x.months + '개월 할부'; }).join(', ') + '는 월말 명세서를 붙여넣을 때 할부로 들어가요.', 'warning'); }, 400);
     if (!added.length && !removed.length) { if (skipped) u.toast('이미 기록된 알림이라 넘어갔어요.'); return; }
     App.store.save();
-    var msg = added.length === 1 ? '알림으로 기록했어요: ' + u.esc(added[0].memo) + ' ' + u.n0(added[0].amount) + '원 (' + u.esc(added[0].category) + ')' : added.length ? '알림으로 ' + added.length + '건 기록했어요.' : '';
+    var a0 = added[0], sign = a0 ? (a0.type === 'INCOME' ? '+' : a0.type === 'TRANSFER' ? '' : '') : '';
+    var msg = added.length === 1 ? '알림으로 기록했어요: ' + u.esc(a0.memo) + ' ' + sign + u.n0(a0.amount) + '원 (' + (a0.type === 'TRANSFER' ? '이체 · ' : a0.type === 'INCOME' ? '수입 · ' : '') + u.esc(a0.category) + ')' : added.length ? '알림으로 ' + added.length + '건 기록했어요.' : '';
     if (removed.length) msg += (msg ? ' · ' : '') + '결제 취소 ' + removed.length + '건을 지웠어요.';
     u.toast(msg);
   };
