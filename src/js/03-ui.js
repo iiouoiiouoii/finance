@@ -59,7 +59,10 @@
     var el = section(v.id);
     el.classList.remove('hidden');
     var par = NAV[v.id] && NAV[v.id][4];
-    u.$('page-title').innerHTML = (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + u.esc(ui.label(v.id));
+    /* 미니홈피 방문자 수처럼 : TODAY = 오늘 적은 내역, TOTAL = 지금까지 모든 내역 */
+    var txs = (App.db && App.db.transactions) || [], td = u.today(), nT = txs.filter(function (t) { return t.date === td; }).length;
+    var cnt = '<span class="cy-count">TODAY <b>' + nT + '</b><i>|</i>TOTAL <b>' + u.n0(txs.length) + '</b></span>';
+    u.$('page-title').innerHTML = cnt + (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + u.esc(ui.label(v.id));
     document.title = ui.label(v.id) + ' · 우리집 가계부';
     renderNav(v.id);
     renderHeader(v.id);

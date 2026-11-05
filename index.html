@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-06 07:47 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 08:10 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -810,6 +810,106 @@ details.fold > summary { font-size: 21px !important; }
 .empty { font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 19px !important; color: #A89C8E !important; }
 .pill { font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 15px !important; font-weight: 700 !important; }
 
+/* =====================================================================
+   미니홈피 테마 — 무늬 바탕 위 다이어리 책 한 권
+   글꼴 : 히피체(제목) · 뚝딱감자체(손글씨 메모) · Pretendard(본문 · 숫자)
+   색   : 하늘 파랑 #3A8FD0 (주), 주황 #FF8A3D (이름 · 포인트 조금), 먹 #3B3F45, 선 #C9D9E4 점선
+   ===================================================================== */
+@font-face { font-family: 'Hippie'; src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2610081905@hippie/hippie/hippie_히피체.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'TtukttakGamja'; src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2610081905@tuktakpotato/tuktakpotato/tuktakpotato.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+:root { --cy: #3A8FD0; --cy-d: #2B78B5; --cy-l: #EAF4FB; --cy-o: #FF8A3D; --ink: #3B3F45; --cyline: #C9D9E4; --pri: #3A8FD0; --pri-d: #2B78B5; --pri-l: #EAF4FB; }
+
+/* ---------- 바깥 : 하늘빛 체크 무늬 ---------- */
+body { background-color: #D7E6EF !important; background-image: linear-gradient(45deg, rgba(255,255,255,.35) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.35) 75%), linear-gradient(45deg, rgba(255,255,255,.35) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.35) 75%) !important; background-size: 16px 16px !important; background-position: 0 0, 8px 8px !important; }
+main, #app-header { background: transparent !important; }
+
+/* ---------- 책 페이지 : 흰 종이 + 안쪽 점선 + 왼쪽 스프링 ---------- */
+#content { background-color: #fff !important; background-image: radial-gradient(circle at 11px 50%, #B7C9D6 3.2px, #fff 3.6px, transparent 4px) !important; background-size: 22px 26px !important; background-repeat: repeat-y !important; background-position: 0 6px !important;
+  border: 1px solid #B9CCDA; border-radius: 18px; outline: 1.5px dashed var(--cyline); outline-offset: -9px; box-shadow: 0 2px 0 #B9CCDA, 0 8px 24px rgba(60, 100, 130, .12); }
+body.fc-m #content { margin: 0 10px; padding: 6px 18px calc(100px + env(safe-area-inset-bottom, 0px)) 34px !important; }
+body:not(.fc-m) #content { margin: 0 24px 24px 12px; padding: 12px 32px 40px 44px !important; }
+body.fc-m main { padding-bottom: 0; }
+/* 옆 메뉴(PC) : 왼쪽 프로필 칸 */
+#sidebar { background: #fff !important; background-image: none !important; margin: 12px 0 24px 24px; border-radius: 18px; border: 1px solid #B9CCDA !important; outline: 1.5px dashed var(--cyline); outline-offset: -9px; box-shadow: 0 2px 0 #B9CCDA; height: auto; }
+body.fc-m #sidebar { margin: 0; border-radius: 0 18px 18px 0; }
+.brand-mark { background: var(--cy) !important; border-radius: 50% !important; }
+.cy-brand { font-family: 'Hippie', 'Pretendard', sans-serif; font-size: 19px; color: var(--cy-d); line-height: 1.15; }
+.cy-brand small { display: block; font-family: 'TtukttakGamja', sans-serif; font-size: 14px; color: var(--cy-o); }
+
+/* ---------- 머리 : 방문자 카운터 + 히피체 제목 ---------- */
+#app-header { height: auto !important; min-height: 64px; padding-top: 8px !important; padding-bottom: 8px !important; }
+body.fc-m #app-header { padding: 8px 18px 8px 22px !important; }
+#page-title { font-family: 'Hippie', 'Pretendard', sans-serif !important; font-weight: 400 !important; font-size: 28px !important; color: var(--cy-d) !important; line-height: 1.1; overflow: visible; white-space: nowrap; }
+body.fc-m #page-title { font-size: 26px !important; }
+.cy-count { display: block; font-family: 'Pretendard', sans-serif; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; color: #7D93A3; margin-bottom: 3px; }
+.cy-count b { color: var(--cy-o); font-weight: 800; margin-left: 2px; }
+.cy-count i { font-style: normal; color: #B8C7D2; margin: 0 6px; }
+.mon-sw, .hdr-chip, .hdr-icon { background: #fff !important; border: 1px solid #B9CCDA !important; box-shadow: 0 2px 0 #B9CCDA; }
+.mon-sw > button, .hdr-icon, .hdr-chip { color: var(--cy-d) !important; }
+
+/* ---------- 구역 제목 : 히피체 + 점선 밑줄, 형광펜은 끈다 ---------- */
+.card-h { border-bottom: 1.5px dotted var(--cyline); padding-bottom: 8px; margin-bottom: 10px !important; }
+.card-h h3, .rp-h h3 { font-family: 'Hippie', 'Pretendard', sans-serif !important; font-weight: 400 !important; font-size: 21px !important; color: var(--cy-d) !important; background: none !important; padding: 0 !important; display: inline-flex !important; align-items: center; }
+.card-h h3::before, .rp-h h3::before { content: "♥"; font-family: 'Pretendard', sans-serif; font-size: 12px; color: var(--cy-o); margin-right: 6px; }
+.card-h h3 .text-accent { background: var(--cy-o) !important; }
+.modal-box h3, .rp-top h2, details.fold > summary { font-family: 'Hippie', 'Pretendard', sans-serif !important; font-weight: 400 !important; color: var(--cy-d) !important; }
+.card { border-bottom: 0 !important; padding: 18px 0 14px !important; }
+
+/* ---------- 손글씨 메모 : 뚝딱감자체 ---------- */
+.empty, .pill, .txn-day > span:first-child, .sub, .rp-eyebrow, .rp-foot, .it-note, .card-h .more, .todo small { font-family: 'TtukttakGamja', 'Pretendard', sans-serif !important; letter-spacing: 0 !important; }
+.sub, .todo small, .it-note { font-size: 15px !important; color: #7A8794 !important; }
+.empty { font-size: 18px !important; color: #8FA3B2 !important; }
+.pill { font-size: 15px !important; font-weight: 400 !important; }
+.card-h .more { font-size: 15px !important; color: var(--cy) !important; }
+.card-h .more::after { content: " ▸"; }
+.txn-day { border-bottom: 1px dotted var(--cyline) !important; }
+.txn-day > span:first-child { font-size: 18px !important; color: var(--cy-d) !important; }
+.txn-day > span:first-child::before { content: "📒 "; font-size: 13px; }
+
+/* ---------- 숫자 · 본문 : 고딕으로 또렷하게 ---------- */
+.big, .kv b, .rp-kv b { font-family: 'Pretendard', sans-serif !important; font-weight: 800 !important; color: var(--ink) !important; }
+body, .row .t b, .it-t b, .txn-row .t b, .todo b { color: var(--ink); }
+
+/* ---------- 선 · 칸 : 점선 ---------- */
+.kv { border: 1.5px dotted var(--cyline) !important; border-radius: 12px; background: #F7FBFE; }
+.kv > div + div { border-left: 1.5px dotted var(--cyline) !important; }
+.kv > div { padding-left: 12px !important; }
+.row + .row, .it, .rp-cat, .rp-goal, .todo { border-top: 1px dotted #D5E2EB !important; }
+
+/* ---------- 색 : 파랑 하나 + 주황 조금 ---------- */
+.btn.pri, .it-btn, .hdr-add, .mb-add, .modal-box button.bg-accent, .modal-box button[type=submit], .modal-box button.bg-slate-800, .modal-box button.bg-slate-900, button.bg-slate-900.text-white, button.bg-slate-800.text-white { background: var(--cy) !important; border-color: var(--cy) !important; }
+.btn.pri:hover, .it-btn:hover { background: var(--cy-d) !important; }
+.fill[style*="#0B7A57"], .it-bar i[style*="#0B7A57"], .fill[style*="#191F28"] { background: repeating-linear-gradient(-45deg, #3A8FD0 0 6px, #5AA5DE 6px 12px) !important; }
+.track, .it-bar { background: #E3EEF5 !important; border: 1px solid #D0E0EA; }
+.track > .mark { background: var(--cy-o) !important; }
+.rp-stack i { background: var(--cy) !important; }
+.rp-no { background: var(--cy-l) !important; color: var(--cy-d) !important; }
+.rp-todo li.key .rp-no { background: var(--cy) !important; color: #fff !important; }
+.nav-item.on { background: var(--cy-l) !important; color: var(--cy-d) !important; }
+.nav-item.on i { color: var(--cy) !important; }
+.seg > button.on { color: var(--cy-d) !important; }
+.mon-lb { color: var(--ink) !important; }
+.kv small i, .card-h h3 > i.fa-solid:first-child { color: #9DB8CC !important; }
+.todo-x:hover { color: var(--cy) !important; }
+
+/* ---------- 탭바 : 미니홈피 메뉴 탭처럼 ---------- */
+body.fc-m #mobile-bar { background: #fff !important; border-top: 1.5px dashed var(--cyline) !important; box-shadow: 0 -4px 16px rgba(60, 100, 130, .1); }
+.mb-tab { margin: 0 4px; border-radius: 12px 12px 6px 6px; padding: 6px 0 4px !important; color: #8FA3B2 !important; }
+.mb-tab span { font-family: 'TtukttakGamja', 'Pretendard', sans-serif; font-size: 13px !important; font-weight: 400 !important; }
+.mb-tab.on { background: var(--cy) !important; color: #fff !important; }
+.mb-tab.on span::after { display: none !important; }
+.mb-add { background: var(--cy-o) !important; border-color: var(--cy-o) !important; border-radius: 50% !important; box-shadow: 0 6px 16px rgba(255, 138, 61, .4) !important; }
+
+/* ---------- 창 : 흰 종이 + 안쪽 점선 ---------- */
+.modal-box { background: #fff !important; outline: 1.5px dashed var(--cyline); outline-offset: -8px; }
+body.fc-m .app-modal > div::before { background: #C9D9E4; }
+.app-modal { background: rgba(50, 80, 105, .35) !important; }
+#content .card-h h3 > i.fa-solid:first-child { display: none !important; }
+.bg-accent { background-color: var(--cy) !important; border-color: var(--cy) !important; }
+.hover\:bg-accent-hover:hover { background-color: var(--cy-d) !important; }
+.bg-accent-light { background-color: var(--cy-l) !important; }
+.text-accent-hover { color: var(--cy-d) !important; }
+
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
@@ -820,7 +920,7 @@ details.fold > summary { font-size: 21px !important; }
     <div class="px-5 pt-6 pb-4">
       <button onclick="App.ui.go('dashboard')" class="flex items-center gap-2.5 text-left">
         <span class="brand-mark">가</span>
-        <span class="font-bold text-[17px] text-slate-900 tracking-tight">우리집 가계부</span>
+        <span class="cy-brand"><small>우리집</small>가계부 미니홈피</span>
       </button>
     </div>
     <nav id="side-nav" class="flex-1 overflow-y-auto px-3 pb-4"></nav>
@@ -1821,7 +1921,10 @@ window.App = window.App || {};
     var el = section(v.id);
     el.classList.remove('hidden');
     var par = NAV[v.id] && NAV[v.id][4];
-    u.$('page-title').innerHTML = (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + u.esc(ui.label(v.id));
+    /* 미니홈피 방문자 수처럼 : TODAY = 오늘 적은 내역, TOTAL = 지금까지 모든 내역 */
+    var txs = (App.db && App.db.transactions) || [], td = u.today(), nT = txs.filter(function (t) { return t.date === td; }).length;
+    var cnt = '<span class="cy-count">TODAY <b>' + nT + '</b><i>|</i>TOTAL <b>' + u.n0(txs.length) + '</b></span>';
+    u.$('page-title').innerHTML = cnt + (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + u.esc(ui.label(v.id));
     document.title = ui.label(v.id) + ' · 우리집 가계부';
     renderNav(v.id);
     renderHeader(v.id);
