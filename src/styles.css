@@ -522,3 +522,112 @@ body.fc-m .modal-box form > div:last-child > button, body.fc-m .modal-box > div:
 #content .view .text-\[10px\], #content .view .text-\[11px\] { font-size: 13px !important; }
 #content .view .text-xs { font-size: 14px; }
 #view-tools .it-t small { white-space: normal; }
+
+/* =====================================================================
+   디자인 기준 (최종) — 아래 값만 쓴다
+   여백 : 4 · 8 · 12 · 16 · 20 · 24 · 32   | 화면 옆 20(휴대폰) / 32(PC) · 구역 위아래 24 · 구역 제목 아래 12 · 줄 위아래 14
+   글자 : 28·700 큰 숫자 / 17·700 구역 제목 / 15·600 줄 제목·금액 / 13·400 설명 / 12·500 작은 이름표
+   색   : 먹 #191F28 · 진회 #4E5968 · 회 #8B95A1 · 옅은회 #B0B8C1 · 선 #F2F4F6 · 바탕회 #F7F8FA · 초록 #0B7A57(진행·들어온 돈) · 빨강 #E0464B(넘음·마이너스)
+   ===================================================================== */
+:root { --ink: #191F28; --ink2: #4E5968; --ink3: #8B95A1; --ink4: #B0B8C1; --line: #F2F4F6; --soft: #F7F8FA; --green: #0B7A57; --red: #E0464B; }
+
+/* ---------- 바깥 여백 · 구역 · 구역 사이 ---------- */
+#content { padding: 0 32px 48px !important; }
+body.fc-m #content { padding: 0 20px calc(96px + env(safe-area-inset-bottom, 0px)) !important; }
+.card, body.fc-m .card { padding: 24px 0 !important; border-bottom: 1px solid var(--line); }
+.card-h { margin-bottom: 12px !important; min-height: 28px; }
+#txn-bar.card { padding: 12px 0 16px !important; }
+#txn-list.card { padding: 0 0 8px !important; }
+.home-grid { column-gap: 48px !important; }
+
+/* ---------- 안쪽 여백 (줄 · 칸) ---------- */
+.row, .it, .rp-cat, .rp-goal, .bud-row { padding-top: 14px !important; padding-bottom: 14px !important; }
+.row, .txn-row, .it.has-ic, .todo-main { column-gap: 12px !important; gap: 12px; }
+.txn-row { padding-top: 12px; padding-bottom: 12px; }
+.txn-day { padding: 20px 0 6px !important; }
+.todo-main { padding: 14px 0 !important; }
+.kv > div { padding: 12px 0 !important; }
+.kv > div + div { padding-left: 16px !important; }
+body.fc-m .kv > div + div { padding-left: 12px !important; }
+
+/* ---------- 글자 위계 ---------- */
+#page-title { font-size: 22px !important; font-weight: 700; color: var(--ink); letter-spacing: -.02em; }
+body.fc-m #page-title { font-size: 20px !important; }
+.big, body.fc-m .big, .rp-hero .big, body.fc-m .rp-hero .big { font-size: 28px !important; font-weight: 700; color: var(--ink); letter-spacing: -.03em; line-height: 1.25; }
+.card-h h3, .rp-h h3, details.fold > summary { font-size: 17px !important; font-weight: 700; color: var(--ink); }
+.card-h h3 > i.fa-solid:first-child { font-size: 15px; color: var(--ink4) !important; margin-right: 8px; }
+.row .t b, .it-t b, .txn-row .t b, .todo b, .rp-cat .n, .bud-row b, .rp-goal > div > b { font-size: 15px !important; font-weight: 600; color: var(--ink); }
+.row .v, .it-v b, .txn-row .v, .rp-cat b { font-size: 15px !important; font-weight: 600; }
+.row .t small, .it-t small, .it-v small, .txn-row .t small, .todo small, .rp-cat .m, .rp-goal small, .it-note, .sub { font-size: 13px !important; font-weight: 400; color: var(--ink3); }
+.it-note { color: var(--ink2); }
+.kv small, .rp-eyebrow, .txn-day { font-size: 12px !important; font-weight: 500; color: var(--ink3) !important; }
+.kv b, .rp-kv b { font-size: 17px !important; font-weight: 700; color: var(--ink); margin-top: 2px; }
+.more { font-size: 13px !important; font-weight: 500; color: var(--ink3) !important; }
+.more:hover { color: var(--ink) !important; }
+.empty { font-size: 14px; color: var(--ink3); padding: 24px 8px; }
+.text-accent { color: var(--green) !important; }
+
+/* ---------- 색 · 헤더 바탕 ---------- */
+body, #app-header, main { background: #fff; }
+#app-header { height: 64px; padding: 0 32px !important; }
+body.fc-m #app-header { height: 56px !important; padding: 0 20px !important; }
+.mon-sw, .hdr-chip, .hdr-icon { background: var(--soft) !important; }
+.mon-sw { height: 36px !important; border-radius: 10px; }
+.hdr-chip, .hdr-icon { height: 36px !important; border-radius: 10px !important; font-size: 13px !important; color: var(--ink2) !important; }
+.hdr-icon { width: 36px !important; }
+.hdr-icon .dot { top: 4px; right: 4px; min-width: 14px; height: 14px; line-height: 14px; font-size: 10px; background: var(--red); }
+
+/* ---------- 진행 막대 : 한 가지 두께 · 둥근 끝 · 옅은 바탕 ---------- */
+.track, .it-bar { height: 6px !important; background: var(--line) !important; border-radius: 999px !important; overflow: hidden; }
+.track > .fill, .it-bar i { border-radius: 999px !important; }
+.card[style*="order:1"] .track { height: 8px !important; margin-top: 20px !important; overflow: visible; }
+.track > .mark { top: -3px; height: 14px; width: 2px; background: var(--ink); }
+.rp-stack { height: 8px !important; border-radius: 999px !important; }
+
+/* ---------- 뱃지 · 아이콘 · 강조 ---------- */
+.pill { font-size: 12px !important; font-weight: 600; padding: 4px 8px !important; border-radius: 6px !important; background: var(--soft) !important; }
+.pill.ok { color: var(--green); } .pill.warn { color: var(--ink2); } .pill.bad { color: var(--red); background: #FDEEEE !important; } .pill.mute { color: var(--ink3); }
+.card-h h3 .text-accent { display: inline-block; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: var(--ink); color: #fff !important; font-size: 12px; line-height: 20px; text-align: center; vertical-align: 2px; }
+.ic { width: 40px; height: 40px; font-size: 15px; background: var(--soft); color: var(--ink2); }
+.ic.sm { width: 36px; height: 36px; font-size: 14px; }
+.ic.in { background: #EAF4EF; color: var(--green); }
+.kv small i { font-size: 11px; color: var(--ink4); margin-right: 4px; }
+.todo-x { width: 44px; font-size: 20px; color: #D1D6DB; }
+.todo-x:hover { color: var(--green); background: none; }
+.todo-main > i.fa-chevron-right, .it-v .fa-chevron-right { color: #D1D6DB !important; font-size: 12px !important; }
+.kv { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.kv > div + div { border-left: 1px solid var(--line); }
+.seg { background: var(--soft); border-radius: 10px; padding: 3px; }
+.seg > button { font-size: 13px; font-weight: 600; color: var(--ink3); padding: 7px 12px; border-radius: 8px; }
+.seg > button.on { color: var(--ink); background: #fff; box-shadow: 0 1px 2px rgba(25, 31, 40, .08); }
+
+/* ---------- 버튼 : 크기 세 가지 (48 / 36 / 32) ---------- */
+.btn { height: 48px; padding: 0 20px; border-radius: 12px; font-size: 15px; font-weight: 600; }
+.card-h .btn, .btn[style*="height:38px"], .btn[style*="height:36px"] { height: 36px !important; padding: 0 12px; border-radius: 10px; font-size: 13px; }
+.btn.pri { background: var(--ink); color: #fff; } .btn.pri:hover { background: #333D4B; }
+.btn.sec { background: var(--soft); color: var(--ink2); } .btn.sec:hover { background: var(--line); }
+.it-btn { height: 32px; padding: 0 12px; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--ink); }
+
+/* ---------- 탭바 : 높이 64 · 아이콘 20 · 글자 11 · 가운데 + 52 ---------- */
+body.fc-m #mobile-bar { height: calc(64px + env(safe-area-inset-bottom, 0px)) !important; background: rgba(255, 255, 255, .96); -webkit-backdrop-filter: saturate(180%) blur(12px); backdrop-filter: saturate(180%) blur(12px); border-top: 1px solid var(--line) !important; align-items: start; padding-top: 6px; }
+.mb-tab { gap: 4px; padding-top: 4px; color: var(--ink4); }
+.mb-tab i { font-size: 20px; height: 22px; line-height: 22px; }
+.mb-tab span { font-size: 11px; font-weight: 600; letter-spacing: -.01em; }
+.mb-tab.on { color: var(--ink); }
+.mb-add { width: 52px; height: 52px; border-radius: 50%; background: var(--ink); color: #fff; font-size: 20px; margin-top: -2px; box-shadow: 0 6px 16px rgba(25, 31, 40, .22); }
+.mb-add:active { transform: scale(.96); }
+body.fc-m #toast-container { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+
+/* 옆 메뉴 */
+.nav-item { font-size: 15px; padding: 10px 12px; border-radius: 10px; color: var(--ink2); }
+.nav-item i { color: var(--ink4); }
+.nav-item.on { background: var(--soft); color: var(--ink); font-weight: 700; }
+.nav-item.on i { color: var(--ink); }
+.nav-group { font-size: 12px; font-weight: 600; color: var(--ink4); padding: 20px 12px 6px; }
+
+/* 아래에서 올라오는 창 : 위 모서리 20 · 손잡이 */
+body.fc-m .app-modal > div { border-top-left-radius: 20px !important; border-top-right-radius: 20px !important; padding: 28px 20px calc(20px + env(safe-area-inset-bottom, 0px)) !important; position: relative; }
+body.fc-m .app-modal > div::before { content: ""; position: absolute; top: 8px; left: 50%; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: #E5E8EB; }
+.sheet-btn { padding: 14px 12px; font-size: 15px; border-radius: 10px; }
+@media (hover: none) { .todo:hover, .it:hover, .txn-row:hover, .row:hover, .add-opt:hover, .sheet-btn:hover { background: none !important; } }
+.bud-row > .col-span-2 { padding-left: 48px; }
