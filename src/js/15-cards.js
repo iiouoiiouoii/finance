@@ -150,7 +150,7 @@
           tap: 'App.cards.menu(' + card.id + ')', title: u.esc(card.name),
           meta: u.dots([u.esc(card.owner || ''), u.esc(card.type), C.isCredit(card) && card.payDay ? '매달 ' + card.payDay + '일 결제' : '']),
           val: u.n0(spent) + '원', valSub: card.targetAmount ? '실적 ' + u.n0(card.targetAmount) + '원' + (rate >= 100 ? ' 채움' : '') : (+mo.slice(5)) + '월 사용',
-          bar: rate, barColor: rate >= 100 ? '#0B7A57' : '#E8A10A',
+          bar: rate, barColor: rate >= 100 ? '#0B7A57' : '#B0B8C1',
           note: card.benefits ? '혜택: ' + u.esc(card.benefits) : ''
         });
       }).join('') : '<div class="empty">등록된 카드가 없어요.</div>';

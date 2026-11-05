@@ -37,7 +37,7 @@
   RE.listHtml = function () {
     var list = db().realEstates || [], mo = App.state.month;
     if (!list.length) return '<div class="empty">등록된 집이 없어요. 자가는 물론 <b>전세로 사는 집</b>도 넣을 수 있어요.<br>대출이 있다면 대출을 먼저 넣고 연결하면 대출 비율(LTV)이 계산돼요.</div>';
-    var COL = { '무차입': '#0B7A57', '안정': '#0B7A57', '보통': '#3182F6', '주의': '#E8A10A', '위험': '#E5484D' };
+    var COL = { '무차입': '#0B7A57', '안정': '#0B7A57', '보통': '#0B7A57', '주의': '#8B95A1', '위험': '#E0464B' };
     return '<div class="list-wrap">' + list.map(function (re) {
       var d = RE.detail(re, mo), info = RE.ltvInfo(d.ltv), left = d.jeonse ? RE.leaseLeft(re) : null, notes = [], cls = '';
       if (d.loans.length) notes.push('대출 ' + d.loans.map(function (l, i) { return u.esc(l.name) + ' ' + u.K(d.states[i].amount); }).join(', ') + ' · ' + (d.jeonse ? '보증금 대비 ' : 'LTV ') + u.pct(d.ltv) + ' ' + info.label);

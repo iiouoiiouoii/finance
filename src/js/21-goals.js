@@ -25,7 +25,7 @@
       tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name),
       meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월 남음)' : '') + '까지' : '기한 없음', i.req == null ? '' : '매달 ' + u.K(i.req) + ' 필요']),
       val: i.pc.toFixed(0) + '%', valSub: u.KS(i.saved) + ' / ' + u.KS(i.tgt),
-      bar: i.pc, barColor: i.rem <= 0 ? '#0B7A57' : warn ? '#E8A10A' : '#0B7A57',
+      bar: i.pc, barColor: '#0B7A57',
       note: s[0] + (g.plan ? ' · 계획 월 ' + u.K(g.plan) : '') + ' · 이번 달 ' + u.K(thisM) + ' 모음', noteCls: warn ? 'warn' : '',
       act: '<input id="goal-c-' + g.id + '" type="text" data-money inputmode="numeric" placeholder="' + (g.plan ? u.n0(g.plan) : '모은 금액') + '" class="w-32 border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1.5 text-[14px] text-right">'
         + '<button onclick="App.goals.contrib(' + g.id + ')" class="it-btn">모았어요</button>'

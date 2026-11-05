@@ -446,3 +446,63 @@ body.fc-m header { padding-left: 1.25rem !important; padding-right: 1.25rem !imp
 body.fc-m .rp-top { flex-direction: column; align-items: flex-start; }
 body.fc-m .rp-hero .big { font-size: 30px; }
 @media print { .rp { max-width: none; } .rp-sec { break-inside: avoid; } }
+
+/* =========================================================
+   색 정리 (최종) : 먹색 + 회색이 기본, 초록은 '누를 것 · 진행'에만, 빨강은 '넘음 · 마이너스'에만
+   ========================================================= */
+:root { --c1: #0B7A57; --c2: #191F28; --c3: #191F28; }
+.more { color: #6B7684; font-weight: 500; }
+.more:hover { color: #191F28; }
+.mb-tab.on, .seg > button.on { color: #191F28; }
+#view-assets .big, #asset-summary-networth { color: #191F28; }
+.txn-dot, .own-badge { display: none !important; }
+
+/* 상태 꼬리표 : 칠한 배경 없이 글자만 */
+.pill { background: none !important; padding: 0; font-size: 13px; font-weight: 600; }
+.pill.ok { color: #0B7A57; } .pill.warn { color: #4E5968; } .pill.bad { color: #E0464B; } .pill.mute { color: #8B95A1; }
+
+/* 할 일 : 아이콘 없이 글자 두 줄 + 오른쪽 체크 */
+.todo-main { gap: .5rem; padding-top: .95rem; padding-bottom: .95rem; }
+.todo b { font-size: 15px; }
+.todo-x { color: #C9CED4; font-size: 19px; }
+
+/* 기록하기 메뉴 아이콘 : 회색 바탕 먹색 아이콘 */
+.add-ic { background: #F2F4F6; color: #333D4B; border-radius: 12px; }
+.add-opt b em { background: #F2F4F6; color: #4E5968; }
+
+/* 예전 화면에 남은 색 안내 상자 · 색 글자 → 무채색 (빨강은 그대로 두어 경고만 눈에 띄게) */
+#content .bg-amber-50, #content .bg-emerald-50, #content .bg-blue-50, #content .bg-sky-50, #content .bg-indigo-50, #content .bg-purple-50, #content .bg-teal-50, #content .bg-yellow-50, #content [class*="bg-amber-50/"], #content [class*="bg-emerald-50/"],
+.app-modal .bg-amber-50, .app-modal .bg-emerald-50, .app-modal .bg-blue-50, .app-modal .bg-sky-50 { background: #F7F8FA !important; border-color: #EEF0F2 !important; }
+#content .bg-amber-100, #content .bg-emerald-100, #content .bg-blue-100, #content .bg-sky-100, #content .bg-indigo-100, #content .bg-purple-100 { background: #F2F4F6 !important; border-color: transparent !important; }
+#content [class*="text-amber-"], #content [class*="text-sky-"], #content [class*="text-indigo-"], #content [class*="text-purple-"], #content [class*="text-blue-"], #content [class*="text-teal-"],
+.app-modal [class*="text-amber-"], .app-modal [class*="text-sky-"], .app-modal [class*="text-blue-"], .app-modal [class*="text-indigo-"] { color: #4E5968 !important; }
+#content [class*="text-emerald-"] { color: #0B7A57 !important; }
+#content [class*="border-amber-"], #content [class*="border-emerald-"], #content [class*="border-blue-"], #content [class*="border-sky-"] { border-color: #EEF0F2 !important; }
+#content .bg-amber-500, #content .bg-blue-500, #content .bg-indigo-500, #content .bg-sky-500, #content .bg-purple-500, #content .bg-teal-500, #content .bg-yellow-600 { background: #8B95A1 !important; }
+#content .bg-emerald-500 { background: #0B7A57 !important; }
+
+/* 글자 위계 : 제목은 또렷하게, 설명은 한 단계 옅게 */
+.card-h h3, .rp-h h3 { font-size: 15px; font-weight: 700; color: #191F28; letter-spacing: -.01em; }
+.sub { color: #8B95A1; }
+.big { font-weight: 700; letter-spacing: -.03em; }
+.kv small { color: #8B95A1; }
+.kv b { font-weight: 600; }
+.btn { border-radius: 10px; font-weight: 600; }
+.btn.pri { background: #191F28; } .btn.pri:hover { background: #333D4B; }
+.it-btn { background: #191F28; } .it-btn:hover { background: #333D4B; }
+.fx-put { background: #191F28; } .fx-put:hover { background: #333D4B; }
+button.bg-slate-900.text-white, button.bg-slate-800.text-white, label.bg-slate-800.text-white { background: #191F28 !important; border-color: #191F28 !important; }
+.hdr-add { background: #191F28; } .hdr-add:hover { background: #333D4B; }
+.mb-add { background: #191F28; border-radius: 50%; }
+
+/* 리포트 : 할 일은 번호 목록, 중요한 것만 번호를 진하게 */
+.rp-todo { counter-reset: rp; }
+.rp-todo li { counter-increment: rp; }
+.rp-no::before { content: counter(rp); }
+.rp-no { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #F2F4F6; color: #6B7684; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: .1rem; }
+.rp-todo li.key .rp-no { background: #191F28; color: #fff; }
+.rp-cat { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "n v" "m m"; }
+.rp-sum { color: #191F28; }
+.rp-more summary { color: #6B7684; }
+.rp-stack { gap: 0; height: 10px; border-radius: 5px; }
+.rp-stack i + i { box-shadow: inset 2px 0 0 #fff; }

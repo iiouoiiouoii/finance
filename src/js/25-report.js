@@ -47,7 +47,7 @@
   };
 
   /* ---------- 화면 : 상자 없이 한 장, 큰 숫자 하나 → 세 숫자 → 어디에 썼나 → 할 일 → 자산 · 목표 ---------- */
-  var TONE = { high: ['#E5484D', '먼저'], mid: ['#F08A3E', '챙기기'], low: ['#8B95A1', '참고'], good: ['#0B7A57', '잘함'] };
+  var TONE = { high: 1, mid: 1, low: 0, good: 0 };
   function sec(title, body, right) { return '<section class="rp-sec"><div class="rp-h"><h3>' + title + '</h3>' + (right || '') + '</div>' + body + '</section>'; }
 
   RP.html = function (mo) {
@@ -57,30 +57,30 @@
     var head = '<div class="rp-top"><div><div class="rp-eyebrow">' + u.esc(C.nm('H')) + ' · ' + u.esc(C.nm('W')) + '</div><h2>' + u.monthLabel(mo) + ' 우리 집 리포트</h2></div>'
       + '<div class="rp-tools no-print"><button onclick="App.report.copy()"><i class="fa-regular fa-copy"></i> 요약 복사</button><button onclick="App.report.print()"><i class="fa-solid fa-print"></i> 인쇄</button></div></div>';
     var hero = '<div class="rp-hero"><div class="sub">이번 달 남은 돈</div><div class="big' + (r.surplus < 0 ? ' text-red-600' : '') + '">' + won(r.surplus) + '</div>'
-      + (r.rate == null ? '' : '<div class="rp-rate"><span style="color:' + (r.rate >= 30 ? 'var(--c1)' : r.rate >= 10 ? 'var(--c3)' : '#E5484D') + '">저축률 ' + r.rate.toFixed(0) + '%</span> · 수입에서 지출을 뺀 돈</div>') + '</div>'
-      + '<div class="kv rp-kv"><div><small>들어온 돈</small><b style="color:var(--c1)">' + u.KS(r.inc) + '</b></div>'
-      + '<div><small>나간 돈</small><b style="color:var(--c3)">' + u.KS(r.exp) + '</b><small>예산 ' + u.KS(r.budgetTotal) + '</small></div>'
-      + '<div><small>저축 · 투자</small><b style="color:var(--c2)">' + u.KS(r.S) + '</b><small>' + (r.T ? '목표의 ' + Math.round(r.S / r.T * 100) + '%' : '목표 없음') + '</small></div></div>';
+      + (r.rate == null ? '' : '<div class="rp-rate"><span style="color:' + (r.rate >= 0 ? '#191F28' : '#E0464B') + '">저축률 ' + r.rate.toFixed(0) + '%</span> · 수입에서 지출을 뺀 돈</div>') + '</div>'
+      + '<div class="kv rp-kv"><div><small>들어온 돈</small><b>' + u.KS(r.inc) + '</b></div>'
+      + '<div><small>나간 돈</small><b>' + u.KS(r.exp) + '</b><small>예산 ' + u.KS(r.budgetTotal) + '</small></div>'
+      + '<div><small>저축 · 투자</small><b>' + u.KS(r.S) + '</b><small>' + (r.T ? '목표의 ' + Math.round(r.S / r.T * 100) + '%' : '목표 없음') + '</small></div></div>';
     /* 어디에 썼나 : 위에 색 막대 한 줄, 아래 큰 항목 순 */
-    var stack = spend ? '<div class="rp-stack">' + top.map(function (c) { return '<i style="width:' + (c.s / spend * 100).toFixed(1) + '%;background:' + u.esc(c.color) + '" title="' + u.esc(c.name) + '"></i>'; }).join('') + '</div>' : '';
+    var stack = spend ? '<div class="rp-stack">' + top.map(function (c, i) { return '<i style="width:' + (c.s / spend * 100).toFixed(1) + '%;background:rgba(25,31,40,' + Math.max(0.12, 0.85 - i * 0.14).toFixed(2) + ')" title="' + u.esc(c.name) + '"></i>'; }).join('') + '</div>' : '';
     var cats = top.length ? stack + top.slice(0, 6).map(function (c) {
       var over = c.b > 0 && c.s > c.b, d = c.s - c.prev;
-      return '<div class="rp-cat"><span class="txn-dot" style="background:' + u.esc(c.color) + '"></span><span class="n">' + u.esc(c.name) + '</span>'
+      return '<div class="rp-cat"><span class="n">' + u.esc(c.name) + '</span>'
         + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · 지난달 ' + (d > 0 ? '+' : '') + u.KS(d) : '') + '</span>'
         + '<b>' + won(c.s) + '</b></div>';
     }).join('') + (top.length > 6 ? '<div class="text-[13px] text-slate-400 pt-2">그 밖에 ' + (top.length - 6) + '개 항목 ' + won(u.sum(top.slice(6), function (c) { return c.s; })) + '</div>' : '')
       : '<div class="empty">이 달 지출 기록이 없어요.</div>';
     var todo = adv.length ? '<ol class="rp-todo">' + adv.slice(0, 5).map(function (x) {
-      var t = TONE[x[0]]; return '<li><span class="rp-tag" style="color:' + t[0] + ';background:' + t[0] + '14">' + t[1] + '</span><p>' + x[1] + '</p></li>';
-    }).join('') + '</ol>' + (adv.length > 5 ? '<details class="rp-more"><summary>' + (adv.length - 5) + '개 더 보기</summary><ol class="rp-todo">' + adv.slice(5).map(function (x) { var t = TONE[x[0]]; return '<li><span class="rp-tag" style="color:' + t[0] + ';background:' + t[0] + '14">' + t[1] + '</span><p>' + x[1] + '</p></li>'; }).join('') + '</ol></details>' : '')
-      : '<p class="text-[15px]" style="color:var(--c1)">특별히 고칠 점이 없어요. 이번 달처럼만 하면 돼요.</p>';
-    var assets = '<div class="kv"><div><small>순자산</small><b style="color:var(--c2)">' + u.KS(r.nwNow) + '</b><small>' + (r.nwChange == null ? '지난달 기록 없음' : '지난달보다 ' + (r.nwChange >= 0 ? '+' : '') + u.KS(r.nwChange)) + '</small></div>'
+      return '<li' + (TONE[x[0]] ? ' class="key"' : '') + '><span class="rp-no"></span><p>' + x[1] + '</p></li>';
+    }).join('') + '</ol>' + (adv.length > 5 ? '<details class="rp-more"><summary>' + (adv.length - 5) + '개 더 보기</summary><ol class="rp-todo">' + adv.slice(5).map(function (x) { return '<li' + (TONE[x[0]] ? ' class="key"' : '') + '><span class="rp-no"></span><p>' + x[1] + '</p></li>'; }).join('') + '</ol></details>' : '')
+      : '<p class="text-[15px] text-slate-700">특별히 고칠 점이 없어요. 이번 달처럼만 하면 돼요.</p>';
+    var assets = '<div class="kv"><div><small>순자산</small><b>' + u.KS(r.nwNow) + '</b><small>' + (r.nwChange == null ? '지난달 기록 없음' : '지난달보다 ' + (r.nwChange >= 0 ? '+' : '') + u.KS(r.nwChange)) + '</small></div>'
       + '<div><small>비상금</small><b' + (r.h.efMonths != null && r.h.efMonths < 3 ? ' class="text-red-600"' : '') + '>' + (r.h.efMonths == null ? '-' : r.h.efMonths.toFixed(1) + '개월') + '</b><small>3~6개월이면 든든</small></div>'
       + '<div><small>매달 정해진 돈</small><b>' + u.KS(C.fixedTotal() + r.inst.thisCharge + C.loansMonthly(mo)) + '</b><small>고정비 · 할부 · 대출</small></div></div>'
-      + (r.ending.length ? '<p class="text-[14px] mt-3" style="color:var(--c1)">이번 달로 끝나는 할부 ' + r.ending.length + '건 · 다음 달부터 월 ' + won(u.sum(r.ending, function (x) { return x.c.thisCharge; })) + '이 가벼워져요.</p>' : '');
+      + (r.ending.length ? '<p class="text-[14px] mt-3 text-slate-600">이번 달로 끝나는 할부 ' + r.ending.length + '건 · 다음 달부터 월 ' + won(u.sum(r.ending, function (x) { return x.c.thisCharge; })) + '이 가벼워져요.</p>' : '');
     var goals = r.goals.length ? r.goals.map(function (x) {
-      return '<div class="rp-goal"><div class="flex justify-between gap-3"><b>' + u.esc(x.g.name) + '</b><span>' + u.KS(x.i.saved) + ' / ' + u.KS(x.i.tgt) + ' · <b style="color:var(--c2)">' + x.i.pc.toFixed(0) + '%</b></span></div>'
-        + '<div class="track mt-2" style="height:6px"><div class="fill" style="width:' + Math.min(100, x.i.pc) + '%;background:var(--c2)"></div></div>'
+      return '<div class="rp-goal"><div class="flex justify-between gap-3"><b>' + u.esc(x.g.name) + '</b><span>' + u.KS(x.i.saved) + ' / ' + u.KS(x.i.tgt) + ' · <b>' + x.i.pc.toFixed(0) + '%</b></span></div>'
+        + '<div class="track mt-2" style="height:6px"><div class="fill" style="width:' + Math.min(100, x.i.pc) + '%;background:#0B7A57"></div></div>'
         + '<small>이번 달 ' + won(x.month) + ' 모음' + (x.i.req ? ' · 기한까지 매달 ' + won(x.i.req) + ' 필요' : '') + '</small></div>';
     }).join('') : '';
     return '<div id="report-page" class="rp">' + head + hero
