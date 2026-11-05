@@ -506,17 +506,19 @@ button.bg-slate-900.text-white, button.bg-slate-800.text-white, label.bg-slate-8
    ========================================================= */
 .fc-in, .modal-box input:not([type=checkbox]):not([type=radio]):not([type=hidden]), .modal-box select, .modal-box textarea,
 #content .view input:not([type=checkbox]):not([type=radio]):not([type=search]):not(.fc-in):not([data-money].w-28), #content .view select:not(.flt-in), #content .view textarea {
-  min-height: 46px; border: 1px solid #E5E8EB !important; border-radius: 10px !important; background: #fff !important; font-size: 15px !important; color: #191F28; padding-left: .8rem; padding-right: .8rem; }
+  min-height: 46px; border: 1px solid #E5E8EB !important; border-radius: 10px !important; background: #fff !important; font-size: 15px !important; color: #191F28; }
+/* 기본 안쪽 여백은 가장 약하게 : 입력칸에 따로 준 여백(예: 오른쪽 '원' 자리)이 항상 이긴다 */
+:where(.modal-box, #content) :where(input, select) { padding-left: .8rem; padding-right: .8rem; }
 .modal-box textarea, #content .view textarea { padding-top: .6rem; padding-bottom: .6rem; }
 .modal-box input:focus, .modal-box select:focus, .modal-box textarea:focus, .fc-in:focus { border-color: #191F28 !important; box-shadow: 0 0 0 3px rgba(25, 31, 40, .08) !important; }
 .modal-box label, .modal-box .text-\[11px\].font-semibold, .modal-box .text-xs.font-semibold { font-size: 13px !important; color: #4E5968 !important; font-weight: 600; }
 .modal-box .text-\[11px\], .modal-box .text-\[10px\], .modal-box .text-xs { font-size: 13px !important; }
 .modal-box .space-y-3 > * + * { margin-top: .9rem !important; }
-.modal-box form > div:last-child button, .modal-box > div:last-child > button, .modal-box button[type=submit] { min-height: 48px; padding: 0 1.25rem; border-radius: 12px !important; font-size: 15px !important; font-weight: 700; }
+.modal-box form > div:last-child:has(> button[type=submit]) > button, .modal-box button[type=submit] { min-height: 48px; padding: 0 1.25rem; border-radius: 12px !important; font-size: 15px !important; font-weight: 700; }
 .modal-box button.bg-accent, .modal-box button[type=submit], .modal-box button.bg-slate-800, .modal-box button.bg-slate-900 { background: #191F28 !important; color: #fff !important; border-color: #191F28 !important; }
 .modal-box button.bg-slate-100 { background: #F2F4F6 !important; color: #333D4B !important; }
-.modal-box form > div:last-child, .modal-box > div:last-child:has(> button) { display: flex; gap: .5rem; }
-body.fc-m .modal-box form > div:last-child > button, body.fc-m .modal-box > div:last-child:has(> button) > button { flex: 1; }
+.modal-box form > div:last-child:has(> button[type=submit]) { display: flex; gap: .5rem; }
+body.fc-m .modal-box form > div:last-child:has(> button[type=submit]) > button { flex: 1; }
 .modal-box h3 { font-size: 19px !important; }
 .modal-box [class*="bg-sky-50"], .modal-box [class*="bg-amber-50"] { background: #fff !important; }
 #content .view .text-\[10px\], #content .view .text-\[11px\] { font-size: 13px !important; }
@@ -631,3 +633,11 @@ body.fc-m .app-modal > div::before { content: ""; position: absolute; top: 8px; 
 .sheet-btn { padding: 14px 12px; font-size: 15px; border-radius: 10px; }
 @media (hover: none) { .todo:hover, .it:hover, .txn-row:hover, .row:hover, .add-opt:hover, .sheet-btn:hover { background: none !important; } }
 .bud-row > .col-span-2 { padding-left: 48px; }
+/* 자산 '모두' 탭 : 휴대폰에선 한 줄에 하나 (2칸으로 나뉘며 금액이 밖으로 밀리던 것) */
+body.fc-m #view-assets .grid.lg\:grid-cols-4 { grid-template-columns: minmax(0, 1fr) !important; }
+/* 목록 줄 오른쪽 금액 : 너무 길면 설명 줄은 줄바꿈, 금액은 한 줄 */
+.it-v { max-width: 60vw; min-width: 0; }
+.it-v small { white-space: normal; }
+/* 창 닫기 버튼이 창 밖으로 삐져나오지 않게 */
+.modal-box .-mr-2 { margin-right: 0; }
+.modal-box input.text-2xl { font-size: 24px !important; font-weight: 700; min-height: 56px; }

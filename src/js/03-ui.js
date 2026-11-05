@@ -123,8 +123,8 @@
     };
     u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 기록할까요?</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div class="space-y-1.5">'
-      + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 오지 않는 지출 · 수입을 넣어요.')
-      + row('App.paste.open()', 'fa-paste', '여러 건 한꺼번에', '알림이 빠진 달이나 지난 내역을 카드 앱에서 복사해 붙여넣거나 엑셀 파일로 올려요. 이미 있는 건은 걸러져요.')
+      + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 없는 지출 · 수입')
+      + row('App.paste.open()', 'fa-paste', '여러 건 붙여넣기', '카드 앱 내역 복사 · 엑셀 파일')
       + '</div>', 460);
     u.open('add-modal');
   };
