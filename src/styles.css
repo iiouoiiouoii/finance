@@ -386,3 +386,63 @@ body.fc-m #content { padding-left: 1.25rem !important; padding-right: 1.25rem !i
 body.fc-m header { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
 /* 예전 화면의 회색 테두리 상자 : 배경·테두리를 빼고 글자만 */
 #content .bg-slate-50.border.border-slate-200, #content .bg-slate-50.rounded-xl, #content .bg-slate-50.rounded-lg { background: none !important; border-width: 1px 0 0 0 !important; border-color: #F2F4F6 !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+
+/* =========================================================
+   포인트 색 세 가지 : 초록(주 · 들어온 돈 · 잘함) / 파랑(모으는 돈 · 자산 · 링크) / 주황(나간 돈 · 챙길 것)
+   ========================================================= */
+:root { --c1: #0B7A57; --c2: #3E63DD; --c3: #F08A3E; }
+.more { color: var(--c2); font-weight: 600; }
+.more:hover { color: #2F4FC0; }
+.dotc.tint1, .todo .dotc.tint1 { background: #E6F4EE !important; color: var(--c1) !important; }
+.dotc.tint2, .todo .dotc.tint2 { background: #EBF0FF !important; color: var(--c2) !important; }
+.dotc.tint3, .todo .dotc.tint3 { background: #FFF1E6 !important; color: #D9701F !important; }
+.mb-tab.on { color: var(--c1); }
+#view-assets .big, #asset-summary-networth { color: var(--c2); }
+.seg > button.on { color: var(--c1); }
+
+/* =========================================================
+   월말 리포트 : 상자 없이 한 장
+   ========================================================= */
+.rp { max-width: 46rem; }
+.rp-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; padding: .5rem 0 1.25rem; }
+.rp-eyebrow { font-size: 13px; color: #8B95A1; font-weight: 600; }
+.rp-top h2 { font-size: 22px; font-weight: 800; color: #191F28; margin-top: .15rem; letter-spacing: -.02em; }
+.rp-tools { display: flex; gap: .4rem; flex-shrink: 0; }
+.rp-tools button { height: 36px; padding: 0 .8rem; border-radius: 10px; background: #F2F4F6; color: #4E5968; font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.rp-tools button:hover { background: #E5E8EB; color: #191F28; }
+.rp-hero { padding: .25rem 0 1.25rem; }
+.rp-hero .big { font-size: 36px; margin-top: .2rem; }
+.rp-rate { font-size: 14px; color: #6B7684; margin-top: .4rem; }
+.rp-rate span { font-weight: 700; }
+.rp-kv b { font-size: 19px; }
+.rp-kv small + b + small, .rp .kv b + small { margin-top: .2rem; font-size: 12.5px; color: #8B95A1; }
+.rp-sec { padding: 1.75rem 0 1.5rem; border-bottom: 1px solid #EEF0F2; }
+.rp-sec:last-of-type { border-bottom: 0; }
+.rp-h { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; }
+.rp-h h3 { font-size: 17px; font-weight: 700; color: #191F28; }
+.rp-sum { font-size: 15px; font-weight: 700; color: var(--c3); }
+.rp-stack { display: flex; height: 12px; border-radius: 6px; overflow: hidden; gap: 2px; margin-bottom: .75rem; }
+.rp-stack i { display: block; height: 100%; min-width: 3px; }
+.rp-cat { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "d n v" ". m m"; column-gap: .6rem; align-items: center; padding: .7rem 0; border-top: 1px solid #F2F4F6; }
+.rp-cat:first-of-type { border-top: 0; }
+.rp-cat .txn-dot { grid-area: d; }
+.rp-cat .n { grid-area: n; font-size: 15px; font-weight: 600; color: #191F28; }
+.rp-cat b { grid-area: v; font-size: 15px; font-weight: 700; color: #191F28; white-space: nowrap; }
+.rp-cat .m { grid-area: m; font-size: 13px; color: #8B95A1; margin-top: .1rem; }
+.rp-cat em { font-style: normal; font-weight: 600; }
+.rp-cat em.bad { color: #E5484D; }
+.rp-todo { display: flex; flex-direction: column; gap: .9rem; }
+.rp-todo li { display: flex; gap: .7rem; align-items: flex-start; }
+.rp-todo p { font-size: 14.5px; color: #333D4B; line-height: 1.6; }
+.rp-tag { flex-shrink: 0; font-size: 12px; font-weight: 700; padding: .2rem .5rem; border-radius: 7px; margin-top: .1rem; }
+.rp-more summary { cursor: pointer; font-size: 14px; color: var(--c2); font-weight: 600; margin-top: 1rem; list-style: none; }
+.rp-more summary::-webkit-details-marker { display: none; }
+.rp-more[open] summary { margin-bottom: .9rem; }
+.rp-goal { padding: .8rem 0; border-top: 1px solid #F2F4F6; font-size: 14px; color: #6B7684; }
+.rp-goal:first-child { border-top: 0; padding-top: 0; }
+.rp-goal > div > b { color: #191F28; font-size: 15px; }
+.rp-goal small { display: block; font-size: 13px; color: #8B95A1; margin-top: .4rem; }
+.rp-foot { font-size: 12.5px; color: #B0B8C1; padding-top: 1rem; }
+body.fc-m .rp-top { flex-direction: column; align-items: flex-start; }
+body.fc-m .rp-hero .big { font-size: 30px; }
+@media print { .rp { max-width: none; } .rp-sec { break-inside: avoid; } }

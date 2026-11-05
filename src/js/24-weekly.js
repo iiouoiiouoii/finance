@@ -183,14 +183,14 @@
     var n = u.daysBetween(lc.date, u.today());
     return n > 7 ? { nag: true, txt: '마지막 주간 점검이 ' + n + '일 전(' + lc.date + ')입니다.' } : { nag: false };
   }
-  W.nag = function () { return nagInfo(); };
+  W.nag = function () { return { nag: false }; };   /* 알림 자동 기록을 쓰므로 정기 점검을 재촉하지 않는다 */
   W.paceHtml = function (mo) {
-    var r = W.compute(mo), s = status(r), sc = summaryCells(r), ng = nagInfo(), showNag = ng.nag && mo === u.nowM();
+    var r = W.compute(mo), s = status(r), sc = summaryCells(r), ng = nagInfo(), showNag = false;
     return '<div id="dash-pace" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3"><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-gauge-high text-accent mr-1.5"></i>이번 달 페이스 <span class="text-[11px] text-slate-400 font-normal">(' + mo + ' · 변동 생활비 예산 ' + u.K(r.V) + ')</span></h3>'
       + '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + s[1] + '">' + s[0] + '</span><button onclick="App.weekly.open()" class="ml-auto bg-slate-800 hover:bg-slate-900 text-white text-xs px-3.5 py-2 rounded-lg font-semibold"><i class="fa-solid fa-calendar-check text-amber-400 mr-1"></i>주간 점검</button></div>'
       + (showNag ? '<div class="flex flex-wrap items-center gap-2 text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2"><i class="fa-solid fa-bell"></i><span class="flex-1 min-w-[200px]">' + ng.txt + '</span><button onclick="App.weekly.open()" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg font-semibold">이번 주 점검하기</button></div>' : '')
       + (r.hasData ? '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + sc.cells + '</div>' + paceBar(r) + sc.msg : '<div class="text-[11px] text-slate-400">' + mo + ' 지출 기록과 주간 점검이 아직 없습니다.</div>')
       + '<div class="text-[10px] text-slate-400">' + (r.hasActual ? '실제 내역이 있는 날짜까지는 내역 합계를, 그 뒤는 주간 점검값을 씁니다. 점검 기록 ' + r.list.length + '회는 참고(추정)입니다.' : r.list.length ? '주간 점검 ' + r.list.length + '회 기록 기준 추정치입니다. 월말에 이용내역을 붙여넣으면 실제 값으로 바뀝니다.' : '') + '</div></div>';
   };
-  App.on('rendered', u.safe('주간 알림 점', function () { var d = u.$('weekly-mdot'); if (d) d.style.display = nagInfo().nag ? '' : 'none'; if (u.isOpen('weekly-modal')) W.preview(); }));
+  App.on('rendered', u.safe('주간 알림 점', function () { var d = u.$('weekly-mdot'); if (d) d.style.display = 'none'; if (u.isOpen('weekly-modal')) W.preview(); }));
 })(window.App);

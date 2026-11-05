@@ -28,11 +28,10 @@
   /* ---------- 1. 이번 달 생활비 : 남은 돈 하나만 크게 ---------- */
   function heroHtml(mo) {
     var r = App.weekly.compute(mo), V = r.V, left = V - r.est, label = parseInt(mo.slice(5), 10) + '월';
-    var btns = '<div class="flex flex-wrap gap-2 mt-5"><button onclick="App.paste.open()" class="btn pri"><i class="fa-solid fa-paste"></i>카드 · 은행 내역 넣기</button>'
-      + (r.cur ? '<button onclick="App.weekly.open()" class="btn sec">주간 점검</button>' : '') + '</div>';
+    var btns = '';   /* 카드 · 통장 알림이 자동으로 기록되므로 붙여넣기 · 주간 점검 버튼은 두지 않는다 (+ 버튼에 있음) */
     if (!V) return '<div class="card" style="order:1"><div class="sub">' + label + ' 생활비</div><div class="big mt-1">' + won(r.est) + ' 썼어요</div>'
       + '<p class="sub mt-3">생활비 예산을 정하면 이번 달에 얼마 남았는지, 오늘까지 적당히 쓰고 있는지 알려드려요.</p>'
-      + '<div class="flex flex-wrap gap-2 mt-5"><button onclick="App.ui.go(\'budget\')" class="btn pri">예산 정하기</button><button onclick="App.paste.open()" class="btn sec">내역 넣기</button></div></div>';
+      + '<div class="flex flex-wrap gap-2 mt-5"><button onclick="App.ui.go(\'budget\')" class="btn pri">예산 정하기</button></div></div>';
     var over = left < 0, p = Math.min(100, r.est / V * 100), m = Math.min(100, r.allowed / V * 100);
     var fast = r.est > r.allowed * 1.1, warn = !fast && r.est > r.allowed;
     var pill = !r.hasData ? '<span class="pill mute">기록 없음</span>' : fast ? '<span class="pill bad">빨라요</span>' : warn ? '<span class="pill warn">조금 빨라요</span>' : '<span class="pill ok">적당해요</span>';
@@ -41,7 +40,7 @@
       note = r.diff >= 0 ? '오늘까지 기준보다 <b>' + won(r.diff) + '</b> 덜 썼어요.' : '오늘까지 기준보다 <b class="text-red-600">' + won(-r.diff) + '</b> 더 썼어요.';
       if (r.perDay != null) note += r.perDay > 0 ? ' 남은 기간엔 하루 <b>' + won(r.perDay) + '</b>씩 쓰면 돼요.' : ' 남은 기간엔 지출을 멈춰야 예산을 지킬 수 있어요.';
     }
-    else if (!r.hasData) note = '아직 이번 달 지출 기록이 없어요. 카드 앱에서 이용내역을 복사해 넣어 보세요.';
+    else if (!r.hasData) note = '아직 이번 달 지출 기록이 없어요. 카드 · 통장 알림이 오면 자동으로 들어와요.';
     return '<div class="card" style="order:1"><div class="flex items-center justify-between gap-2"><div class="sub">' + label + ' 생활비' + (r.past ? '' : ' · 고정비 빼고') + '</div>' + pill + '</div>'
       + '<div class="big mt-1">' + (over ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div>'
       + '<div class="sub mt-1">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요 (' + Math.round(r.est / V * 100) + '%)' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
@@ -53,7 +52,6 @@
   /* ---------- 2. 지금 할 일 : 눌러서 바로 처리할 수 있는 것만 ---------- */
   function todos(mo) {
     var out = [], cur = mo === u.nowM(), tx = C.monthTx(mo);
-    if (cur && !tx.some(function (t) { return t.type === 'EXPENSE'; })) out.push(['fa-paste', '이번 달 카드 내역이 아직 없어요', '카드 앱 이용내역을 복사해 붙여넣으면 한 번에 들어가요.', 'App.paste.open()', '넣기', 'paste:' + mo]);
     var fx = (db().fixedExpenses || []).filter(function (f) { return !App.fixed.isApplied(f, mo); });
     if (fx.length) out.push(['fa-rotate', '고정비 · 정기 수입 ' + fx.length + '건이 이번 달에 아직 안 들어갔어요', fx.slice(0, 3).map(function (f) { return f.name; }).join(', ') + (fx.length > 3 ? ' 외' : ''), 'App.ui.go(\'fixed\')', '확인', 'fixed:' + mo + ':' + fx.length]);
     /* 새 할부 : 예산에서 빠지는 만큼, 첫 청구 달에는 산 사실을 한 번 보여 준다 */
@@ -61,7 +59,6 @@
       out.push(['fa-cart-shopping', '새 할부: ' + i.title + ' ' + won(i.total) + ' (' + i.months + '개월)', '매달 ' + won(C.calcInst(i, mo).thisCharge) + '씩 나가요 · 예산 대신 고정비처럼 따로 묶어요', 'App.ui.go(\'fixed\')', '보기', 'newinst:' + i.id]);
     });
     App.budget.alerts(mo).filter(function (a) { return a.lv === 'over'; }).slice(0, 2).forEach(function (a) { out.push(['fa-triangle-exclamation', a.c + ' 예산을 ' + won(a.s - a.b) + ' 넘었어요', '예산 ' + won(a.b) + ' · 쓴 돈 ' + won(a.s), 'App.ui.go(\'budget\')', '예산 보기', 'budget:' + mo + ':' + a.c]); });
-    if (cur) { var ng = App.weekly.nag(); if (ng.nag) out.push(['fa-gauge-high', '이번 주 점검을 아직 안 했어요', '카드 앱의 이번 달 이용금액만 옮겨 적으면 돼요. 1분이면 끝나요.', 'App.weekly.open()', '점검하기', 'weekly:' + weekKey()]); }
     (db().realEstates || []).forEach(function (re) {
       if (re.tenure !== 'JEONSE') return; var d = App.re.leaseLeft(re);
       if (d != null && d <= 183) out.push(['fa-key', re.name + ' 전세 만기 ' + (d < 0 ? '지남' : 'D-' + d), d < 0 ? '갱신했다면 만기일을 고쳐 주세요.' : '갱신하거나 이사·보증금 반환을 준비할 때예요.', 'App.ui.go(\'assets\')', '보기', 'lease:' + re.id + ':' + re.leaseEnd]);
@@ -92,7 +89,7 @@
     return '<div class="card" style="order:2"><div class="card-h"><h3>지금 할 일' + (L.length ? ' <span class="text-accent">' + L.length + '</span>' : '') + '</h3>'
       + (hid ? '<button onclick="App.dash.restore()" class="more">끝낸 일 ' + hid + '개 다시 보기</button>' : '') + '</div>'
       + (L.length ? L.map(function (t) {
-        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main"><span class="dotc bg-white text-slate-500"><i class="fa-solid ' + t[0] + '"></i></span><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
+        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main"><span class="dotc ' + ({ 'fa-triangle-exclamation': 'tint3', 'fa-cart-shopping': 'tint3', 'fa-credit-card': 'tint2', 'fa-key': 'tint2', 'fa-cloud-arrow-up': 'tint2' }[t[0]] || 'tint1') + '"><i class="fa-solid ' + t[0] + '"></i></span><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
           + '<button onclick="App.dash.done(\'' + u.esc(t[5]).replace(/'/g, '') + '\')" class="todo-x" title="끝냈어요 (숨기기)" aria-label="끝냈어요"><i class="fa-regular fa-circle-check"></i></button></div>';
       }).join('') : '<div class="empty">' + (hid ? '할 일을 모두 끝냈어요.' : '지금은 할 일이 없어요.') + '</div>') + '</div>';
   }
@@ -101,9 +98,9 @@
   function monthHtml(mo) {
     var inc = C.income(mo), exp = C.expense(mo), rest = inc - exp, T = C.savingTarget(mo), S = C.savedIn(mo);
     return '<div class="card" style="order:3"><div class="card-h"><h3>' + parseInt(mo.slice(5), 10) + '월 돈 흐름</h3><button onclick="App.ui.go(\'report\')" class="more">월말 리포트</button></div>'
-      + '<div class="kv"><div><small>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small>남은 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
+      + '<div class="kv"><div><small>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small>나간 돈</small><b style="color:var(--c3)" title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small>남은 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
       + (T > 0 ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">저축 · 투자</span><span><b>' + won(S) + '</b> <span class="text-slate-500">/ 목표 ' + won(T) + '</span></span></div>'
-        + '<div class="track mt-2" style="height:8px"><div class="fill" style="width:' + Math.min(100, S / T * 100) + '%;background:#0B7A57"></div></div></div>' : '') + '</div>';
+        + '<div class="track mt-2" style="height:8px"><div class="fill" style="width:' + Math.min(100, S / T * 100) + '%;background:var(--c2)"></div></div></div>' : '') + '</div>';
   }
 
   /* ---------- 4. 어디에 썼나 : 카테고리별 (예산과 함께) ---------- */

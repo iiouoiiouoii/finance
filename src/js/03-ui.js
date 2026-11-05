@@ -119,9 +119,8 @@
     };
     u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 기록할까요?</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div class="space-y-1.5">'
-      + row('App.paste.open()', 'fa-paste', '카드 · 은행 내역 한꺼번에', '앱에서 이용내역을 복사해 붙여넣거나 엑셀 파일을 올립니다. 여러 건을 한 번에 넣고, 이미 넣은 건 걸러집니다.', '추천')
-      + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금이나 계좌이체처럼 내역에 없는 한 건만 넣습니다.')
-      + row('App.weekly.open()', 'fa-gauge-high', '주간 점검', '카드 앱의 이번 달 이용금액만 옮겨 적어 예산 속도를 확인합니다.')
+      + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 오지 않는 지출 · 수입을 넣습니다.')
+      + row('App.paste.open()', 'fa-paste', '여러 건 한꺼번에', '알림이 빠진 달이나 지난 내역을 카드 앱에서 복사해 붙여넣거나 엑셀 파일로 올립니다. 이미 있는 건은 걸러집니다.')
       + '</div>', 460);
     u.open('add-modal');
   };
