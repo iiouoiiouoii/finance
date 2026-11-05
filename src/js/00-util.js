@@ -133,8 +133,8 @@ window.App = window.App || {};
      화면마다 연필 · 휴지통 · 색 꼬리표가 붙던 것을 하나로 : 줄을 누르면 할 수 있는 일이 아래에서 올라온다.
      o = { tap, title, meta, val, valCls, valSub, bar(0~100), barColor, note, noteCls, act(줄 안 버튼 html) } */
   u.item = function (o) {
-    return '<div class="it" role="button" tabindex="0" onclick="' + o.tap + '" onkeydown="if(event.key===\'Enter\')this.click()">'
-      + '<div class="it-t"><b>' + o.title + '</b>' + (o.meta ? '<small>' + o.meta + '</small>' : '') + '</div>'
+    return '<div class="it' + (o.icon ? ' has-ic' : '') + '" role="button" tabindex="0" onclick="' + o.tap + '" onkeydown="if(event.key===\'Enter\')this.click()">'
+      + (o.icon ? u.ic(o.icon, o.iconCls) : '') + '<div class="it-t"><b>' + o.title + '</b>' + (o.meta ? '<small>' + o.meta + '</small>' : '') + '</div>'
       + '<div class="it-v">' + (o.val != null ? '<b class="' + (o.valCls || '') + '">' + o.val + '</b>' : '') + (o.valSub ? '<small>' + o.valSub + '</small>' : '') + '</div>'
       + (o.bar != null ? '<div class="it-bar"><i style="width:' + Math.max(0, Math.min(100, o.bar)) + '%;background:' + (o.barColor || '#0B7A57') + '"></i></div>' : '')
       + (o.note ? '<div class="it-note ' + (o.noteCls || '') + '">' + o.note + '</div>' : '')
@@ -166,4 +166,30 @@ window.App = window.App || {};
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   };
+})(window.App);
+
+/* ---------- 아이콘 : 이름(분류 · 소분류 · 가게 · 항목)에서 알맞은 아이콘을 고른다. 색 없이 회색 동그라미 하나 ---------- */
+(function (App) {
+  'use strict';
+  var u = App.u;
+  var MAP = [
+    [/카페|커피|간식|베이커리|스타벅스/, 'fa-mug-hot'], [/외식|배달|식당/, 'fa-utensils'], [/장보기|식자재|마트/, 'fa-basket-shopping'], [/식비|음식/, 'fa-utensils'],
+    [/주유|충전|차량|정비|통행|자동차/, 'fa-car'], [/택시|대리/, 'fa-taxi'], [/대중교통|교통|버스|지하철/, 'fa-bus'],
+    [/월세|주거|관리비|공과금|전기|수도|가스/, 'fa-house'], [/통신|인터넷|휴대폰/, 'fa-wifi'],
+    [/의류|잡화|뷰티|미용/, 'fa-shirt'], [/쇼핑|생활/, 'fa-bag-shopping'],
+    [/여행|숙박|항공/, 'fa-plane'], [/영화|공연/, 'fa-film'], [/OTT|구독/, 'fa-tv'], [/운동|레저|골프|헬스/, 'fa-person-running'], [/취미|여가|문화/, 'fa-masks-theater'],
+    [/병원|의료|건강|약국/, 'fa-heart-pulse'], [/경조사|선물|축의|조의|용돈/, 'fa-gift'],
+    [/교육|학원|도서|자기계발/, 'fa-book'], [/육아|아이|자녀/, 'fa-baby'], [/반려|동물/, 'fa-paw'],
+    [/보험/, 'fa-shield-halved'], [/세금|국세|지방세/, 'fa-landmark'], [/대출|이자|상환/, 'fa-hand-holding-dollar'], [/금융|수수료/, 'fa-building-columns'],
+    [/할부/, 'fa-calendar-days'], [/월급|급여|상여|보너스/, 'fa-briefcase'], [/수입|환급|이자수입|배당/, 'fa-arrow-down'],
+    [/목표|적금|저축|파킹|예금/, 'fa-piggy-bank'], [/투자|주식|ETF|펀드|코인/, 'fa-chart-line'], [/연금|IRP|ISA/, 'fa-umbrella'], [/전세|보증금|집|아파트|부동산/, 'fa-house'],
+    [/카드/, 'fa-credit-card'], [/이체|자산이동|계좌/, 'fa-arrow-right-arrow-left']
+  ];
+  u.iconFor = function () {
+    var s = Array.prototype.join.call(arguments, ' ');
+    for (var i = 0; i < MAP.length; i++) if (MAP[i][0].test(s)) return MAP[i][1];
+    return 'fa-receipt';
+  };
+  /* 회색 동그라미 아이콘 html. cls: 'in'(들어온 돈 · 초록) / 'bad'(빨강) */
+  u.ic = function (icon, cls) { return '<span class="ic' + (cls ? ' ' + cls : '') + '"><i class="fa-solid ' + icon + '"></i></span>'; };
 })(window.App);

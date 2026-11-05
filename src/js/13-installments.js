@@ -31,7 +31,7 @@
       h += '<div class="list-wrap">' + s.act.map(function (x) {
         var i = x.i, c = x.c, sched = c.status === 'SCHEDULED';
         return u.item({
-          tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title),
+          tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title), icon: u.iconFor(i.title, i.category || '') === 'fa-receipt' ? 'fa-calendar-days' : u.iconFor(i.title, i.category || ''),
           meta: u.dots([sched ? esc(i.startMonth) + ' 시작' : c.roundNo + '/' + i.months + '회', '월 ' + won(c.thisCharge || c.nextMonthCharge), esc(c.lastMonth) + ' 끝']),
           val: won(c.remaining), valSub: c.remainRounds + '회 남음',
           bar: c.progress, barColor: sched ? '#B0B8C1' : '#0B7A57'
@@ -43,7 +43,7 @@
     return h + '<div class="list-wrap">' + s.set.map(function (x) {
       var i = x.i, c = x.c;
       return u.item({
-        tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title),
+        tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title), icon: u.iconFor(i.title, i.category || '') === 'fa-receipt' ? 'fa-calendar-days' : u.iconFor(i.title, i.category || ''),
         meta: u.dots([esc(i.closedMonth || c.lastMonth) + ' 다 갚음', i.months + '개월', c.earlyClosed ? '미리 갚음' : '']),
         val: won(i.total || 0), valSub: c.earlyClosed && c.savedInterest > 0 ? '수수료 ' + won(c.savedInterest) + ' 아낌' : '',
         valCls: 'text-slate-500'

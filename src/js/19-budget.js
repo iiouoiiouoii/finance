@@ -113,7 +113,7 @@
           + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + won(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요 (여유 ' + won(-over) + ').') + '</div>';
       var rows = db().categories.map(function (c, i) {
         var bv = bud[c.name] || 0, sv = spent[c.name] || 0, rem = bv - sv, rate = bv > 0 ? sv / bv * 100 : 0;
-        return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0"><span class="txn-dot" style="background:' + u.esc(c.color) + '"></span><b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
+        return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0">' + u.ic(u.iconFor(c.name), 'sm') + '<b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
           + '<div class="bud-in"><input type="text" data-money inputmode="numeric" value="' + (bv ? u.n0(bv) : '') + '" placeholder="예산 없음" onchange="App.budget.editIdx(' + i + ', this.value)" aria-label="' + u.esc(c.name) + ' 예산"><span>원</span></div>'
           + '<div class="col-span-2"><div class="track" style="height:6px"><div class="fill" style="width:' + Math.min(100, rate) + '%;background:' + (rate > 100 ? '#E0464B' : '#0B7A57') + '"></div></div>'
           + '<div class="flex justify-between text-[13px] mt-1.5"><span class="text-slate-500">쓴 돈 ' + won(sv) + '</span>' + (bv ? '<span class="' + (rem < 0 ? 'text-red-600 font-semibold' : 'text-slate-600') + '">' + (rem < 0 ? won(-rem) + ' 넘음' : won(rem) + ' 남음') + '</span>' : '') + '</div></div></div>';

@@ -65,7 +65,7 @@
     var stack = spend ? '<div class="rp-stack">' + top.map(function (c, i) { return '<i style="width:' + (c.s / spend * 100).toFixed(1) + '%;background:rgba(25,31,40,' + Math.max(0.12, 0.85 - i * 0.14).toFixed(2) + ')" title="' + u.esc(c.name) + '"></i>'; }).join('') + '</div>' : '';
     var cats = top.length ? stack + top.slice(0, 6).map(function (c) {
       var over = c.b > 0 && c.s > c.b, d = c.s - c.prev;
-      return '<div class="rp-cat"><span class="n">' + u.esc(c.name) + '</span>'
+      return '<div class="rp-cat has-ic">' + u.ic(u.iconFor(c.name), 'sm') + '<span class="n">' + u.esc(c.name) + '</span>'
         + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · 지난달 ' + (d > 0 ? '+' : '') + u.KS(d) : '') + '</span>'
         + '<b>' + won(c.s) + '</b></div>';
     }).join('') + (top.length > 6 ? '<div class="text-[13px] text-slate-400 pt-2">그 밖에 ' + (top.length - 6) + '개 항목 ' + won(u.sum(top.slice(6), function (c) { return c.s; })) + '</div>' : '')

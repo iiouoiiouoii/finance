@@ -22,7 +22,7 @@
     var i = C.goalInfo(g), s = status(g, i), thisM = u.sum(db().transactions.filter(function (t) { return t.goalId === g.id && String(t.date).indexOf(u.nowM()) === 0; }), function (t) { return t.amount; });
     var warn = /부족|필요|경과/.test(s[0]);
     return u.item({
-      tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name),
+      tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name), icon: /집|주택/.test(g.name) ? 'fa-house' : /차/.test(g.name) ? 'fa-car' : /여행/.test(g.name) ? 'fa-plane' : /교육|아이/.test(g.name) ? 'fa-graduation-cap' : 'fa-flag',
       meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월 남음)' : '') + '까지' : '기한 없음', i.req == null ? '' : '매달 ' + u.K(i.req) + ' 필요']),
       val: i.pc.toFixed(0) + '%', valSub: u.KS(i.saved) + ' / ' + u.KS(i.tgt),
       bar: i.pc, barColor: '#0B7A57',

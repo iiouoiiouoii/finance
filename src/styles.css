@@ -506,3 +506,19 @@ button.bg-slate-900.text-white, button.bg-slate-800.text-white, label.bg-slate-8
 .rp-more summary { color: #6B7684; }
 .rp-stack { gap: 0; height: 10px; border-radius: 5px; }
 .rp-stack i + i { box-shadow: inset 2px 0 0 #fff; }
+
+/* ---------- 아이콘 : 회색 동그라미 + 먹색 아이콘 (색은 들어온 돈 · 경고에만) ---------- */
+.ic { width: 40px; height: 40px; border-radius: 50%; background: #F2F4F6; color: #4E5968; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.ic.in { background: #E8F3EE; color: #0B7A57; }
+.ic.bad { background: #FDECEC; color: #E0464B; }
+.ic.sm { width: 34px; height: 34px; font-size: 13px; }
+.it.has-ic { grid-template-columns: auto minmax(0, 1fr) auto; }
+.it.has-ic .it-bar, .it.has-ic .it-note, .it.has-ic .it-act { grid-column: 2 / -1; }
+.row > .ic, .txn-row > .ic { margin-right: .1rem; }
+.txn-row { gap: .85rem; }
+.todo-main { gap: .85rem; }
+.rp-cat.has-ic { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "i n v" "i m m"; }
+.rp-cat .ic { grid-area: i; }
+.kv small i { font-size: 11px; margin-right: .3rem; color: #B0B8C1; }
+.card-h h3 i { color: #8B95A1; margin-right: .4rem; font-size: 14px; }
+#content .card-h h3 > i.fa-solid:first-child { display: inline-block !important; width: 1.1rem; }

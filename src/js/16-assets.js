@@ -25,7 +25,7 @@
       else if (t === 'ISA') note = '올해 넣은 돈 ' + u.K(a.annualContrib) + ' / 한도 2,000만';
       else if (C.EXT[t]) note = u.dots([t !== '퇴직연금' ? '올해 넣은 돈 ' + u.K(a.annualContrib) : '', a.pensionMonthly ? '예상 월 ' + u.K(a.pensionMonthly) + ' (' + (a.pensionStartAge || 65) + '세~)' : '', '비상금에선 빼요']);
       return u.item({
-        tap: 'App.assets.menu(' + a.id + ')', title: u.esc(d.name),
+        tap: 'App.assets.menu(' + a.id + ')', title: u.esc(d.name), icon: t === '입출금' ? 'fa-building-columns' : u.iconFor(t),
         meta: u.dots([u.esc(d.bankName), u.esc(t), u.esc(C.short(a.owner || 'J'))]),
         val: (t === '적금' ? '월 ' : '') + u.K(nps ? a.pensionPaid : d.amount),
         valSub: nps ? '낸 돈 누적' : (C.EXT[t] === 'LEASE' ? '' : '연 ' + d.rate + '%'),

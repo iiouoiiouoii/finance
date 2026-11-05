@@ -48,7 +48,7 @@
       if (left != null && left < 0) { notes.push('계약 만기가 지났어요. 갱신했다면 만기일을 고쳐 주세요.'); cls = 'bad'; }
       else if (left != null && left <= 183) { notes.push('만기 D-' + left + ' · 갱신 또는 이사 · 보증금 돌려받기를 준비할 때예요.'); cls = 'warn'; }
       return u.item({
-        tap: 'App.re.menu(' + re.id + ')', title: u.esc(re.name),
+        tap: 'App.re.menu(' + re.id + ')', title: u.esc(re.name), icon: d.jeonse ? 'fa-key' : 'fa-house',
         meta: u.dots([d.jeonse ? '전세' : '자가', u.esc(re.kind || ''), u.esc(C.short(re.owner || 'J'))]),
         val: u.K(d.value), valSub: (d.jeonse ? '내 돈 ' : '순자본 ') + u.K(d.equity),
         bar: d.loans.length ? Math.round(d.ltv * 100) : null, barColor: COL[info.label] || '#0B7A57',
@@ -234,7 +234,7 @@
       + '<div class="list-wrap">' + list.map(function (l, i) {
         var s = st[i], own = ownerRE(l.id), sch = C.hasSchedule(l) ? C.loanSchedule(l, mo) : null;
         return u.item({
-          tap: 'App.loans.menu(' + l.id + ')', title: u.esc(l.name),
+          tap: 'App.loans.menu(' + l.id + ')', title: u.esc(l.name), icon: 'fa-hand-holding-dollar',
           meta: u.dots([C.DTYPE[l.debtType] || '', '연 ' + (l.rate || 0) + '%', u.esc(C.short(l.owner || 'J')), own ? u.esc(own.name) : '']),
           val: u.K(s.amount), valCls: 'text-red-600', valSub: '월 ' + u.K(s.monthly) + ' · ' + (s.months || 0) + '개월 남음',
           bar: sch && !sch.notYet && sch.total ? Math.round(sch.paid / sch.total * 100) : null,

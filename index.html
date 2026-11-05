@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-05 12:03 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-05 12:13 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -540,6 +540,22 @@ button.bg-slate-900.text-white, button.bg-slate-800.text-white, label.bg-slate-8
 .rp-stack { gap: 0; height: 10px; border-radius: 5px; }
 .rp-stack i + i { box-shadow: inset 2px 0 0 #fff; }
 
+/* ---------- 아이콘 : 회색 동그라미 + 먹색 아이콘 (색은 들어온 돈 · 경고에만) ---------- */
+.ic { width: 40px; height: 40px; border-radius: 50%; background: #F2F4F6; color: #4E5968; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.ic.in { background: #E8F3EE; color: #0B7A57; }
+.ic.bad { background: #FDECEC; color: #E0464B; }
+.ic.sm { width: 34px; height: 34px; font-size: 13px; }
+.it.has-ic { grid-template-columns: auto minmax(0, 1fr) auto; }
+.it.has-ic .it-bar, .it.has-ic .it-note, .it.has-ic .it-act { grid-column: 2 / -1; }
+.row > .ic, .txn-row > .ic { margin-right: .1rem; }
+.txn-row { gap: .85rem; }
+.todo-main { gap: .85rem; }
+.rp-cat.has-ic { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "i n v" "i m m"; }
+.rp-cat .ic { grid-area: i; }
+.kv small i { font-size: 11px; margin-right: .3rem; color: #B0B8C1; }
+.card-h h3 i { color: #8B95A1; margin-right: .4rem; font-size: 14px; }
+#content .card-h h3 > i.fa-solid:first-child { display: inline-block !important; width: 1.1rem; }
+
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
@@ -707,8 +723,8 @@ window.App = window.App || {};
      화면마다 연필 · 휴지통 · 색 꼬리표가 붙던 것을 하나로 : 줄을 누르면 할 수 있는 일이 아래에서 올라온다.
      o = { tap, title, meta, val, valCls, valSub, bar(0~100), barColor, note, noteCls, act(줄 안 버튼 html) } */
   u.item = function (o) {
-    return '<div class="it" role="button" tabindex="0" onclick="' + o.tap + '" onkeydown="if(event.key===\'Enter\')this.click()">'
-      + '<div class="it-t"><b>' + o.title + '</b>' + (o.meta ? '<small>' + o.meta + '</small>' : '') + '</div>'
+    return '<div class="it' + (o.icon ? ' has-ic' : '') + '" role="button" tabindex="0" onclick="' + o.tap + '" onkeydown="if(event.key===\'Enter\')this.click()">'
+      + (o.icon ? u.ic(o.icon, o.iconCls) : '') + '<div class="it-t"><b>' + o.title + '</b>' + (o.meta ? '<small>' + o.meta + '</small>' : '') + '</div>'
       + '<div class="it-v">' + (o.val != null ? '<b class="' + (o.valCls || '') + '">' + o.val + '</b>' : '') + (o.valSub ? '<small>' + o.valSub + '</small>' : '') + '</div>'
       + (o.bar != null ? '<div class="it-bar"><i style="width:' + Math.max(0, Math.min(100, o.bar)) + '%;background:' + (o.barColor || '#0B7A57') + '"></i></div>' : '')
       + (o.note ? '<div class="it-note ' + (o.noteCls || '') + '">' + o.note + '</div>' : '')
@@ -740,6 +756,32 @@ window.App = window.App || {};
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   };
+})(window.App);
+
+/* ---------- 아이콘 : 이름(분류 · 소분류 · 가게 · 항목)에서 알맞은 아이콘을 고른다. 색 없이 회색 동그라미 하나 ---------- */
+(function (App) {
+  'use strict';
+  var u = App.u;
+  var MAP = [
+    [/카페|커피|간식|베이커리|스타벅스/, 'fa-mug-hot'], [/외식|배달|식당/, 'fa-utensils'], [/장보기|식자재|마트/, 'fa-basket-shopping'], [/식비|음식/, 'fa-utensils'],
+    [/주유|충전|차량|정비|통행|자동차/, 'fa-car'], [/택시|대리/, 'fa-taxi'], [/대중교통|교통|버스|지하철/, 'fa-bus'],
+    [/월세|주거|관리비|공과금|전기|수도|가스/, 'fa-house'], [/통신|인터넷|휴대폰/, 'fa-wifi'],
+    [/의류|잡화|뷰티|미용/, 'fa-shirt'], [/쇼핑|생활/, 'fa-bag-shopping'],
+    [/여행|숙박|항공/, 'fa-plane'], [/영화|공연/, 'fa-film'], [/OTT|구독/, 'fa-tv'], [/운동|레저|골프|헬스/, 'fa-person-running'], [/취미|여가|문화/, 'fa-masks-theater'],
+    [/병원|의료|건강|약국/, 'fa-heart-pulse'], [/경조사|선물|축의|조의|용돈/, 'fa-gift'],
+    [/교육|학원|도서|자기계발/, 'fa-book'], [/육아|아이|자녀/, 'fa-baby'], [/반려|동물/, 'fa-paw'],
+    [/보험/, 'fa-shield-halved'], [/세금|국세|지방세/, 'fa-landmark'], [/대출|이자|상환/, 'fa-hand-holding-dollar'], [/금융|수수료/, 'fa-building-columns'],
+    [/할부/, 'fa-calendar-days'], [/월급|급여|상여|보너스/, 'fa-briefcase'], [/수입|환급|이자수입|배당/, 'fa-arrow-down'],
+    [/목표|적금|저축|파킹|예금/, 'fa-piggy-bank'], [/투자|주식|ETF|펀드|코인/, 'fa-chart-line'], [/연금|IRP|ISA/, 'fa-umbrella'], [/전세|보증금|집|아파트|부동산/, 'fa-house'],
+    [/카드/, 'fa-credit-card'], [/이체|자산이동|계좌/, 'fa-arrow-right-arrow-left']
+  ];
+  u.iconFor = function () {
+    var s = Array.prototype.join.call(arguments, ' ');
+    for (var i = 0; i < MAP.length; i++) if (MAP[i][0].test(s)) return MAP[i][1];
+    return 'fa-receipt';
+  };
+  /* 회색 동그라미 아이콘 html. cls: 'in'(들어온 돈 · 초록) / 'bad'(빨강) */
+  u.ic = function (icon, cls) { return '<span class="ic' + (cls ? ' ' + cls : '') + '"><i class="fa-solid ' + icon + '"></i></span>'; };
 })(window.App);
 
 /* ===== 01-store.js ===== */
@@ -2078,7 +2120,7 @@ window.App = window.App || {};
       + (own !== 'J' ? ' · ' + u.esc(C.short(own)) + ' 개인' : '') + (t.installmentId ? ' · <span class="text-amber-700 font-semibold">할부</span>' : '') + lock;
     return '<div data-id="' + t.id + '" class="txn-row' + (on ? ' sel' : '') + '" onclick="App.txn.rowClick(event,' + t.id + ')">'
       + (PICK ? '<input type="checkbox" class="txn-ck" aria-label="선택" ' + (on ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="App.txn.sel(' + t.id + ',this.checked)">' : '')
-      + '<span class="txn-dot" style="background:' + col + '"></span>'
+      + u.ic(tr ? 'fa-arrow-right-arrow-left' : u.iconFor(t.category, t.subcategory, inc ? '수입' : ''), inc ? 'in' : '')
       + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + meta + '</small></div>'
       + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : 'text-slate-900') + '">' + (inc ? '+' : tr ? '' : '-') + u.n0(t.amount) + '원</div></div>';
   }
@@ -2802,7 +2844,7 @@ window.App = window.App || {};
       h += '<div class="list-wrap">' + s.act.map(function (x) {
         var i = x.i, c = x.c, sched = c.status === 'SCHEDULED';
         return u.item({
-          tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title),
+          tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title), icon: u.iconFor(i.title, i.category || '') === 'fa-receipt' ? 'fa-calendar-days' : u.iconFor(i.title, i.category || ''),
           meta: u.dots([sched ? esc(i.startMonth) + ' 시작' : c.roundNo + '/' + i.months + '회', '월 ' + won(c.thisCharge || c.nextMonthCharge), esc(c.lastMonth) + ' 끝']),
           val: won(c.remaining), valSub: c.remainRounds + '회 남음',
           bar: c.progress, barColor: sched ? '#B0B8C1' : '#0B7A57'
@@ -2814,7 +2856,7 @@ window.App = window.App || {};
     return h + '<div class="list-wrap">' + s.set.map(function (x) {
       var i = x.i, c = x.c;
       return u.item({
-        tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title),
+        tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title), icon: u.iconFor(i.title, i.category || '') === 'fa-receipt' ? 'fa-calendar-days' : u.iconFor(i.title, i.category || ''),
         meta: u.dots([esc(i.closedMonth || c.lastMonth) + ' 다 갚음', i.months + '개월', c.earlyClosed ? '미리 갚음' : '']),
         val: won(i.total || 0), valSub: c.earlyClosed && c.savedInterest > 0 ? '수수료 ' + won(c.savedInterest) + ' 아낌' : '',
         valCls: 'text-slate-500'
@@ -3193,7 +3235,7 @@ window.App = window.App || {};
   function itemHtml(f) {
     var applied = Fx.isApplied(f), own = f.owner && f.owner !== 'J';
     return u.item({
-      tap: 'App.fixed.menu(' + f.id + ')', title: u.esc(f.name),
+      tap: 'App.fixed.menu(' + f.id + ')', title: u.esc(f.name), icon: u.iconFor(f.name, f.category || '', f.subcategory || '', isInc(f) ? '월급' : ''), iconCls: isInc(f) ? 'in' : '',
       meta: u.dots(['매달 ' + f.day + '일', u.esc(f.payment || '계좌이체'), own ? u.esc(C.short(f.owner)) : '', f.auto ? '자동' : '']),
       val: (isInc(f) ? '+' : '') + u.n0(f.amount) + '원', valCls: isInc(f) ? 'text-accent' : '',
       valSub: applied ? '<span class="it-ok"><i class="fa-solid fa-check"></i> 들어감</span>' : '<button onclick="event.stopPropagation();App.fixed.apply(' + f.id + ')" class="it-btn mt-1">넣기</button>'
@@ -3384,7 +3426,7 @@ window.App = window.App || {};
       var grid = db().cards.length ? db().cards.map(function (card) {
         var spent = spentOf(card, mo), rate = card.targetAmount > 0 ? Math.min(Math.round(spent / card.targetAmount * 100), 100) : null;
         return u.item({
-          tap: 'App.cards.menu(' + card.id + ')', title: u.esc(card.name),
+          tap: 'App.cards.menu(' + card.id + ')', title: u.esc(card.name), icon: 'fa-credit-card',
           meta: u.dots([u.esc(card.owner || ''), u.esc(card.type), C.isCredit(card) && card.payDay ? '매달 ' + card.payDay + '일 결제' : '']),
           val: u.n0(spent) + '원', valSub: card.targetAmount ? '실적 ' + u.n0(card.targetAmount) + '원' + (rate >= 100 ? ' 채움' : '') : (+mo.slice(5)) + '월 사용',
           bar: rate, barColor: rate >= 100 ? '#0B7A57' : '#B0B8C1',
@@ -3427,7 +3469,7 @@ window.App = window.App || {};
       else if (t === 'ISA') note = '올해 넣은 돈 ' + u.K(a.annualContrib) + ' / 한도 2,000만';
       else if (C.EXT[t]) note = u.dots([t !== '퇴직연금' ? '올해 넣은 돈 ' + u.K(a.annualContrib) : '', a.pensionMonthly ? '예상 월 ' + u.K(a.pensionMonthly) + ' (' + (a.pensionStartAge || 65) + '세~)' : '', '비상금에선 빼요']);
       return u.item({
-        tap: 'App.assets.menu(' + a.id + ')', title: u.esc(d.name),
+        tap: 'App.assets.menu(' + a.id + ')', title: u.esc(d.name), icon: t === '입출금' ? 'fa-building-columns' : u.iconFor(t),
         meta: u.dots([u.esc(d.bankName), u.esc(t), u.esc(C.short(a.owner || 'J'))]),
         val: (t === '적금' ? '월 ' : '') + u.K(nps ? a.pensionPaid : d.amount),
         valSub: nps ? '낸 돈 누적' : (C.EXT[t] === 'LEASE' ? '' : '연 ' + d.rate + '%'),
@@ -3617,7 +3659,7 @@ window.App = window.App || {};
       if (left != null && left < 0) { notes.push('계약 만기가 지났어요. 갱신했다면 만기일을 고쳐 주세요.'); cls = 'bad'; }
       else if (left != null && left <= 183) { notes.push('만기 D-' + left + ' · 갱신 또는 이사 · 보증금 돌려받기를 준비할 때예요.'); cls = 'warn'; }
       return u.item({
-        tap: 'App.re.menu(' + re.id + ')', title: u.esc(re.name),
+        tap: 'App.re.menu(' + re.id + ')', title: u.esc(re.name), icon: d.jeonse ? 'fa-key' : 'fa-house',
         meta: u.dots([d.jeonse ? '전세' : '자가', u.esc(re.kind || ''), u.esc(C.short(re.owner || 'J'))]),
         val: u.K(d.value), valSub: (d.jeonse ? '내 돈 ' : '순자본 ') + u.K(d.equity),
         bar: d.loans.length ? Math.round(d.ltv * 100) : null, barColor: COL[info.label] || '#0B7A57',
@@ -3803,7 +3845,7 @@ window.App = window.App || {};
       + '<div class="list-wrap">' + list.map(function (l, i) {
         var s = st[i], own = ownerRE(l.id), sch = C.hasSchedule(l) ? C.loanSchedule(l, mo) : null;
         return u.item({
-          tap: 'App.loans.menu(' + l.id + ')', title: u.esc(l.name),
+          tap: 'App.loans.menu(' + l.id + ')', title: u.esc(l.name), icon: 'fa-hand-holding-dollar',
           meta: u.dots([C.DTYPE[l.debtType] || '', '연 ' + (l.rate || 0) + '%', u.esc(C.short(l.owner || 'J')), own ? u.esc(own.name) : '']),
           val: u.K(s.amount), valCls: 'text-red-600', valSub: '월 ' + u.K(s.monthly) + ' · ' + (s.months || 0) + '개월 남음',
           bar: sch && !sch.notYet && sch.total ? Math.round(sch.paid / sch.total * 100) : null,
@@ -3979,7 +4021,7 @@ window.App = window.App || {};
       var inv = x.inv, d = x.d, w = p.value > 0 ? d.value / p.value : 0, pnlCol = sgn(d.unreal);
       var extra = u.dots([d.dividend ? '배당 ' + won(d.dividend) : '', d.realized ? '실현 ' + sgnTxt(d.realized) : '', d.cagr !== null ? '연평균 ' + (d.cagr >= 0 ? '+' : '') + pct(d.cagr, 1) : '', d.stale != null && d.stale >= 14 ? '현재가 ' + d.stale + '일 전 값' : '']);
       return u.item({
-        tap: 'App.invest.menu(' + inv.id + ')', title: u.esc(inv.name),
+        tap: 'App.invest.menu(' + inv.id + ')', title: u.esc(inv.name), icon: /코인/.test(inv.assetClass || '') ? 'fa-coins' : /금|원자재/.test(inv.assetClass || '') ? 'fa-gem' : 'fa-chart-line',
         meta: u.dots([u.esc(inv.assetClass || '기타'), d.cur !== 'KRW' ? u.esc(d.cur) : '', d.closed ? '청산' : '', inv.broker ? u.esc(inv.broker) : '', '비중 ' + pct(w, 0), u.esc(C.short(inv.owner || 'J'))]),
         val: won(d.value), valSub: '<span class="' + pnlCol + ' font-semibold">' + sgnTxt(d.unreal) + ' (' + (d.roi >= 0 ? '+' : '') + pct(d.roi, 1) + ')</span>',
         note: (d.mode === 'QTY' ? qtyTxt(d.qty) + '주 · 평단 ' + priceTxt(d.avg, d.cur) + ' → 현재 ' + priceTxt(d.cp || d.avg, d.cur) : '원금 ' + won(d.cost) + (d.dca ? ' · 월 ' + won(Math.round(num(inv.monthly) * d.fx)) + ' 적립' : '')) + (extra ? '<br>' + extra : '')
@@ -4314,7 +4356,7 @@ window.App = window.App || {};
           + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + won(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요 (여유 ' + won(-over) + ').') + '</div>';
       var rows = db().categories.map(function (c, i) {
         var bv = bud[c.name] || 0, sv = spent[c.name] || 0, rem = bv - sv, rate = bv > 0 ? sv / bv * 100 : 0;
-        return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0"><span class="txn-dot" style="background:' + u.esc(c.color) + '"></span><b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
+        return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0">' + u.ic(u.iconFor(c.name), 'sm') + '<b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
           + '<div class="bud-in"><input type="text" data-money inputmode="numeric" value="' + (bv ? u.n0(bv) : '') + '" placeholder="예산 없음" onchange="App.budget.editIdx(' + i + ', this.value)" aria-label="' + u.esc(c.name) + ' 예산"><span>원</span></div>'
           + '<div class="col-span-2"><div class="track" style="height:6px"><div class="fill" style="width:' + Math.min(100, rate) + '%;background:' + (rate > 100 ? '#E0464B' : '#0B7A57') + '"></div></div>'
           + '<div class="flex justify-between text-[13px] mt-1.5"><span class="text-slate-500">쓴 돈 ' + won(sv) + '</span>' + (bv ? '<span class="' + (rem < 0 ? 'text-red-600 font-semibold' : 'text-slate-600') + '">' + (rem < 0 ? won(-rem) + ' 넘음' : won(rem) + ' 남음') + '</span>' : '') + '</div></div></div>';
@@ -4423,10 +4465,10 @@ window.App = window.App || {};
   };
   function todoHtml(mo) {
     var all = todos(mo), m = doneMap(), L = all.filter(function (t) { return !m[t[5]]; }), hid = all.length - L.length;
-    return '<div class="card" style="order:2"><div class="card-h"><h3>지금 할 일' + (L.length ? ' <span class="text-accent">' + L.length + '</span>' : '') + '</h3>'
+    return '<div class="card" style="order:2"><div class="card-h"><h3><i class="fa-solid fa-list-check"></i>지금 할 일' + (L.length ? ' <span class="text-accent">' + L.length + '</span>' : '') + '</h3>'
       + (hid ? '<button onclick="App.dash.restore()" class="more">끝낸 일 ' + hid + '개 다시 보기</button>' : '') + '</div>'
       + (L.length ? L.map(function (t) {
-        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main"><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
+        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main">' + u.ic(t[0], 'sm') + '<span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
           + '<button onclick="App.dash.done(\'' + u.esc(t[5]).replace(/'/g, '') + '\')" class="todo-x" title="끝냈어요 (숨기기)" aria-label="끝냈어요"><i class="fa-regular fa-circle-check"></i></button></div>';
       }).join('') : '<div class="empty">' + (hid ? '할 일을 모두 끝냈어요.' : '지금은 할 일이 없어요.') + '</div>') + '</div>';
   }
@@ -4434,8 +4476,8 @@ window.App = window.App || {};
   /* ---------- 3. 이번 달 수입 · 지출 · 남은 돈 ---------- */
   function monthHtml(mo) {
     var inc = C.income(mo), exp = C.expense(mo), rest = inc - exp, T = C.savingTarget(mo), S = C.savedIn(mo);
-    return '<div class="card" style="order:3"><div class="card-h"><h3>' + parseInt(mo.slice(5), 10) + '월 돈 흐름</h3><button onclick="App.ui.go(\'report\')" class="more">월말 리포트</button></div>'
-      + '<div class="kv"><div><small>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small>남은 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
+    return '<div class="card" style="order:3"><div class="card-h"><h3><i class="fa-solid fa-money-bill-transfer"></i>' + parseInt(mo.slice(5), 10) + '월 돈 흐름</h3><button onclick="App.ui.go(\'report\')" class="more">월말 리포트</button></div>'
+      + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small><i class="fa-solid fa-arrow-up"></i>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>남은 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
       + (T > 0 ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">저축 · 투자</span><span><b>' + won(S) + '</b> <span class="text-slate-500">/ 목표 ' + won(T) + '</span></span></div>'
         + '<div class="track mt-2" style="height:8px"><div class="fill" style="width:' + Math.min(100, S / T * 100) + '%;background:#0B7A57"></div></div></div>' : '') + '</div>';
   }
@@ -4448,13 +4490,13 @@ window.App = window.App || {};
     var keys = Object.keys(sp).sort(function (a, c) { return sp[c] - sp[a]; });
     var body = keys.length ? keys.slice(0, 7).map(function (k) {
       var bud = b[k] || 0, pc = bud ? sp[k] / bud * 100 : 0;
-      return '<div class="row">'
+      return '<div class="row">' + u.ic(u.iconFor(k), 'sm')
         + '<div class="t"><b>' + u.esc(k) + '</b><small>' + (bud ? '예산 ' + won(bud) + ' 중 <span class="' + (pc > 100 ? 'text-red-600 font-semibold' : '') + '">' + Math.round(pc) + '%</span>' : '지출의 ' + Math.round(sp[k] / tot * 100) + '%') + '</small>'
         + (bud ? '<div class="track mt-2" style="height:3px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:' + (pc > 100 ? '#E0464B' : '#191F28') + '"></div></div>' : '') + '</div>'
         + '<div class="v">' + won(sp[k]) + '</div></div>';
     }).join('') : (bs.inst ? '' : '<div class="empty">이번 달 지출 기록이 없어요.</div>');
-    if (bs.inst) body += '<div class="row"><div class="t"><b>카드 할부</b><small>이미 정해진 돈이라 예산과 남은 생활비에서는 뺐어요</small></div><div class="v text-slate-500">' + won(bs.inst) + '</div></div>';
-    return '<div class="card" style="order:4"><div class="card-h"><h3>어디에 썼나</h3><button onclick="App.ui.go(\'budget\')" class="more">예산</button></div>' + body + '</div>';
+    if (bs.inst) body += '<div class="row">' + u.ic('fa-calendar-days', 'sm') + '<div class="t"><b>카드 할부</b><small>이미 정해진 돈이라 예산과 남은 생활비에서는 뺐어요</small></div><div class="v text-slate-500">' + won(bs.inst) + '</div></div>';
+    return '<div class="card" style="order:4"><div class="card-h"><h3><i class="fa-solid fa-chart-pie"></i>어디에 썼나</h3><button onclick="App.ui.go(\'budget\')" class="more">예산</button></div>' + body + '</div>';
   }
 
   /* ---------- 5. 최근 내역 ---------- */
@@ -4462,17 +4504,17 @@ window.App = window.App || {};
     var L = C.monthTx(mo).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (b.id || 0) - (a.id || 0); }).slice(0, 6);
     var body = L.length ? L.map(function (t) {
       var inc = t.type === 'INCOME', tr = t.type === 'TRANSFER';
-      return '<div class="row"><div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + md(t.date) + ' · ' + u.esc(tr ? (t.subcategory || '이체') : (t.category || '')) + (t.payment ? ' · ' + u.esc(t.payment) : '') + '</small></div>'
+      return '<div class="row">' + u.ic(tr ? 'fa-arrow-right-arrow-left' : u.iconFor(t.category, t.subcategory, inc ? '수입' : ''), inc ? 'in sm' : 'sm') + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + md(t.date) + ' · ' + u.esc(tr ? (t.subcategory || '이체') : (t.category || '')) + (t.payment ? ' · ' + u.esc(t.payment) : '') + '</small></div>'
         + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : '') + '">' + (inc ? '+' : tr ? '' : '-') + won(t.amount) + '</div></div>';
     }).join('') : '<div class="empty">이번 달 내역이 없어요.</div>';
-    return '<div class="card" style="order:5"><div class="card-h"><h3>최근 내역</h3><button onclick="App.ui.go(\'transactions\')" class="more">전체 보기</button></div>' + body + '</div>';
+    return '<div class="card" style="order:5"><div class="card-h"><h3><i class="fa-solid fa-clock-rotate-left"></i>최근 내역</h3><button onclick="App.ui.go(\'transactions\')" class="more">전체 보기</button></div>' + body + '</div>';
   }
 
   /* ---------- 6. 순자산 ---------- */
   function assetHtml(mo) {
     var n = C.netWorth(mo), prev = db().snapshots[u.addM(mo, -1)], ch = prev ? n.nw - prev.nw : null;
-    if (!n.assets && !n.debt) return '<div class="card" style="order:6"><div class="card-h"><h3>순자산</h3></div><p class="sub">예금 · 투자 · 집 · 대출을 등록하면 우리 집 순자산과 매달 변화를 보여 드려요.</p><button onclick="App.ui.go(\'assets\')" class="btn sec mt-4">자산 등록하기</button></div>';
-    return '<div class="card" style="order:6"><div class="card-h"><h3>순자산</h3><button onclick="App.ui.go(\'assets\')" class="more">자산 · 대출</button></div>'
+    if (!n.assets && !n.debt) return '<div class="card" style="order:6"><div class="card-h"><h3><i class="fa-solid fa-scale-balanced"></i>순자산</h3></div><p class="sub">예금 · 투자 · 집 · 대출을 등록하면 우리 집 순자산과 매달 변화를 보여 드려요.</p><button onclick="App.ui.go(\'assets\')" class="btn sec mt-4">자산 등록하기</button></div>';
+    return '<div class="card" style="order:6"><div class="card-h"><h3><i class="fa-solid fa-scale-balanced"></i>순자산</h3><button onclick="App.ui.go(\'assets\')" class="more">자산 · 대출</button></div>'
       + '<div class="text-[28px] font-extrabold tracking-tight">' + won(n.nw) + '</div>'
       + (ch != null ? '<div class="text-[14px] mt-0.5 ' + (ch >= 0 ? 'text-accent' : 'text-red-600') + '">지난달보다 ' + (ch >= 0 ? '+' : '-') + won(Math.abs(ch)) + '</div>' : '')
       + '<div class="kv mt-4" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><small>가진 것</small><b title="' + won(n.assets) + '">' + u.KS(n.assets) + '</b></div><div><small>갚을 것</small><b title="' + won(n.debt) + '">' + u.KS(n.debt) + '</b></div></div></div>';
@@ -4576,7 +4618,7 @@ window.App = window.App || {};
     var i = C.goalInfo(g), s = status(g, i), thisM = u.sum(db().transactions.filter(function (t) { return t.goalId === g.id && String(t.date).indexOf(u.nowM()) === 0; }), function (t) { return t.amount; });
     var warn = /부족|필요|경과/.test(s[0]);
     return u.item({
-      tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name),
+      tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name), icon: /집|주택/.test(g.name) ? 'fa-house' : /차/.test(g.name) ? 'fa-car' : /여행/.test(g.name) ? 'fa-plane' : /교육|아이/.test(g.name) ? 'fa-graduation-cap' : 'fa-flag',
       meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월 남음)' : '') + '까지' : '기한 없음', i.req == null ? '' : '매달 ' + u.K(i.req) + ' 필요']),
       val: i.pc.toFixed(0) + '%', valSub: u.KS(i.saved) + ' / ' + u.KS(i.tgt),
       bar: i.pc, barColor: '#0B7A57',
@@ -5214,7 +5256,7 @@ window.App = window.App || {};
     var stack = spend ? '<div class="rp-stack">' + top.map(function (c, i) { return '<i style="width:' + (c.s / spend * 100).toFixed(1) + '%;background:rgba(25,31,40,' + Math.max(0.12, 0.85 - i * 0.14).toFixed(2) + ')" title="' + u.esc(c.name) + '"></i>'; }).join('') + '</div>' : '';
     var cats = top.length ? stack + top.slice(0, 6).map(function (c) {
       var over = c.b > 0 && c.s > c.b, d = c.s - c.prev;
-      return '<div class="rp-cat"><span class="n">' + u.esc(c.name) + '</span>'
+      return '<div class="rp-cat has-ic">' + u.ic(u.iconFor(c.name), 'sm') + '<span class="n">' + u.esc(c.name) + '</span>'
         + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · 지난달 ' + (d > 0 ? '+' : '') + u.KS(d) : '') + '</span>'
         + '<b>' + won(c.s) + '</b></div>';
     }).join('') + (top.length > 6 ? '<div class="text-[13px] text-slate-400 pt-2">그 밖에 ' + (top.length - 6) + '개 항목 ' + won(u.sum(top.slice(6), function (c) { return c.s; })) + '</div>' : '')

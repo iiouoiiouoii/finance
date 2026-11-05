@@ -135,7 +135,7 @@
       + (own !== 'J' ? ' · ' + u.esc(C.short(own)) + ' 개인' : '') + (t.installmentId ? ' · <span class="text-amber-700 font-semibold">할부</span>' : '') + lock;
     return '<div data-id="' + t.id + '" class="txn-row' + (on ? ' sel' : '') + '" onclick="App.txn.rowClick(event,' + t.id + ')">'
       + (PICK ? '<input type="checkbox" class="txn-ck" aria-label="선택" ' + (on ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="App.txn.sel(' + t.id + ',this.checked)">' : '')
-      + '<span class="txn-dot" style="background:' + col + '"></span>'
+      + u.ic(tr ? 'fa-arrow-right-arrow-left' : u.iconFor(t.category, t.subcategory, inc ? '수입' : ''), inc ? 'in' : '')
       + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + meta + '</small></div>'
       + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : 'text-slate-900') + '">' + (inc ? '+' : tr ? '' : '-') + u.n0(t.amount) + '원</div></div>';
   }

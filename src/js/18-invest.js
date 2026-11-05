@@ -86,7 +86,7 @@
       var inv = x.inv, d = x.d, w = p.value > 0 ? d.value / p.value : 0, pnlCol = sgn(d.unreal);
       var extra = u.dots([d.dividend ? '배당 ' + won(d.dividend) : '', d.realized ? '실현 ' + sgnTxt(d.realized) : '', d.cagr !== null ? '연평균 ' + (d.cagr >= 0 ? '+' : '') + pct(d.cagr, 1) : '', d.stale != null && d.stale >= 14 ? '현재가 ' + d.stale + '일 전 값' : '']);
       return u.item({
-        tap: 'App.invest.menu(' + inv.id + ')', title: u.esc(inv.name),
+        tap: 'App.invest.menu(' + inv.id + ')', title: u.esc(inv.name), icon: /코인/.test(inv.assetClass || '') ? 'fa-coins' : /금|원자재/.test(inv.assetClass || '') ? 'fa-gem' : 'fa-chart-line',
         meta: u.dots([u.esc(inv.assetClass || '기타'), d.cur !== 'KRW' ? u.esc(d.cur) : '', d.closed ? '청산' : '', inv.broker ? u.esc(inv.broker) : '', '비중 ' + pct(w, 0), u.esc(C.short(inv.owner || 'J'))]),
         val: won(d.value), valSub: '<span class="' + pnlCol + ' font-semibold">' + sgnTxt(d.unreal) + ' (' + (d.roi >= 0 ? '+' : '') + pct(d.roi, 1) + ')</span>',
         note: (d.mode === 'QTY' ? qtyTxt(d.qty) + '주 · 평단 ' + priceTxt(d.avg, d.cur) + ' → 현재 ' + priceTxt(d.cp || d.avg, d.cur) : '원금 ' + won(d.cost) + (d.dca ? ' · 월 ' + won(Math.round(num(inv.monthly) * d.fx)) + ' 적립' : '')) + (extra ? '<br>' + extra : '')

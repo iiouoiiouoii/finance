@@ -149,7 +149,7 @@
   function itemHtml(f) {
     var applied = Fx.isApplied(f), own = f.owner && f.owner !== 'J';
     return u.item({
-      tap: 'App.fixed.menu(' + f.id + ')', title: u.esc(f.name),
+      tap: 'App.fixed.menu(' + f.id + ')', title: u.esc(f.name), icon: u.iconFor(f.name, f.category || '', f.subcategory || '', isInc(f) ? '월급' : ''), iconCls: isInc(f) ? 'in' : '',
       meta: u.dots(['매달 ' + f.day + '일', u.esc(f.payment || '계좌이체'), own ? u.esc(C.short(f.owner)) : '', f.auto ? '자동' : '']),
       val: (isInc(f) ? '+' : '') + u.n0(f.amount) + '원', valCls: isInc(f) ? 'text-accent' : '',
       valSub: applied ? '<span class="it-ok"><i class="fa-solid fa-check"></i> 들어감</span>' : '<button onclick="event.stopPropagation();App.fixed.apply(' + f.id + ')" class="it-btn mt-1">넣기</button>'
