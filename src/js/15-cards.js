@@ -21,7 +21,7 @@
     return b;
   }
   function optimizerHtml() {
-    if (!db().cards.length) return '<div class="text-xs text-slate-400">카드를 등록하면 혜택 최적화 분석이 표시됩니다. (혜택 입력 예: <b>대중교통 10%, 온라인 5%, 기본 0.7%</b>)</div>';
+    if (!db().cards.length) return '<div class="text-xs text-slate-400">카드를 등록하면 혜택 최적화 분석이 표시돼요. (혜택 입력 예: <b>대중교통 10%, 온라인 5%, 기본 0.7%</b>)</div>';
     var mo = App.state.month, tx = C.monthTx(mo).filter(function (t) { return t.type === 'EXPENSE'; });
     var d = new Date(), left = mo === u.nowM() ? Math.max(1, u.dim(mo) - d.getDate() + 1) : 0, spent = {}, ben = {};
     db().cards.forEach(function (c) { spent[c.id] = 0; ben[c.id] = 0; });
@@ -43,13 +43,13 @@
     var warn = db().cards.filter(function (c) { return (c.targetAmount || 0) > spent[c.id]; }).map(function (c) { return '<b>' + u.esc(c.name) + '</b> 실적까지 ' + u.K(c.targetAmount - spent[c.id]) + (left ? ' (하루 ' + u.K((c.targetAmount - spent[c.id]) / left) + ')' : ''); });
     return '<div class="flex items-center justify-between flex-wrap gap-2"><h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>카드 혜택 최적화 <span class="text-xs text-slate-400 font-normal">(' + mo + ' 지출 기준)</span></h3><div class="text-xs text-slate-500">최적 카드 사용 시 추가 혜택 <b class="text-accent text-sm">' + u.K(total) + '</b></div></div>'
       + '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">카드</th><th class="p-2 text-right">당월 사용 / 실적목표</th><th class="p-2 text-right">남은 실적</th><th class="p-2 text-right">잔여일 권장</th><th class="p-2 text-right">예상 혜택</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
-      + (warn.length ? '<div class="text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-3">실적 미달 카드: ' + warn.join(' · ') + '<div class="text-[11px] mt-1 opacity-80">※ 실적을 채우려고 지출을 늘리면 혜택보다 지출이 더 커질 수 있습니다. 어차피 쓸 돈만 카드를 바꿔 결제하세요.</div></div>' : '')
+      + (warn.length ? '<div class="text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-3">실적 미달 카드: ' + warn.join(' · ') + '<div class="text-[11px] mt-1 opacity-80">※ 실적을 채우려고 지출을 늘리면 혜택보다 지출이 더 커질 수 있어요. 어차피 쓸 돈만 카드를 바꿔 결제하세요.</div></div>' : '')
       + '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">지출 항목</th><th class="p-2 text-right">지출액</th><th class="p-2 text-right">현재 혜택</th><th class="p-2 text-left">추천 카드</th><th class="p-2 text-right">추가 혜택</th></tr></thead><tbody>'
       + (list.map(function (g) {
         var low = g.best && (g.best.targetAmount || 0) > spent[g.best.id];
         return '<tr class="border-t border-slate-100"><td class="p-2">' + u.esc(g.k) + '</td><td class="p-2 text-right">' + u.K(g.amt) + '</td><td class="p-2 text-right">' + u.K(g.cur) + '</td><td class="p-2">' + u.esc(g.best ? g.best.name : '-') + ' <span class="text-slate-400">' + g.br + '%</span>' + (low ? ' <span class="text-amber-600">⚠실적 필요</span>' : '') + '</td><td class="p-2 text-right font-bold ' + (g.gain > 0 ? 'text-accent' : 'text-slate-400') + '">' + u.K(g.gain) + '</td></tr>';
-      }).join('') || '<tr><td colspan="5" class="p-4 text-center text-slate-400">이번 달 지출이 없습니다.</td></tr>')
-      + '</tbody></table></div><div class="text-[11px] text-slate-400">※ 카드 혜택 문구의 “항목 N%”를 읽어 계산하는 추정치이며, 월 한도·전월실적 조건은 반영하지 않습니다.</div>';
+      }).join('') || '<tr><td colspan="5" class="p-4 text-center text-slate-400">이번 달 지출이 없어요.</td></tr>')
+      + '</tbody></table></div><div class="text-[11px] text-slate-400">※ 카드 혜택 문구의 “항목 N%”를 읽어 계산하는 추정치이며, 월 한도·전월실적 조건은 반영하지 않아요.</div>';
   }
 
   /* ---------- 등록 · 수정 ---------- */
@@ -98,11 +98,11 @@
       payDay: check ? null : (+u.val('card-payday') || null), periodStart: check || !(S >= 1 && S <= 31) ? null : S, payAccount: check ? '' : u.val('card-account').trim() };
     if (c) Object.keys(rec).forEach(function (k) { c[k] = rec[k]; }); else { rec.id = u.uid(); db().cards.push(rec); }
     App.store.save(); u.close('card-modal');
-    u.toast(c ? '카드를 고쳤습니다.' + (oldName && oldName !== rec.name ? ' 기존 내역의 결제수단 이름은 그대로이니 필요하면 내역에서 한꺼번에 바꾸세요.' : '') : '카드를 등록했습니다.');
+    u.toast(c ? '카드를 고쳤어요.' + (oldName && oldName !== rec.name ? ' 기존 내역의 결제수단 이름은 그대로이니 필요하면 내역에서 한꺼번에 바꾸세요.' : '') : '카드를 등록했어요.');
   };
   CD.remove = function (id) {
     u.confirm('카드 삭제', '이 카드를 목록에서 지울까요? 내역은 그대로 남아요.', function () {
-      db().cards = db().cards.filter(function (c) { return c.id !== Number(id); }); App.store.save(); u.toast('카드를 지웠습니다.');
+      db().cards = db().cards.filter(function (c) { return c.id !== Number(id); }); App.store.save(); u.toast('카드를 지웠어요.');
     });
   };
   /* 냈어요 표시 (자동으로 못 찾았을 때) */
@@ -110,7 +110,7 @@
     var c = u.byId(db().cards, id); if (!c) return;
     c.paid = c.paid || {};
     if (on) c.paid[P] = { at: u.today(), amount: C.cardBill(c, P).total }; else delete c.paid[P];
-    App.store.save(); u.toast(on ? c.name + ' ' + (+P.slice(5)) + '월 카드값을 낸 것으로 표시했습니다.' : '표시를 지웠습니다.');
+    App.store.save(); u.toast(on ? c.name + ' ' + (+P.slice(5)) + '월 카드값을 낸 것으로 표시했어요.' : '표시를 지웠어요.');
   };
 
   /* ---------- 다가오는 카드값 ---------- */

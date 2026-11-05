@@ -157,7 +157,7 @@
     var def = u.val('paste-default-payment') || '계좌이체';
     /* 줄 앞의 탭은 빈 칸이므로 남긴다 (공백만 다듬기) */
     var lines = raw.split('\n').map(function (l) { return l.replace(/^[  ]+|[  \t]+$/g, ''); }).filter(function (l) { var t = l.trim(); return t.length > 0 && !/^(합\s*계|총\s*계|소\s*계|total)/i.test(t); });
-    if (!lines.length) { u.toast('분석할 내역이 없습니다.', 'warning'); return; }
+    if (!lines.length) { u.toast('분석할 내역이 없어요.', 'warning'); return; }
     items = []; var seq = 0;
     function push(date, amount, memo, payment, info, bank) {
       memo = cleanMemo(memo) || '붙여넣기 내역';
@@ -187,7 +187,7 @@
       var rows = lines.map(splitRow).filter(function (r) { return r.some(function (c) { return c; }); });
       var hr = PA.findHeader(rows, 10), H = headerMap(hr >= 0 ? rows[hr] : rows[0]);
       var hasHeader = hr >= 0 || H.date !== -1 || H.amount !== -1 || H.memo !== -1, data = hasHeader ? rows.slice(hr >= 0 ? hr + 1 : 1) : rows;
-      if (!data.length) { u.toast('데이터 행을 찾지 못했습니다.', 'warning'); return; }
+      if (!data.length) { u.toast('데이터 행을 찾지 못했어요.', 'warning'); return; }
       var auto = analyzeColumns(data), headerInst = hasHeader && H.inst !== -1;
       if (!hasHeader) H = headerMap([]);
       var I = {
@@ -275,7 +275,7 @@
     var opts = C.payments().map(function (p) { return '<option value="' + u.esc(p) + '">' + u.esc(p) + '</option>'; }).join('');
     PA.markDups();
     var nd = 0, ns = 0;
-    if (!items.length) { tb.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-400">파싱 가능한 내역을 찾지 못했습니다.</td></tr>'; }
+    if (!items.length) { tb.innerHTML = '<tr><td colspan="8" class="p-4 text-center text-slate-400">파싱 가능한 내역을 찾지 못했어요.</td></tr>'; }
     else tb.innerHTML = items.map(function (t, i) {
       if (t._dup) { nd++; if (t._skip) ns++; }
       var inst = t.inst ? '<div class="mt-0.5"><span class="px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-bold">할부 ' + t.inst.round + '/' + t.inst.months + (t.inst.free ? ' 무이자' : '') + '</span>'
@@ -303,7 +303,7 @@
       + (cnt.TRANSFER ? '<span class="text-slate-500">이체 <b>' + cnt.TRANSFER + '</b>건 ' + u.K(sum('TRANSFER')) + ' <span class="text-[10px]">(카드대금·본인계좌 · 지출 합계에서 빠짐)</span></span>' : '') : '';
     var info = u.$('paste-dup-info');
     info.className = nd ? 'mb-2 p-2 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800' : 'hidden';
-    info.innerHTML = nd ? '<i class="fa-solid fa-clone mr-1"></i>이미 등록된 내역과 날짜·금액·결제수단·가맹점이 같은 <b>' + nd + '건</b>을 찾았습니다. 중복 의심 건은 기본으로 제외되며, [다시 포함]으로 등록할 수 있습니다.' : '';
+    info.innerHTML = nd ? '<i class="fa-solid fa-clone mr-1"></i>이미 등록된 내역과 날짜·금액·결제수단·가맹점이 같은 <b>' + nd + '건</b>을 찾았어요. 중복 의심 건은 기본으로 제외되며, [다시 포함]으로 등록할 수 있어요.' : '';
     u.$('parse-result-wrapper').classList.remove('hidden');
   }
   PA.setPayment = function (i, v) { if (items[i]) items[i].payment = v; renderTable(); };
@@ -324,7 +324,7 @@
     if (!items.length) return;
     PA.markDups();
     var keep = items.filter(function (t) { return !t._skip; }), skipped = items.length - keep.length;
-    if (!keep.length) { items = []; u.close('smart-paste-modal'); u.toast('새로 등록할 내역이 없습니다. 중복 의심 ' + skipped + '건을 제외했습니다.', 'warning'); return; }
+    if (!keep.length) { items = []; u.close('smart-paste-modal'); u.toast('새로 등록할 내역이 없어요. 중복 의심 ' + skipped + '건을 제외했어요.', 'warning'); return; }
     var created = 0;
     keep.forEach(function (t) {
       if (t.type === 'EXPENSE' && t.inst && t.inst.months > 1) {
@@ -343,7 +343,7 @@
     var c = { EXPENSE: 0, INCOME: 0, TRANSFER: 0 }; keep.forEach(function (t) { c[t.type]++; });
     items = [];
     App.store.save(); u.close('smart-paste-modal');
-    u.toast(keep.length + '건이 등록되었습니다.' + (c.INCOME || c.TRANSFER ? ' (지출 ' + c.EXPENSE + ' · 수입 ' + c.INCOME + ' · 이체 ' + c.TRANSFER + ')' : '') + (skipped ? ' 중복 의심 ' + skipped + '건은 제외했습니다.' : '') + (created ? ' 할부 ' + created + '건이 자동 생성되었습니다.' : ''));
+    u.toast(keep.length + '건이 등록되었어요.' + (c.INCOME || c.TRANSFER ? ' (지출 ' + c.EXPENSE + ' · 수입 ' + c.INCOME + ' · 이체 ' + c.TRANSFER + ')' : '') + (skipped ? ' 중복 의심 ' + skipped + '건은 제외했어요.' : '') + (created ? ' 할부 ' + created + '건이 자동 생성되었어요.' : ''));
   };
 
   /* ---------- 엑셀 · CSV 파일 읽기 (SheetJS 는 처음 쓸 때만 불러온다) ---------- */
@@ -352,8 +352,8 @@
     if (window.XLSX) return Promise.resolve(window.XLSX);
     if (!xlsxP) xlsxP = new Promise(function (res, rej) {
       var s = document.createElement('script'); s.src = XLSX_URL; s.async = true;
-      s.onload = function () { window.XLSX ? res(window.XLSX) : rej(new Error('엑셀 읽기 도구를 불러오지 못했습니다.')); };
-      s.onerror = function () { xlsxP = null; rej(new Error('엑셀 읽기 도구를 불러오지 못했습니다. 인터넷 연결을 확인하세요.')); };
+      s.onload = function () { window.XLSX ? res(window.XLSX) : rej(new Error('엑셀 읽기 도구를 불러오지 못했어요.')); };
+      s.onerror = function () { xlsxP = null; rej(new Error('엑셀 읽기 도구를 불러오지 못했어요. 인터넷 연결을 확인하세요.')); };
       document.head.appendChild(s);
     });
     return xlsxP;
@@ -408,14 +408,14 @@
   };
   PA.decrypt = async function (X, buf, password) {
     var cfb = X.CFB.read(bytes(buf), { type: 'array' }), ie = X.CFB.find(cfb, 'EncryptionInfo'), pe = X.CFB.find(cfb, 'EncryptedPackage');
-    if (!ie || !pe) throw new Error('암호 정보를 찾지 못했습니다.');
+    if (!ie || !pe) throw new Error('암호 정보를 찾지 못했어요.');
     var info = bytes(ie.content), pkg = bytes(pe.content);
-    if (!(info[0] === 4 && info[2] === 4)) throw new Error('이 파일의 암호 방식(표준 암호화)은 아직 풀 수 없습니다. 엑셀에서 암호를 풀고 다시 저장한 뒤 올려 주세요.');
+    if (!(info[0] === 4 && info[2] === 4)) throw new Error('이 파일의 암호 방식(표준 암호화)은 아직 풀 수 없어요. 엑셀에서 암호를 풀고 다시 저장한 뒤 올려 주세요.');
     var doc = new DOMParser().parseFromString(new TextDecoder().decode(info.slice(8)), 'application/xml');
     var kd = doc.getElementsByTagName('keyData')[0], ek = doc.getElementsByTagNameNS('http://schemas.microsoft.com/office/2006/keyEncryptor/password', 'encryptedKey')[0];
-    if (!kd || !ek) throw new Error('비밀번호 방식이 아닌 암호(인증서 등)는 풀 수 없습니다.');
+    if (!kd || !ek) throw new Error('비밀번호 방식이 아닌 암호(인증서 등)는 풀 수 없어요.');
     var A = function (el, k) { return el.getAttribute(k); }, alg = HASHES[A(ek, 'hashAlgorithm')], kAlg = HASHES[A(kd, 'hashAlgorithm')];
-    if (!alg || !kAlg) throw new Error('지원하지 않는 암호 해시 방식입니다.');
+    if (!alg || !kAlg) throw new Error('지원하지 않는 암호 해시 방식이에요.');
     var salt = b64(A(ek, 'saltValue')), keyLen = (+A(ek, 'keyBits') || 128) / 8, spin = +A(ek, 'spinCount') || 100000, hashSize = +A(ek, 'hashSize') || 20;
     var pw = new Uint8Array(String(password).length * 2);
     for (var i = 0; i < password.length; i++) { var c = password.charCodeAt(i); pw[i * 2] = c & 255; pw[i * 2 + 1] = c >> 8; }
@@ -425,7 +425,7 @@
     var vIn = await aesCbc(await derive(BLK_VIN), salt, b64(A(ek, 'encryptedVerifierHashInput')));
     var vHash = await aesCbc(await derive(BLK_VHASH), salt, b64(A(ek, 'encryptedVerifierHashValue')));
     var calc = await digest(alg, vIn.slice(0, +A(ek, 'saltSize') || 16));
-    for (i = 0; i < hashSize; i++) if (calc[i] !== vHash[i]) { var e = new Error('비밀번호가 맞지 않습니다.'); e.badPassword = true; throw e; }
+    for (i = 0; i < hashSize; i++) if (calc[i] !== vHash[i]) { var e = new Error('비밀번호가 맞지 않아요.'); e.badPassword = true; throw e; }
     var secret = (await aesCbc(await derive(BLK_KEY), salt, b64(A(ek, 'encryptedKeyValue')))).slice(0, keyLen);
     var kSalt = b64(A(kd, 'saltValue')), bs = +A(kd, 'blockSize') || 16, size = pkg[0] + pkg[1] * 256 + pkg[2] * 65536 + pkg[3] * 16777216 + (pkg[4] + pkg[5] * 256) * 4294967296;
     var enc = pkg.slice(8), out = new Uint8Array(enc.length);
@@ -452,7 +452,7 @@
       var s = PA.sheetToText(rows); if (!best || (best.header < 0 && s.header >= 0)) best = s;
       return s.header >= 0;
     });
-    if (!best || !best.text.trim()) throw new Error('파일에서 내역을 찾지 못했습니다.');
+    if (!best || !best.text.trim()) throw new Error('파일에서 내역을 찾지 못했어요.');
     var card = guessCard(name + ' ' + best.pre);
     if (card && C.payments().indexOf(card) >= 0) u.$('paste-default-payment').value = card;
     u.$('paste-raw-text').value = best.text;
@@ -461,9 +461,9 @@
   }
   function fail(e) {
     console.warn('[엑셀 읽기]', e);
-    var msg = (e && e.message) || '파일을 읽지 못했습니다.';
+    var msg = (e && e.message) || '파일을 읽지 못했어요.';
     /* 예전 .xls 의 암호(RC4 등)는 풀 수 없다 */
-    if (/password|encrypt|AlgID|RC4|FilePass/i.test(msg)) msg = '이 파일의 암호 방식은 풀 수 없습니다. 엑셀에서 열어 암호를 풀거나 .xlsx 로 다시 저장한 뒤 올려 주세요.';
+    if (/password|encrypt|AlgID|RC4|FilePass/i.test(msg)) msg = '이 파일의 암호 방식은 풀 수 없어요. 엑셀에서 열어 암호를 풀거나 .xlsx 로 다시 저장한 뒤 올려 주세요.';
     status('<span class="text-red-600">' + u.esc(msg) + '</span>');
     u.toast(msg, 'warning');
   }
@@ -476,8 +476,8 @@
     Promise.all([loadXlsx(), readBuf(file)]).then(function (r) {
       if (!/\.(csv|txt)$/i.test(name) && PA.isEncrypted(r[0], r[1])) {
         pending = { name: name, buf: r[1] };
-        status('<i class="fa-solid fa-lock text-amber-500 mr-1"></i><b>' + u.esc(name) + '</b> · 비밀번호가 걸린 파일입니다.');
-        showPw(true, '카드사 · 은행에서 정한 비밀번호(보통 생년월일 6자리 등)를 넣으세요. 이 기기 안에서만 쓰고 저장하지 않습니다.');
+        status('<i class="fa-solid fa-lock text-amber-500 mr-1"></i><b>' + u.esc(name) + '</b> · 비밀번호가 걸린 파일이에요.');
+        showPw(true, '카드사 · 은행에서 정한 비밀번호(보통 생년월일 6자리 등)를 넣으세요. 이 기기 안에서만 쓰고 저장하지 않아요.');
         return;
       }
       openBook(r[0], name, r[1]);
@@ -487,11 +487,11 @@
     var pw = u.val('paste-pw'); if (!pending) return;
     if (!pw) { u.$('paste-pw').focus(); return; }
     var p = pending, btn = u.$('paste-pw-btn');
-    btn.disabled = true; u.$('paste-pw-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>암호를 푸는 중... (몇 초 걸립니다)';
+    btn.disabled = true; u.$('paste-pw-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>암호를 푸는 중... (몇 초 걸려요)';
     loadXlsx().then(function (X) {
       return PA.decrypt(X, p.buf, pw).then(function (plain) { pending = null; showPw(false); openBook(X, p.name, plain); });
     }).catch(function (e) {
-      if (e && e.badPassword) { showPw(true, '<span class="text-red-600">비밀번호가 맞지 않습니다. 다시 넣어 주세요.</span>'); return; }
+      if (e && e.badPassword) { showPw(true, '<span class="text-red-600">비밀번호가 맞지 않아요. 다시 넣어 주세요.</span>'); return; }
       showPw(false); pending = null; fail(e);
     }).then(function () { btn.disabled = false; });
   };
@@ -539,7 +539,7 @@
     items = [];
     u.$('paste-raw-text').value = '';
     pending = null; showPw(false);
-    u.$('paste-file-status').innerHTML = '카드사 · 은행에서 내려받은 .xlsx · .xls · .csv 파일의 첫 시트를 읽습니다.';
+    u.$('paste-file-status').innerHTML = '카드사 · 은행에서 내려받은 .xlsx · .xls · .csv 파일의 첫 시트를 읽어요.';
     u.$('parse-result-wrapper').classList.add('hidden');
     u.$('btn-import-parsed').disabled = true; u.$('btn-import-parsed').textContent = '가계부에 넣기';
     u.$('paste-default-payment').innerHTML = C.payments().map(function (p) { return '<option value="' + u.esc(p) + '">' + u.esc(p) + '</option>'; }).join('');

@@ -111,17 +111,17 @@
   };
   cat.learnToast = function (keys, category, subcategory) {
     keys = keys.filter(Boolean); if (!keys.length) return '';
-    return ' 앞으로 \'' + keys.slice(0, 2).join('\', \'') + '\'' + (keys.length > 2 ? ' 외 ' + (keys.length - 2) + '곳' : '') + '은(는) ' + category + ' › ' + subcategory + '(으)로 분류합니다.';
+    return ' 앞으로 \'' + keys.slice(0, 2).join('\', \'') + '\'' + (keys.length > 2 ? ' 외 ' + (keys.length - 2) + '곳' : '') + '은(는) ' + category + ' › ' + subcategory + '(으)로 분류해요.';
   };
-  cat.removeRule = function (k) { delete rules()[k]; App.store.save(); u.toast('학습된 분류 규칙을 지웠습니다.'); };
+  cat.removeRule = function (k) { delete rules()[k]; App.store.save(); u.toast('학습된 분류 규칙을 지웠어요.'); };
   cat.clearRules = function () {
     var n = Object.keys(rules()).length; if (!n) return;
-    u.confirm('학습 규칙 모두 지우기', '학습된 가맹점 분류 규칙 ' + n + '개를 모두 지웁니다. 이미 분류된 내역은 바뀌지 않습니다.', function () { db().merchantRules = {}; App.store.save(); u.toast('학습 규칙 ' + n + '개를 지웠습니다.'); });
+    u.confirm('학습 규칙 모두 지우기', '학습된 가맹점 분류 규칙 ' + n + '개를 모두 지워요. 이미 분류된 내역은 바뀌지 않아요.', function () { db().merchantRules = {}; App.store.save(); u.toast('학습 규칙 ' + n + '개를 지웠어요.'); });
   };
   /* 설정 화면용 학습 규칙 목록 */
   cat.rulesHtml = function () {
     var R = rules(), keys = Object.keys(R).sort(function (a, b) { return String(R[b].updated || '').localeCompare(String(R[a].updated || '')) || a.localeCompare(b); });
-    if (!keys.length) return '<div class="text-[11px] text-slate-400 py-2">아직 학습된 규칙이 없습니다. 내역의 분류를 직접 고치면 여기에 쌓입니다.</div>';
+    if (!keys.length) return '<div class="text-[11px] text-slate-400 py-2">아직 학습된 규칙이 없어요. 내역의 분류를 직접 고치면 여기에 쌓여요.</div>';
     return '<div class="max-h-64 overflow-y-auto border border-slate-200 rounded-lg bg-white custom-scrollbar"><table class="w-full text-[11px]"><thead><tr class="bg-slate-50 text-slate-500"><th class="p-2 text-left">가맹점 (정규화)</th><th class="p-2 text-left">분류</th><th class="p-2 text-left hidden sm:table-cell">학습일</th><th class="p-2 w-8"></th></tr></thead><tbody>'
       + keys.map(function (k) {
         var r = R[k], ok = cat.subExists(r.category, r.subcategory);
@@ -165,7 +165,7 @@
   function modal() {
     return u.modal('reclass-modal', ''
       + '<div class="flex items-center justify-between pb-3 border-b border-slate-100"><div><h3 class="font-bold text-slate-800">카테고리 규칙 재적용 (일괄 재분류)</h3>'
-      + '<p class="text-[11px] text-slate-400 mt-0.5">수정한 키워드 규칙으로 기존 내역을 다시 분류합니다. 적용 전 변경 내용을 확인하세요.</p></div>'
+      + '<p class="text-[11px] text-slate-400 mt-0.5">수정한 키워드 규칙으로 기존 내역을 다시 분류해요. 적용 전 변경 내용을 확인하세요.</p></div>'
       + '<button onclick="App.u.close(\'reclass-modal\')" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div class="flex items-center gap-3 flex-wrap"><select id="reclass-scope" onchange="App.cat.renderPlan()" class="border border-slate-300 rounded-lg p-2 text-xs bg-white"><option value="MONTH">이번 달 내역만</option><option value="ALL">전체 기간</option></select>'
       + '<label class="flex items-center gap-1.5 text-xs text-slate-600"><input type="checkbox" id="reclass-locked" onchange="App.cat.renderPlan()" class="accent-emerald-600"> 직접 수정한 내역도 포함</label>'
@@ -182,7 +182,7 @@
   cat.renderPlan = function () {
     var plan = cat.buildPlan(u.val('reclass-scope'), u.$('reclass-locked').checked), body = u.$('reclass-body');
     u.$('reclass-count').innerText = plan.length;
-    if (!plan.length) { body.innerHTML = '<div class="py-10 text-center text-slate-400">현재 키워드 규칙과 모든 내역의 분류가 일치합니다. 변경할 항목이 없습니다.</div>'; return; }
+    if (!plan.length) { body.innerHTML = '<div class="py-10 text-center text-slate-400">현재 키워드 규칙과 모든 내역의 분류가 일치해요. 변경할 항목이 없어요.</div>'; return; }
     body.innerHTML = '<table class="w-full"><thead><tr class="bg-slate-50 text-slate-500 text-[11px]"><th class="p-2 w-8"></th><th class="p-2 text-left">날짜</th><th class="p-2 text-left">내용</th><th class="p-2 text-right">금액</th><th class="p-2 text-left">현재 분류</th><th class="p-2 text-left">변경 후</th></tr></thead><tbody>'
       + plan.map(function (p) {
         return '<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="p-2 text-center"><input type="checkbox" class="reclass-cb accent-emerald-600" data-id="' + p.id + '" data-cat="' + u.esc(p.toCat) + '" data-sub="' + u.esc(p.toSub) + '" checked></td>'
@@ -207,24 +207,24 @@
     });
     lastSnapshot = snap;
     App.store.save(); u.close('reclass-modal');
-    u.toast(snap.length + '건이 재분류되었습니다. 되돌리려면 내역 화면의 되돌리기 버튼을 누르세요.');
+    u.toast(snap.length + '건이 재분류되었어요. 되돌리려면 내역 화면의 되돌리기 버튼을 누르세요.');
   };
   cat.undo = function () {
-    if (!cat.hasSnapshot()) { u.toast('되돌릴 재분류 기록이 없습니다.', 'warning'); return; }
+    if (!cat.hasSnapshot()) { u.toast('되돌릴 재분류 기록이 없어요.', 'warning'); return; }
     lastSnapshot.forEach(function (s) { var t = u.byId(db().transactions, s.id); if (t) { t.category = s.category; t.subcategory = s.subcategory; t.lockCategory = s.lockCategory; } });
     var n = lastSnapshot.length; lastSnapshot = null;
-    App.store.save(); u.toast(n + '건의 재분류를 되돌렸습니다.');
+    App.store.save(); u.toast(n + '건의 재분류를 되돌렸어요.');
   };
   cat.setAuto = function (on) {
     db().ui.autoReclassify = !!on;
     if (on) { var n = cat.silentReclassify(); u.toast('자동 재분류 ON · 즉시 ' + n + '건 반영'); }
-    else u.toast('자동 재분류를 껐습니다.');
+    else u.toast('자동 재분류를 껐어요.');
     App.store.save();
   };
   cat.toggleLock = function (id) {
     var t = u.byId(db().transactions, id); if (!t) return;
     t.lockCategory = !t.lockCategory; App.store.save();
-    u.toast(t.lockCategory ? '이 내역의 분류를 고정했습니다. 재분류 대상에서 제외됩니다.' : '분류 고정을 해제했습니다.');
+    u.toast(t.lockCategory ? '이 내역의 분류를 고정했어요. 재분류 대상에서 제외돼요.' : '분류 고정을 해제했어요.');
   };
 
   /* ---------- 카테고리 추가 · 수정 ---------- */
@@ -292,18 +292,18 @@
       if (!(name in db().budgets)) db().budgets[name] = 0;
     }
     App.store.save(); u.close('category-modal');
-    u.toast('카테고리가 저장되었습니다.' + (moved ? ' 기존 내역 ' + moved + '건의 분류명을 함께 변경했습니다.' : ''));
+    u.toast('카테고리가 저장되었어요.' + (moved ? ' 기존 내역 ' + moved + '건의 분류명을 함께 변경했어요.' : ''));
     var plan = cat.buildPlan('ALL', false);
-    if (plan.length) u.confirm('기존 내역 재분류', '수정한 키워드 규칙과 다르게 분류된 내역이 ' + plan.length + '건 있습니다. 지금 확인하고 일괄 재분류하시겠습니까?', function () { cat.openReclass('ALL'); });
+    if (plan.length) u.confirm('기존 내역 재분류', '수정한 키워드 규칙과 다르게 분류된 내역이 ' + plan.length + '건 있어요. 지금 확인하고 일괄 재분류할까요?', function () { cat.openReclass('ALL'); });
   };
   cat.remove = function (idx) {
     var c = db().categories[idx]; if (!c) return;
     var used = db().transactions.filter(function (t) { return t.category === c.name; }).length;
-    u.confirm('카테고리 삭제', '[' + c.name + '] 카테고리를 삭제합니다.' + (used ? ' 이 분류를 쓰는 내역 ' + used + '건은 [기타지출 › 기타]로 이동됩니다.' : ''), function () {
+    u.confirm('카테고리 삭제', '[' + c.name + '] 카테고리를 삭제해요.' + (used ? ' 이 분류를 쓰는 내역 ' + used + '건은 [기타지출 › 기타]로 이동돼요.' : ''), function () {
       db().transactions.forEach(function (t) { if (t.category === c.name) { t.category = '기타지출'; t.subcategory = '기타'; t.lockCategory = false; } });
       db().categories.splice(idx, 1); dropBudgetKey(c.name);
       if (!cat.exists('기타지출')) db().categories.push({ name: '기타지출', color: '#64748B', subcategories: [{ name: '기타', keywords: [] }] });
-      App.store.save(); u.toast('카테고리가 삭제되고 관련 내역이 안전하게 이동되었습니다.');
+      App.store.save(); u.toast('카테고리가 삭제되고 관련 내역이 안전하게 이동되었어요.');
     });
   };
 

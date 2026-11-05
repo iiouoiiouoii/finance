@@ -57,13 +57,13 @@
       + '<div class="space-y-1 border-t border-slate-800 pt-3 text-[11px] text-slate-300">' + row('총급여 (비과세 제외)', u.K(sal)) + row('카드 25% 문턱 금액', u.K(c.th)) + row('문턱 초과 사용액 (공제액 아님)', u.K(c.over))
       + row('카드 소득공제액', u.K(c.ded)) + row('공제 한도 (기본 + 추가)', u.K(c.baseLim) + ' + ' + u.K(c.extraLim)) + (c.raw > c.ded ? row('한도를 넘어 버려지는 공제', u.K(c.raw - c.ded)) : '')
       + row('과세표준 추정 (공제 후)', u.K(t1.base)) + row('한계세율', Math.round(t1.rate * 100) + '%') + row('결정세액 추정 (공제 전 → 후)', u.K(t0.det) + ' → ' + u.K(t1.det))
-      + '<div class="text-slate-400 pt-1 leading-relaxed">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았습니다. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div></div>';
+      + '<div class="text-slate-400 pt-1 leading-relaxed">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았어요. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div></div>';
   };
   X.sync = function () {
     var b = X.buckets(App.state.month.slice(0, 4));
     ['credit', 'debit', 'cash', 'market', 'transit', 'culture'].forEach(function (k) { S[k] = Math.round(b[k]); });
     App.ui.render();
-    u.toast(App.state.month.slice(0, 4) + '년 카드/현금 실적 (' + u.K(b.credit + b.debit + b.cash + b.market + b.transit + b.culture) + ')이 연말정산에 연동되었습니다.');
+    u.toast(App.state.month.slice(0, 4) + '년 카드/현금 실적 (' + u.K(b.credit + b.debit + b.cash + b.market + b.transit + b.culture) + ')이 연말정산에 연동되었어요.');
   };
 
   /* ---------- 부부 공제 배분 ---------- */
@@ -89,7 +89,7 @@
     if (who === 'M') tp.medical = u.P(v); else if (who === 'S') tp[k] = u.P(v); else tp[who][k] = u.P(v);
     App.store.save({ quiet: true }); renderCouple();
   };
-  X.planAuto = function () { db().taxPlan = autoPlan(); App.store.save({ quiet: true }); App.ui.render(); u.toast('가계부 내역으로 부부별 카드·의료비·연금 납입액을 불러왔습니다.'); };
+  X.planAuto = function () { db().taxPlan = autoPlan(); App.store.save({ quiet: true }); App.ui.render(); u.toast('가계부 내역으로 부부별 카드·의료비·연금 납입액을 불러왔어요.'); };
   function renderCouple() {
     var box = u.$('tax-couple'); if (!box) return;
     var y = App.state.month.slice(0, 4);
@@ -103,7 +103,7 @@
       + '<tr class="border-t border-slate-100"><td class="p-2 font-semibold">연간 총급여</td><td class="p-1">' + inp('S', 'salA', sA) + '</td><td class="p-1">' + inp('S', 'salB', sB) + '</td></tr>'
       + PF.map(function (f) { return '<tr class="border-t border-slate-100"><td class="p-2">' + f[1] + '</td><td class="p-1">' + inp('H', f[0], tp.H[f[0]]) + '</td><td class="p-1">' + inp('W', f[0], tp.W[f[0]]) + '</td></tr>'; }).join('')
       + '<tr class="border-t border-slate-100"><td class="p-2">부부 의료비 합계 (누구 몫이든)</td><td class="p-1" colspan="2">' + inp('M', 'medical', tp.medical) + '</td></tr></tbody></table></div>';
-    if (!sA || !sB) { box.innerHTML = head + '<div class="text-xs text-slate-500">두 사람의 연간 총급여를 입력하면 카드·의료비·연금계좌 공제를 누구에게 두는 것이 유리한지 계산합니다. ([설정]의 연간 총급여가 자동으로 들어옵니다.)</div>'; return; }
+    if (!sA || !sB) { box.innerHTML = head + '<div class="text-xs text-slate-500">두 사람의 연간 총급여를 입력하면 카드·의료비·연금계좌 공제를 누구에게 두는 것이 유리한지 계산해요. ([설정]의 연간 총급여가 자동으로 들어와요.)</div>'; return; }
     var zero = { credit: 0, debit: 0, sp40: 0, culture: 0 }, merge = function (a, b) { var o = {}; Object.keys(zero).forEach(function (k) { o[k] = (a[k] || 0) + (b[k] || 0); }); return o; };
     var withPen = function (x, src) { return Object.assign({}, x, { pens: src.pens, irp: src.irp }); };
     var cards = { cur: [tp.H, tp.W], A: [merge(tp.H, tp.W), zero], B: [zero, merge(tp.H, tp.W)] }, combos = [];
@@ -119,19 +119,19 @@
       if (room > 0) extra = person(p.sal, Object.assign({}, uu, { irp: (uu.irp || 0) + room }), 0).total - person(p.sal, uu, 0).total;
       return '<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1 text-xs"><div class="font-bold text-slate-800">' + who + ' <span class="font-normal text-slate-400">총급여 ' + u.K(p.sal) + '</span></div>'
         + '<div class="flex justify-between"><span>카드 25% 문턱 / 사용액</span><b>' + u.K(p.c.th) + ' / ' + u.K(p.c.total) + '</b></div>'
-        + (under ? '<div class="text-amber-700">문턱 미달 → 카드 공제 0원. 사용액이 적은 쪽은 공제를 받기 어렵습니다.</div>' : '<div class="flex justify-between"><span>카드 공제로 줄어든 세금</span><b>' + u.K(p.card * 1.1) + '</b></div>')
+        + (under ? '<div class="text-amber-700">문턱 미달 → 카드 공제 0원. 사용액이 적은 쪽은 공제를 받기 어려워요.</div>' : '<div class="flex justify-between"><span>카드 공제로 줄어든 세금</span><b>' + u.K(p.card * 1.1) + '</b></div>')
         + '<div class="flex justify-between"><span>연금계좌 세액공제 (' + (p.pr === 0.15 ? '16.5%' : '13.2%') + ')</span><b>' + u.K(p.pCred * 1.1) + '</b></div>'
         + (p.mNet ? '<div class="flex justify-between"><span>의료비 세액공제 (표준공제 13만 차감 후)</span><b>' + u.K(p.mNet * 1.1) + '</b></div>' : '')
         + '<div class="flex justify-between"><span>결정세액 추정</span><b>' + u.K(p.det1 * 1.1) + '</b></div>'
-        + (p.capped ? '<div class="text-red-600">낼 세금보다 세액공제가 많아 일부가 사라집니다. 공제를 배우자 쪽으로 옮기세요.</div>' : '')
-        + (room > 0 && extra > 1000 ? '<div class="text-emerald-700">IRP에 ' + u.K(room) + ' 더 넣으면 약 ' + u.K(extra) + ' 더 돌려받습니다.</div>' : '') + '</div>';
+        + (p.capped ? '<div class="text-red-600">낼 세금보다 세액공제가 많아 일부가 사라져요. 공제를 배우자 쪽으로 옮기세요.</div>' : '')
+        + (room > 0 && extra > 1000 ? '<div class="text-emerald-700">IRP에 ' + u.K(room) + ' 더 넣으면 약 ' + u.K(extra) + ' 더 돌려받아요.</div>' : '') + '</div>';
     };
     box.innerHTML = head + '<div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs"><b>추천:</b> ' + label(best) + ' → 부부 합산 절세 약 <b>' + u.K(best.total) + '</b>'
-      + (best.total - cur.total > 1000 ? ' (지금 방식 중 최선인 \'' + label(cur) + '\'보다 ' + u.K(best.total - cur.total) + ' 많음)' : ' · 지금 방식이 이미 최선에 가깝습니다.') + '</div>'
+      + (best.total - cur.total > 1000 ? ' (지금 방식 중 최선인 \'' + label(cur) + '\'보다 ' + u.K(best.total - cur.total) + ' 많음)' : ' · 지금 방식이 이미 최선에 가까워요.') + '</div>'
       + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">' + pcard(A, best.a, withPen(cards[best.ck][0], tp.H)) + pcard(B, best.b, withPen(cards[best.ck][1], tp.W)) + '</div>'
       + '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">배분 방식</th><th class="p-2 text-right">' + A + '</th><th class="p-2 text-right">' + B + '</th><th class="p-2 text-right">합계</th></tr></thead><tbody>'
       + combos.map(function (c) { return '<tr class="border-t border-slate-100' + (c === best ? ' bg-emerald-50 font-bold' : '') + '"><td class="p-2">' + label(c) + '</td><td class="p-2 text-right">' + u.K(c.a.total) + '</td><td class="p-2 text-right">' + u.K(c.b.total) + '</td><td class="p-2 text-right">' + u.K(c.total) + '</td></tr>'; }).join('') + '</tbody></table></div>'
-      + '<div class="text-[11px] text-slate-500 leading-relaxed">※ 맞벌이 부부는 배우자 카드 사용액을 옮겨 공제받을 수 없습니다(각자 본인 사용분만). \'몰기\'는 앞으로 결제 카드를 바꿀 때의 효과입니다. 의료비는 배우자 몫도 실제로 낸 사람이 공제받을 수 있어, 총급여 3% 문턱이 낮은 쪽이 대체로 유리하지만 낼 세금이 적으면 효과가 사라집니다. 연금저축·IRP는 본인 계좌만 공제됩니다. 의료비 한도는 일반 700만 원으로 계산했습니다(본인·65세 이상·장애인 등은 한도 없음). 모든 금액은 지방소득세를 포함한 추정치입니다.</div>';
+      + '<div class="text-[11px] text-slate-500 leading-relaxed">※ 맞벌이 부부는 배우자 카드 사용액을 옮겨 공제받을 수 없어요(각자 본인 사용분만). \'몰기\'는 앞으로 결제 카드를 바꿀 때의 효과예요. 의료비는 배우자 몫도 실제로 낸 사람이 공제받을 수 있어, 총급여 3% 문턱이 낮은 쪽이 대체로 유리하지만 낼 세금이 적으면 효과가 사라져요. 연금저축·IRP는 본인 계좌만 공제돼요. 의료비 한도는 일반 700만 원으로 계산했어요(본인·65세 이상·장애인 등은 한도 없음). 모든 금액은 지방소득세를 포함한 추정치예요.</div>';
   }
 
   App.views.add({
@@ -146,7 +146,7 @@
         + '<div class="w-40"><label class="block font-semibold text-slate-600 mb-1">인적공제 인원 (본인 포함)</label><input type="number" min="1" max="10" value="' + S.people + '" onchange="App.tax.set(\'people\', this.value)" class="w-full border border-slate-300 rounded p-2 font-bold"></div></div>'
         + '<div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3"><h4 class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1.5">2. 카드 / 체크카드 / 현금영수증 사용액</h4><div class="grid grid-cols-3 gap-3">' + f('credit', FIELDS[2][1]) + f('debit', FIELDS[3][1]) + f('cash', FIELDS[4][1]) + '</div>'
         + '<div class="grid grid-cols-3 gap-3">' + f('market', FIELDS[5][1]) + f('transit', FIELDS[6][1]) + f('culture', FIELDS[7][1]) + '</div>'
-        + '<div class="text-[11px] text-slate-500">아래 3개 금액은 신용·체크·현금영수증 칸과 겹치지 않게 넣으세요. [가계부 카드실적 불러오기]는 대중교통·도서/공연 소분류와 메모의 \'전통시장\'을 자동으로 나눕니다.</div></div></div>'
+        + '<div class="text-[11px] text-slate-500">아래 3개 금액은 신용·체크·현금영수증 칸과 겹치지 않게 넣으세요. [가계부 카드실적 불러오기]는 대중교통·도서/공연 소분류와 메모의 \'전통시장\'을 자동으로 나눠요.</div></div></div>'
         + '<div id="tax-result" class="col-span-12 lg:col-span-5 bg-slate-900 text-white p-5 rounded-xl flex flex-col justify-between space-y-4"></div></div></div>'
         + '<div id="tax-couple" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"></div>';
       X.calc(); renderCouple();

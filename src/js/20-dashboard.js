@@ -23,7 +23,7 @@
     var c = db().snapshots[mo];
     if (!c || c.nw !== n.nw || c.assets !== n.assets || c.debt !== n.debt) { db().snapshots[mo] = { nw: n.nw, assets: n.assets, debt: n.debt }; App.store.save({ quiet: true }); }
   }));
-  D.setTarget = function (v) { db().settings.targetNetWorth = Math.max(0, u.P(v)); App.store.save(); u.toast('목표 순자산을 저장했습니다.'); };
+  D.setTarget = function (v) { db().settings.targetNetWorth = Math.max(0, u.P(v)); App.store.save(); u.toast('목표 순자산을 저장했어요.'); };
 
   /* ---------- 1. 이번 달 생활비 : 남은 돈 하나만 크게 ---------- */
   function heroHtml(mo) {
@@ -122,13 +122,13 @@
 
   /* ---------- 5. 최근 내역 ---------- */
   function recentHtml(mo) {
-    var L = C.monthTx(mo).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (b.id || 0) - (a.id || 0); }).slice(0, 6);
+    var L = C.monthTx(mo).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (b.id || 0) - (a.id || 0); }).slice(0, 5);
     var body = L.length ? L.map(function (t) {
       var inc = t.type === 'INCOME', tr = t.type === 'TRANSFER';
       return '<div class="row">' + u.ic(tr ? 'fa-arrow-right-arrow-left' : u.iconFor(t.category, t.subcategory, inc ? '수입' : ''), inc ? 'in sm' : 'sm') + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + md(t.date) + ' · ' + u.esc(tr ? (t.subcategory || '이체') : (t.category || '')) + (t.payment ? ' · ' + u.esc(t.payment) : '') + '</small></div>'
         + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : '') + '">' + (inc ? '+' : tr ? '' : '-') + won(t.amount) + '</div></div>';
     }).join('') : '<div class="empty">이번 달 내역이 없어요.</div>';
-    return '<div class="card" style="order:5"><div class="card-h"><h3><i class="fa-solid fa-clock-rotate-left"></i>최근 내역</h3><button onclick="App.ui.go(\'transactions\')" class="more">전체 보기</button></div>' + body + '</div>';
+    return '<div class="card" style="order:4"><div class="card-h"><h3><i class="fa-solid fa-clock-rotate-left"></i>최근 내역</h3><button onclick="App.ui.go(\'transactions\')" class="more">전체 보기</button></div>' + body + '</div>';
   }
 
   /* ---------- 6. 순자산 ---------- */
@@ -183,11 +183,13 @@
     return '<div><h4>달력 <span class="text-[13px] font-normal text-slate-500">· 무지출 ' + zero + '일</span></h4><div class="grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500 pb-1"><div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div></div>'
       + '<div class="grid grid-cols-7">' + cells + '</div></div>';
   }
-  function foldHtml(mo) {
+  /* 자세한 분석 (리포트 아래에 접어 둔다) */
+  D.analysisHtml = function (mo) {
     var open = false; try { open = localStorage.getItem(FOLD_KEY) === '1'; } catch (e) {}
-    return '<details id="home-fold" class="fold" style="order:7"' + (open ? ' open' : '') + ' ontoggle="App.dash.fold(this.open)"><summary>자세한 분석 · 재무 건강 · 달력</summary><div class="fold-body">'
-      + healthHtml(mo) + coupleHtml(mo) + chartsHtml() + calendarHtml(mo) + '</div></details>';
-  }
+    return '<details id="home-fold" class="fold no-print"' + (open ? ' open' : '') + ' ontoggle="App.dash.fold(this.open)"><summary><span><i class="fa-solid fa-chart-column mr-2 text-slate-400"></i>그래프 · 달력 · 재무 건강</span></summary><div class="fold-body">'
+      + chartsHtml() + calendarHtml(mo) + healthHtml(mo) + '</div></details>';
+  };
+  D.drawCharts = function (mo) { drawCharts(mo); };
   D.fold = function (open) { try { localStorage.setItem(FOLD_KEY, open ? '1' : '0'); } catch (e) {} if (open) drawCharts(App.state.month); };
   function drawCharts(mo) {
     var f = u.$('home-fold'); if (!f || !f.open) return;
@@ -207,9 +209,9 @@
     id: 'dashboard', order: 10, title: '홈', nav: { label: '홈', icon: 'fa-house' },
     render: function (el) {
       var mo = App.state.month;
-      el.innerHTML = '<div class="home-grid"><div class="home-col">' + heroHtml(mo) + catHtml(mo) + recentHtml(mo) + '</div>'
-        + '<div class="home-col">' + todoHtml(mo) + monthHtml(mo) + assetHtml(mo) + '</div></div>' + foldHtml(mo);
-      drawCharts(mo);
+      /* 홈은 네 가지만 : 남은 생활비 · 할 일 · 이번 달 흐름 · 최근 내역. 항목별은 예산, 순자산은 자산, 분석은 리포트에서 */
+      el.innerHTML = '<div class="home-grid"><div class="home-col">' + heroHtml(mo) + recentHtml(mo) + '</div>'
+        + '<div class="home-col">' + todoHtml(mo) + monthHtml(mo) + '</div></div>';
     }
   });
 })(window.App);

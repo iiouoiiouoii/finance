@@ -273,7 +273,7 @@
       if (badge) { badge.textContent = '로컬 저장 완료'; badge.className = 'text-emerald-400 font-semibold'; }
     } catch (e) {
       if (badge) { badge.textContent = '저장 공간 부족'; badge.className = 'text-red-400 font-semibold'; }
-      u.toast('저장에 실패했습니다. JSON 백업 후 저장 공간을 확인해 주세요.', 'warning');
+      u.toast('저장에 실패했어요. JSON 백업 후 저장 공간을 확인해 주세요.', 'warning');
       console.error('[가계부 데이터 저장]', e);
       return;
     }
@@ -287,13 +287,13 @@
   };
 
   store.loadSample = function () {
-    u.confirm('예시 데이터 넣기', '지금 데이터가 지워지고 예시 데이터로 바뀝니다.\n필요하면 먼저 [백업 파일 받기]를 하세요.', function () {
-      store.replace(sampleData()); u.toast('예시 데이터를 넣었습니다.');
+    u.confirm('예시 데이터 넣기', '지금 데이터가 지워지고 예시 데이터로 바뀌어요.\n필요하면 먼저 [백업 파일 받기]를 하세요.', function () {
+      store.replace(sampleData()); u.toast('예시 데이터를 넣었어요.');
     }, '예시 데이터로 바꾸기');
   };
   store.clearAll = function () {
-    u.confirm('모든 데이터 지우기', '이 기기의 내역 · 자산 · 설정이 모두 지워지고 되돌릴 수 없습니다.\n필요하면 먼저 [백업 파일 받기]를 하세요.', function () {
-      store.replace(emptyData()); u.toast('모든 데이터를 지웠습니다.');
+    u.confirm('모든 데이터 지우기', '이 기기의 내역 · 자산 · 설정이 모두 지워지고 되돌릴 수 없어요.\n필요하면 먼저 [백업 파일 받기]를 하세요.', function () {
+      store.replace(emptyData()); u.toast('모든 데이터를 지웠어요.');
     }, '모두 지우기');
   };
 
@@ -302,8 +302,8 @@
     try {
       u.download('household-backup-' + u.today() + '.json', JSON.stringify(App.db, null, 2), 'application/json');
       try { localStorage.setItem('FC_LAST_BACKUP', String(Date.now())); } catch (e) {}
-      u.toast('백업 파일이 저장되었습니다.');
-    } catch (e) { u.toast('백업에 실패했습니다.', 'warning'); }
+      u.toast('백업 파일이 저장되었어요.');
+    } catch (e) { u.toast('백업에 실패했어요.', 'warning'); }
   };
   store.importBackup = function (input) {
     var file = input.files && input.files[0]; if (!file) return;
@@ -312,10 +312,10 @@
       try {
         var parsed = JSON.parse(fr.result);
         if (!parsed || !Array.isArray(parsed.transactions)) throw new Error('형식 오류');
-        u.confirm('백업 복원', '현재 데이터를 백업 파일로 완전히 덮어씁니다. 진행하시겠습니까?', function () {
-          store.replace(parsed); u.toast('백업이 복원되었습니다.');
+        u.confirm('백업 복원', '현재 데이터를 백업 파일로 완전히 덮어써요. 진행할까요?', function () {
+          store.replace(parsed); u.toast('백업이 복원되었어요.');
         });
-      } catch (e) { u.toast('올바른 백업 파일이 아닙니다.', 'warning'); }
+      } catch (e) { u.toast('올바른 백업 파일이 아니에요.', 'warning'); }
       input.value = '';
     };
     fr.readAsText(file);

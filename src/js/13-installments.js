@@ -78,18 +78,18 @@
   I.apply = function (id) {
     var i = get(id); if (!i) return;
     var m = App.state.month, c = C.calcInst(i, m);
-    if (c.thisCharge <= 0) { u.toast('이번 달 청구 회차가 없습니다.', 'warning'); return; }
-    if (chargedThisMonth(i, m)) { u.toast('이미 이번 달에 반영되었습니다.', 'warning'); return; }
+    if (c.thisCharge <= 0) { u.toast('이번 달 청구 회차가 없어요.', 'warning'); return; }
+    if (chargedThisMonth(i, m)) { u.toast('이미 이번 달에 반영되었어요.', 'warning'); return; }
     pushCharge(i, m, c); App.store.save();
-    u.toast('할부 ' + c.roundNo + '회차 ' + u.K(c.thisCharge) + '이 지출에 반영되었습니다.');
+    u.toast('할부 ' + c.roundNo + '회차 ' + u.K(c.thisCharge) + '이 지출에 반영되었어요.');
   };
   I.applyActive = function () {
     var s = split(), n = 0, sum = 0;
     s.act.forEach(function (x) {
       if (x.c.status === 'ACTIVE' && x.c.thisCharge > 0 && !applied(x.i.id, s.cm) && !chargedThisMonth(x.i, s.cm)) { pushCharge(x.i, s.cm, x.c); n++; sum += x.c.thisCharge; }
     });
-    if (!n) { u.toast('반영할 당월 청구분이 없습니다.', 'warning'); return; }
-    App.store.save(); u.toast(n + '건 · ' + u.K(sum) + '이 당월 지출에 반영되었습니다.');
+    if (!n) { u.toast('반영할 당월 청구분이 없어요.', 'warning'); return; }
+    App.store.save(); u.toast(n + '건 · ' + u.K(sum) + '이 당월 지출에 반영되었어요.');
   };
   /* 자동 반영용 : m 월에 청구일(uptoDay 이하)이 지난 진행 중 할부를 반영 (저장은 부르는 쪽) */
   I.applyDue = function (m, uptoDay) {
@@ -106,7 +106,7 @@
     var a = db().ui.instAuto || (db().ui.instAuto = {});
     a.on = !!on; if (on) { a.from = u.nowM(); delete a.last; }
     App.store.save();
-    u.toast(on ? '진행 중 할부의 매달 청구분을 청구일이 지나면 자동으로 반영합니다.' : '할부 자동 반영을 껐습니다.');
+    u.toast(on ? '진행 중 할부의 매달 청구분을 청구일이 지나면 자동으로 반영해요.' : '할부 자동 반영을 껐어요.');
     if (on && App.fixed) App.fixed.autoRun();
   };
 
@@ -142,7 +142,7 @@
   I.preview = function () {
     var el = u.$('inst-preview'); if (!el) return;
     var total = u.P(u.val('inst-total')), months = parseInt(u.val('inst-months'), 10) || 1, apr = parseFloat(u.val('inst-apr')) || 0;
-    if (!total) { el.innerHTML = '금액과 개월수를 입력하면 월 납입액이 계산됩니다.'; return; }
+    if (!total) { el.innerHTML = '금액과 개월수를 입력하면 월 납입액이 계산돼요.'; return; }
     var rows = C.instSchedule({ total: total, months: months, apr: apr, startMonth: u.val('inst-start-month') || App.state.month, prepayments: [], prepayMode: 'SHORTEN' }, false);
     var fee = u.sum(rows, function (r) { return r.interest; });
     el.innerHTML = '월 납입액 약 <strong>' + u.K(rows[0].charge + rows[0].interest) + '</strong> · 종료 <strong>' + rows[rows.length - 1].month + '</strong>'
@@ -160,19 +160,19 @@
     var i = id ? get(id) : null;
     if (i) Object.keys(rec).forEach(function (k) { i[k] = rec[k]; });
     else { rec.id = u.uid(); rec.prepayments = []; rec.prepayMode = 'SHORTEN'; rec.closedMonth = null; rec.category = '기타지출'; rec.subcategory = '기타'; db().installments.push(rec); }
-    App.store.save(); u.close('installment-modal'); u.toast('할부 정보가 저장되었습니다.');
+    App.store.save(); u.close('installment-modal'); u.toast('할부 정보가 저장되었어요.');
   };
   I.remove = function (id) {
     var i = get(id); if (!i) return;
-    u.confirm('할부 삭제', '[' + i.title + '] 할부를 삭제합니다. 이미 지출에 반영된 내역은 유지됩니다.', function () {
+    u.confirm('할부 삭제', '[' + i.title + '] 할부를 삭제해요. 이미 지출에 반영된 내역은 유지돼요.', function () {
       db().installments = db().installments.filter(function (x) { return x.id !== i.id; });
-      App.store.save(); u.toast('할부가 삭제되었습니다.');
+      App.store.save(); u.toast('할부가 삭제되었어요.');
     });
   };
 
   /* ---------- 선결제 ---------- */
   function prepayModal() {
-    return u.modal('prepay-modal', '<div><h3 class="font-bold text-slate-800">할부 선결제 · 부분결제</h3><p class="text-[11px] text-slate-400 mt-0.5">일부만 미리 갚아도 잔액에 즉시 반영되고, 잔액이 0이 되면 자동으로 완납 처리됩니다.</p></div>'
+    return u.modal('prepay-modal', '<div><h3 class="font-bold text-slate-800">할부 선결제 · 부분결제</h3><p class="text-[11px] text-slate-400 mt-0.5">일부만 미리 갚아도 잔액에 즉시 반영되고, 잔액이 0이 되면 자동으로 완납 처리돼요.</p></div>'
       + '<input type="hidden" id="prepay-inst-id"><div id="prepay-info" class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs leading-relaxed"></div>'
       + '<div class="grid grid-cols-2 gap-2"><div><label class="block text-[11px] font-semibold text-slate-600 mb-1">결제일</label><input type="date" id="prepay-date" class="' + u.IN + '"></div>'
       + '<div><label class="block text-[11px] font-semibold text-slate-600 mb-1">결제 금액</label><input type="text" id="prepay-amount" data-money inputmode="numeric" placeholder="0" class="' + u.IN + ' font-bold"></div></div>'
@@ -192,7 +192,7 @@
     u.$('prepay-list').innerHTML = (i.prepayments || []).length ? i.prepayments.map(function (p) {
       return '<div class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px]"><span class="text-slate-600">' + u.esc(p.date) + '</span><span class="font-bold text-slate-800">' + u.K(p.amount) + '</span>'
         + '<button onclick="App.inst.deletePrepay(' + i.id + ',' + p.id + ')" class="text-slate-300 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button></div>';
-    }).join('') : '<div class="text-[11px] text-slate-400">등록된 선결제가 없습니다.</div>';
+    }).join('') : '<div class="text-[11px] text-slate-400">등록된 선결제가 없어요.</div>';
   }
   I.openPrepay = function (id) {
     var i = get(id); if (!i) return;
@@ -211,44 +211,44 @@
     var amt = u.P(u.val('prepay-amount')), date = u.val('prepay-date') || u.today();
     if (!(amt > 0)) { u.toast('결제 금액을 입력해주세요.', 'warning'); return; }
     var before = C.calcInst(i, App.state.month);
-    if (amt > before.remaining) { u.toast('잔액 ' + u.K(before.remaining) + '보다 큰 금액은 등록할 수 없습니다. 잔액으로 조정합니다.', 'warning'); amt = before.remaining; }
+    if (amt > before.remaining) { u.toast('잔액 ' + u.K(before.remaining) + '보다 큰 금액은 등록할 수 없어요. 잔액으로 조정해요.', 'warning'); amt = before.remaining; }
     i.prepayMode = u.val('prepay-mode');
     i.prepayments.push({ id: u.uid(), date: date, amount: amt });
     if (u.$('prepay-make-txn').checked) db().transactions.push({ id: u.uid(), date: date, type: 'EXPENSE', category: i.category || '기타지출', subcategory: i.subcategory || '기타', payment: i.payment || '계좌이체', amount: amt, memo: '[할부선결제] ' + i.title, installmentId: i.id, lockCategory: true });
     var after = C.calcInst(i, App.state.month);
     if (after.remaining <= 0) { i.closedMonth = String(date).slice(0, 7); db().ui.instView = 'SETTLED'; }
     App.store.save();
-    if (after.remaining <= 0) { u.close('prepay-modal'); u.toast('완납 처리되었습니다. 절감 수수료 ' + u.K(after.savedInterest) + ' · 잔여 회차 소멸'); }
+    if (after.remaining <= 0) { u.close('prepay-modal'); u.toast('완납 처리되었어요. 절감 수수료 ' + u.K(after.savedInterest) + ' · 잔여 회차 소멸'); }
     else { renderPrepayInfo(); u.toast('선결제 ' + u.K(amt) + ' 반영 · 잔액 ' + u.K(after.remaining)); }
   };
   I.deletePrepay = function (instId, payId) {
     var i = get(instId); if (!i) return;
     i.prepayments = i.prepayments.filter(function (p) { return p.id !== payId; });
     if (C.calcInst(i, App.state.month).remaining > 0) i.closedMonth = null;
-    App.store.save(); renderPrepayInfo(); u.toast('선결제 기록이 삭제되었습니다.');
+    App.store.save(); renderPrepayInfo(); u.toast('선결제 기록이 삭제되었어요.');
   };
 
   /* ---------- 완납 · 되돌리기 ---------- */
   I.settle = function (id) {
     var i = get(id); if (!i) return;
     var c = C.calcInst(i, App.state.month);
-    if (c.remaining <= 0) { u.toast('이미 완납된 할부입니다.', 'warning'); return; }
-    u.confirm('할부 완납 처리', '[' + i.title + '] 잔액 ' + u.K(c.remaining) + '을 전액 상환 처리합니다. 잔여 ' + c.remainRounds + '회차가 소멸되고 수수료 ' + u.K(Math.max(0, c.savedInterest)) + '이 절감됩니다.', function () {
+    if (c.remaining <= 0) { u.toast('이미 완납된 할부예요.', 'warning'); return; }
+    u.confirm('할부 완납 처리', '[' + i.title + '] 잔액 ' + u.K(c.remaining) + '을 전액 상환 처리해요. 잔여 ' + c.remainRounds + '회차가 소멸되고 수수료 ' + u.K(Math.max(0, c.savedInterest)) + '이 절감돼요.', function () {
       var d = u.today();
       i.prepayments.push({ id: u.uid(), date: d, amount: c.remaining }); i.closedMonth = d.slice(0, 7);
       db().transactions.push({ id: u.uid(), date: d, type: 'EXPENSE', category: i.category || '기타지출', subcategory: i.subcategory || '기타', payment: i.payment || '계좌이체', amount: c.remaining, memo: '[할부완납] ' + i.title, installmentId: i.id, lockCategory: true });
       db().ui.instView = 'SETTLED';
-      App.store.save(); u.toast('[' + i.title + '] 완납 처리되었습니다.');
+      App.store.save(); u.toast('[' + i.title + '] 완납 처리되었어요.');
     });
   };
   I.reopen = function (id) {
     var i = get(id); if (!i) return;
     var pre = i.prepayments || [];
-    if (!pre.length) { u.toast('약정 회차가 정상 종료된 할부입니다. 되돌릴 선결제 기록이 없습니다.', 'warning'); return; }
-    u.confirm('완납 되돌리기', '[' + i.title + '] 선결제·완납 기록 ' + pre.length + '건과 그에 따라 생성된 지출 내역을 삭제하고 잔여 회차를 복원합니다.', function () {
+    if (!pre.length) { u.toast('약정 회차가 정상 종료된 할부예요. 되돌릴 선결제 기록이 없어요.', 'warning'); return; }
+    u.confirm('완납 되돌리기', '[' + i.title + '] 선결제·완납 기록 ' + pre.length + '건과 그에 따라 생성된 지출 내역을 삭제하고 잔여 회차를 복원해요.', function () {
       db().transactions = db().transactions.filter(function (t) { if (t.installmentId !== i.id) return true; var m = String(t.memo || ''); return m.indexOf('[할부완납]') !== 0 && m.indexOf('[할부선결제]') !== 0; });
       i.prepayments = []; i.closedMonth = null; db().ui.instView = 'ACTIVE';
-      App.store.save(); u.toast('[' + i.title + '] 완납이 취소되고 잔여 회차가 복원되었습니다.');
+      App.store.save(); u.toast('[' + i.title + '] 완납이 취소되고 잔여 회차가 복원되었어요.');
     });
   };
 

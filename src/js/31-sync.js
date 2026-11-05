@@ -20,7 +20,7 @@
   var pass = function (c) { var s = ''; try { s = sessionStorage.getItem(SK) || ''; } catch (e) {} return c.pass || mem.pass || s; };
   var ready = function (c) { c = c || cfg(); return !!(c.repo && c.token && c.path && pass(c)); };
   var fmt = function (t) { return t ? new Date(t).toLocaleString('ko-KR') : '-'; };
-  function guard() { if (!window.crypto || !crypto.subtle) throw new Error('이 환경에서는 암호화를 쓸 수 없습니다. https 주소나 로컬 파일로 여세요.'); }
+  function guard() { if (!window.crypto || !crypto.subtle) throw new Error('이 환경에서는 암호화를 쓸 수 없어요. https 주소나 로컬 파일로 여세요.'); }
 
   /* ---------- 암호화 ---------- */
   function b64(x) { var s = ''; for (var i = 0; i < x.length; i += 8192) s += String.fromCharCode.apply(null, x.subarray(i, i + 8192)); return btoa(s); }
@@ -36,7 +36,7 @@
   }
   async function unseal(txt, p) {
     var f = JSON.parse(txt), k = await kdf(p, unb64(f.salt), 250000), pt;
-    try { pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(f.iv) }, k, unb64(f.data)); } catch (e) { throw new Error('암호가 올바르지 않거나 파일이 손상되었습니다.'); }
+    try { pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(f.iv) }, k, unb64(f.data)); } catch (e) { throw new Error('암호가 올바르지 않거나 파일이 손상되었어요.'); }
     return JSON.parse(dec.decode(pt));
   }
 
@@ -64,13 +64,13 @@
   function setSt(s, msg) {
     state = s;
     if (App.ui.renderFoot) App.ui.renderFoot();
-    var t = u.$('sync-status'); if (t) t.innerHTML = msg || (cfg().repo ? '마지막 동기화: <b>' + fmt(meta().savedAt) + '</b>' + (meta().dirty ? ' · <span class="text-amber-600">업로드 대기</span>' : '') : '아직 연결되지 않았습니다.');
+    var t = u.$('sync-status'); if (t) t.innerHTML = msg || (cfg().repo ? '마지막 동기화: <b>' + fmt(meta().savedAt) + '</b>' + (meta().dirty ? ' · <span class="text-amber-600">업로드 대기</span>' : '') : '아직 연결되지 않았어요.');
   }
   function apply(o, sha) {
     try { localStorage.setItem('FC20_PREV', localStorage.getItem(DBK) || ''); } catch (e) {}
     App.store.replace(o.db, { fromSync: true });
     setMeta({ sha: sha, savedAt: o.savedAt, dirty: false }); setSt(cfg().mode === 'ro' ? 'ro' : 'ok');
-    u.toast('저장소의 최신 데이터를 불러왔습니다.');
+    u.toast('저장소의 최신 데이터를 불러왔어요.');
   }
 
   /* ---------- 동기화 ---------- */
@@ -81,7 +81,7 @@
       var rm = await remote(c), m = meta();
       if (rm && rm.sha !== m.sha && !force) {
         var rf = JSON.parse(rm.txt);
-        var ch = await u.choose('<i class="fa-solid fa-cloud-arrow-down text-amber-500 mr-1.5"></i>동기화 확인', '저장소에 이 기기가 모르는 변경이 있습니다.\n저장소 저장 시각: <b>' + fmt(rf.savedAt) + '</b>\n이 기기 마지막 동기화: <b>' + fmt(m.savedAt) + '</b>',
+        var ch = await u.choose('<i class="fa-solid fa-cloud-arrow-down text-amber-500 mr-1.5"></i>동기화 확인', '저장소에 이 기기가 모르는 변경이 있어요.\n저장소 저장 시각: <b>' + fmt(rf.savedAt) + '</b>\n이 기기 마지막 동기화: <b>' + fmt(m.savedAt) + '</b>',
           [{ label: '저장소 데이터 불러오기 (이 기기 변경은 이전 데이터로 보관)', value: 'pull' }, { label: '이 기기 데이터로 덮어쓰기', value: 'force' }, { label: '보류', value: 'hold' }]);
         if (ch === 'pull') { busy = false; return S.pull(true); }
         if (ch !== 'force') { setSt('warn'); return; }
@@ -106,10 +106,10 @@
     try {
       guard(); setSt('busy', '불러오는 중...');
       var rm = await remote(c);
-      if (!rm) { u.toast('저장소에 데이터 파일이 아직 없습니다.', 'warning'); setSt('warn'); return; }
+      if (!rm) { u.toast('저장소에 데이터 파일이 아직 없어요.', 'warning'); setSt('warn'); return; }
       var o = await unseal(rm.txt, pass(c));
       if (!force && (meta().dirty || !meta().sha) && c.mode !== 'ro') {
-        var ch = await u.choose('동기화 확인', '이 기기에 업로드되지 않은 변경이 있습니다. 저장소 데이터(' + fmt(o.savedAt) + ')로 바꾸면 이 기기 데이터는 이전본으로만 남습니다.', [{ label: '저장소 데이터로 바꾸기', value: 'go' }, { label: '취소', value: 'no' }]);
+        var ch = await u.choose('동기화 확인', '이 기기에 업로드되지 않은 변경이 있어요. 저장소 데이터(' + fmt(o.savedAt) + ')로 바꾸면 이 기기 데이터는 이전본으로만 남아요.', [{ label: '저장소 데이터로 바꾸기', value: 'go' }, { label: '취소', value: 'no' }]);
         if (ch !== 'go') { setSt('warn'); return; }
       }
       apply(o, rm.sha); return true;
@@ -119,7 +119,7 @@
     var c = cfg(); if (!ready(c) || busy) return; lastCheck = Date.now();
     try {
       guard(); var rm = await remote(c), m = meta(), hasLocal = (App.db.transactions || []).length + (App.db.assets || []).length > 0;
-      if (!rm) { if (c.mode !== 'ro' && hasLocal) return S.push(); return setSt('warn', '저장소에 파일이 없습니다. [지금 업로드]로 첫 백업을 만드세요.'); }
+      if (!rm) { if (c.mode !== 'ro' && hasLocal) return S.push(); return setSt('warn', '저장소에 파일이 없어요. [지금 업로드]로 첫 백업을 만드세요.'); }
       if (rm.sha === m.sha) { setSt(c.mode === 'ro' ? 'ro' : 'ok'); return m.dirty && c.mode !== 'ro' ? S.push() : 0; }
       if (c.mode === 'ro') return S.pull(true);
       if (m.sha && !m.dirty) return S.pull(true);   /* 이 기기에 안 올린 변경이 없으면 묻지 않고 최신으로 */
@@ -144,14 +144,14 @@
     box.innerHTML = '<div class="text-xs text-slate-400">불러오는 중...</div>';
     try {
       var r = await gh(c, '/commits?path=' + encodeURIComponent(c.path) + (c.branch ? '&sha=' + encodeURIComponent(c.branch) : '') + '&per_page=15'), l = r ? await r.json() : [];
-      box.innerHTML = l.length ? l.map(function (x) { return '<div class="flex items-center justify-between text-xs py-1.5 border-t border-slate-100"><span>' + fmt(x.commit.committer.date) + '</span><button onclick="App.sync.restore(\'' + x.sha + '\')" class="text-accent font-semibold">이 시점으로 복원</button></div>'; }).join('') : '<div class="text-xs text-slate-400">이력이 없습니다.</div>';
+      box.innerHTML = l.length ? l.map(function (x) { return '<div class="flex items-center justify-between text-xs py-1.5 border-t border-slate-100"><span>' + fmt(x.commit.committer.date) + '</span><button onclick="App.sync.restore(\'' + x.sha + '\')" class="text-accent font-semibold">이 시점으로 복원</button></div>'; }).join('') : '<div class="text-xs text-slate-400">이력이 없어요.</div>';
     } catch (e) { box.innerHTML = '<div class="text-xs text-red-600">' + u.esc(e.message) + '</div>'; }
   };
   S.restore = async function (sha) {
     var c = cfg();
     try {
       guard(); var old = await remote(c, sha), head = await remote(c), o = await unseal(old.txt, pass(c));
-      if ((await u.choose('복원', '<b>' + fmt(o.savedAt) + '</b> 시점의 데이터로 복원합니다. 현재 기기 데이터는 이전본으로 보관되고, 복원본이 저장소에 새로 저장됩니다.', [{ label: '복원', value: 'go' }, { label: '취소', value: 'no' }])) !== 'go') return;
+      if ((await u.choose('복원', '<b>' + fmt(o.savedAt) + '</b> 시점의 데이터로 복원해요. 현재 기기 데이터는 이전본으로 보관되고, 복원본이 저장소에 새로 저장돼요.', [{ label: '복원', value: 'go' }, { label: '취소', value: 'no' }])) !== 'go') return;
       apply(o, head.sha); setMeta({ dirty: true }); clearTimeout(timer); timer = setTimeout(function () { S.push(false); }, 1500);
     } catch (e) { u.toast(e.message, 'error'); }
   };
@@ -162,21 +162,21 @@
     return u.modal('sync-modal', '<div class="flex justify-between items-center"><h3 class="font-bold text-slate-800 text-base"><i class="fa-brands fa-github mr-2"></i>GitHub 암호화 백업·동기화</h3><button onclick="App.u.close(\'sync-modal\')" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div id="sync-status" class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs"></div>'
       + '<div class="flex flex-wrap gap-2 text-xs"><button onclick="App.sync.push(false)" class="border border-slate-300 px-3.5 py-2 rounded-lg">지금 업로드</button><button onclick="App.sync.pull(false)" class="border border-slate-300 px-3.5 py-2 rounded-lg">지금 불러오기</button><button onclick="App.sync.history()" class="border border-slate-300 px-3.5 py-2 rounded-lg">변경 이력</button><button onclick="App.sync.tokenOpen()" class="border border-slate-300 px-3.5 py-2 rounded-lg">토큰 바꾸기</button></div><div id="sync-hist"></div>'
-      + '<div class="border-t border-slate-200 pt-4 space-y-2 text-xs"><div class="font-bold text-slate-700"><i class="fa-solid fa-user-plus mr-1.5"></i>아이디 추가 (배우자용)</div><p class="text-slate-500 leading-relaxed">지금 연결된 가계부에 들어갈 아이디를 하나 더 만듭니다. 배우자는 그 아이디·비밀번호만 넣으면 같은 데이터를 봅니다.</p>'
+      + '<div class="border-t border-slate-200 pt-4 space-y-2 text-xs"><div class="font-bold text-slate-700"><i class="fa-solid fa-user-plus mr-1.5"></i>아이디 추가 (배우자용)</div><p class="text-slate-500 leading-relaxed">지금 연결된 가계부에 들어갈 아이디를 하나 더 만들어요. 배우자는 그 아이디·비밀번호만 넣으면 같은 데이터를 봐요.</p>'
       + '<div class="grid grid-cols-2 gap-2"><input id="login-new-id" placeholder="아이디" autocomplete="off" autocapitalize="none" class="border border-slate-300 rounded-lg px-2.5 py-2"><select id="login-new-mode" class="border border-slate-300 rounded-lg px-2.5 py-2"><option value="rw">입력·수정 가능</option><option value="ro">조회 전용</option></select>'
       + '<input id="login-new-pw" type="password" placeholder="비밀번호 (10자 이상)" autocomplete="new-password" class="border border-slate-300 rounded-lg px-2.5 py-2"><input id="login-new-pw2" type="password" placeholder="비밀번호 확인" autocomplete="new-password" class="border border-slate-300 rounded-lg px-2.5 py-2"></div>'
       + '<button onclick="App.sync.makeLoginFile()" class="bg-slate-800 text-white px-3.5 py-2 rounded-lg font-semibold">아이디 추가</button><div id="login-mk-msg" class="text-[11px]"></div></div>'
       + '<details class="border-t border-slate-200 pt-3 text-xs"><summary class="font-semibold text-slate-500 cursor-pointer">고급: 연결 정보 직접 입력 · 설정 코드</summary><div class="space-y-3 mt-3">'
-      + '<details class="bg-sky-50 border border-sky-200 rounded-lg p-3 text-sky-900 text-xs"><summary class="font-semibold cursor-pointer">직접 연결하는 방법</summary><ol class="list-decimal ml-4 mt-2 space-y-1"><li>GitHub에서 <b>Private(비공개)</b> 저장소를 만듭니다. (예: finance-data)</li><li>Settings → Developer settings → Fine-grained tokens에서 토큰을 만들고 <b>그 저장소만</b> 선택합니다.</li><li>Repository permissions → <b>Contents: Read and write</b> (조회 전용 기기는 Read-only).</li><li>아래에 저장소와 토큰, 암호를 입력합니다. 암호는 분실하면 복구할 수 없습니다.</li></ol></details>'
+      + '<details class="bg-sky-50 border border-sky-200 rounded-lg p-3 text-sky-900 text-xs"><summary class="font-semibold cursor-pointer">직접 연결하는 방법</summary><ol class="list-decimal ml-4 mt-2 space-y-1"><li>GitHub에서 <b>Private(비공개)</b> 저장소를 만들어요. (예: finance-data)</li><li>Settings → Developer settings → Fine-grained tokens에서 토큰을 만들고 <b>그 저장소만</b> 선택해요.</li><li>Repository permissions → <b>Contents: Read and write</b> (조회 전용 기기는 Read-only).</li><li>아래에 저장소와 토큰, 암호를 입력해요. 암호는 분실하면 복구할 수 없어요.</li></ol></details>'
       + '<div class="space-y-3 text-xs">' + inp('sync-repo', '저장소 (계정/저장소명)', 'text', 'myname/finance-data') + inp('sync-path', '파일 경로', 'text', 'finance-data.enc.json') + inp('sync-token', 'GitHub 토큰', 'password', 'github_pat_...') + inp('sync-pass', '암호화 암호', 'password', '')
       + '<label class="flex items-center gap-2"><input id="sync-remember" type="checkbox"> 이 기기에 암호 저장 (자동 동기화에 필요, 공용 PC에서는 해제)</label>'
       + '<div><label class="block font-semibold text-slate-600 mb-1">이 기기의 역할</label><select id="sync-mode" class="w-full border border-slate-300 rounded-lg px-2.5 py-2"><option value="rw">입력용 (변경 시 자동 업로드)</option><option value="ro">조회 전용 (불러오기만, 업로드 안 함)</option></select></div>'
       + '<div class="flex flex-wrap gap-2"><button onclick="App.sync.saveCfg()" class="bg-accent text-white px-3.5 py-2 rounded-lg font-semibold">저장 후 연결 테스트</button><button onclick="App.sync.off()" class="ml-auto text-red-500 px-2">연결 해제</button></div>'
-      + '<div class="border-t border-slate-200 pt-4 space-y-2"><div class="font-bold text-slate-700"><i class="fa-solid fa-mobile-screen mr-1.5"></i>다른 기기에 연결하기 (설정 코드)</div><p class="text-slate-500 leading-relaxed">연결을 저장한 기기에서 코드를 복사해 새 기기에 붙여넣으면 입력이 끝납니다. 코드에는 <b>토큰과 암호가 들어 있으니</b> 나와의 채팅·비밀번호 관리자로만 옮기고, 다 쓰면 지우세요.</p>'
+      + '<div class="border-t border-slate-200 pt-4 space-y-2"><div class="font-bold text-slate-700"><i class="fa-solid fa-mobile-screen mr-1.5"></i>다른 기기에 연결하기 (설정 코드)</div><p class="text-slate-500 leading-relaxed">연결을 저장한 기기에서 코드를 복사해 새 기기에 붙여넣으면 입력이 끝나요. 코드에는 <b>토큰과 암호가 들어 있으니</b> 나와의 채팅·비밀번호 관리자로만 옮기고, 다 쓰면 지우세요.</p>'
       + '<div class="flex flex-wrap gap-2"><button onclick="App.sync.copyCode(false)" class="border border-slate-300 px-3.5 py-2 rounded-lg">설정 코드 복사</button><button onclick="App.sync.copyCode(true)" class="border border-slate-300 px-3.5 py-2 rounded-lg">설정 링크 복사</button></div>'
       + '<textarea id="sync-code" rows="2" placeholder="이 기기에 적용할 설정 코드를 붙여넣으세요 (FCS1.…)" class="w-full border border-slate-300 rounded-lg px-2.5 py-2 text-[11px]"></textarea><button onclick="App.sync.applyCode(App.u.val(\'sync-code\'))" class="bg-slate-800 text-white px-3.5 py-2 rounded-lg font-semibold">코드 적용하고 연결</button></div>'
       + '</div></div></details>'
-      + '<p class="text-[11px] text-slate-400 leading-relaxed">※ 로그인 파일에는 토큰과 데이터 암호가 로그인 비밀번호로 암호화되어 들어 있고, 공개 저장소에 올라갑니다. 비밀번호를 길게 정하세요. 비밀번호가 새었다면 GitHub에서 토큰을 지우고 새로 만든 뒤 아이디를 다시 만들면 됩니다.</p>', 540);
+      + '<p class="text-[11px] text-slate-400 leading-relaxed">※ 로그인 파일에는 토큰과 데이터 암호가 로그인 비밀번호로 암호화되어 들어 있고, 공개 저장소에 올라가요. 비밀번호를 길게 정하세요. 비밀번호가 새었다면 GitHub에서 토큰을 지우고 새로 만든 뒤 아이디를 다시 만들면 돼요.</p>', 540);
   }
   S.open = function () {
     modal();
@@ -193,11 +193,11 @@
     try {
       guard(); setSt('busy', '연결 확인 중...');
       var rm = await remote(c);
-      if (rm) { await unseal(rm.txt, p); u.toast('연결 성공 · 저장소에 기존 백업이 있습니다.'); } else u.toast('연결 성공 · 아직 백업 파일이 없습니다. [지금 업로드]로 첫 백업을 만드세요.');
+      if (rm) { await unseal(rm.txt, p); u.toast('연결 성공 · 저장소에 기존 백업이 있어요.'); } else u.toast('연결 성공 · 아직 백업 파일이 없어요. [지금 업로드]로 첫 백업을 만드세요.');
       setSt(c.mode === 'ro' ? 'ro' : 'ok'); if (rm) S.check();
     } catch (e) { setSt('err', '<span class="text-red-600">' + u.esc(e.message) + '</span>'); }
   };
-  S.off = function () { [LS, MS, LK].forEach(function (k) { localStorage.removeItem(k); }); mem.pass = ''; try { sessionStorage.removeItem(SK); } catch (e) {} S.open(); u.toast('연결을 해제했습니다. (저장소의 백업은 삭제되지 않습니다)'); App.ui.render(); };
+  S.off = function () { [LS, MS, LK].forEach(function (k) { localStorage.removeItem(k); }); mem.pass = ''; try { sessionStorage.removeItem(SK); } catch (e) {} S.open(); u.toast('연결을 해제했어요. (저장소의 백업은 삭제되지 않아요)'); App.ui.render(); };
 
   /* ---------- 설정 코드 (v21) ---------- */
   function makeCode() {
@@ -206,9 +206,9 @@
     return 'FCS1.' + btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
   function parseCode(s) {
-    s = String(s || '').trim(); var i = s.indexOf('FCS1.'); if (i < 0) throw new Error('설정 코드 형식이 아닙니다.');
+    s = String(s || '').trim(); var i = s.indexOf('FCS1.'); if (i < 0) throw new Error('설정 코드 형식이 아니에요.');
     var b = s.slice(i + 5).replace(/[^\w\-]/g, '').replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '=';
-    var o = JSON.parse(decodeURIComponent(escape(atob(b)))); if (!o.r || !o.t || !o.w) throw new Error('설정 코드에 필요한 정보가 없습니다.');
+    var o = JSON.parse(decodeURIComponent(escape(atob(b)))); if (!o.r || !o.t || !o.w) throw new Error('설정 코드에 필요한 정보가 없어요.');
     return o;
   }
   function copy(text, msg) {
@@ -216,7 +216,7 @@
     var fallback = function () { var t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); done(); } catch (e) { prompt('아래 내용을 복사하세요', text); } t.remove(); };
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
   }
-  S.copyCode = function (asLink) { var c = makeCode(); if (!c) return; copy(asLink ? location.origin + location.pathname + '#fcs=' + c : c, asLink ? '설정 링크를 복사했습니다. 새 기기 브라우저에서 열면 자동 연결됩니다.' : '설정 코드를 복사했습니다.'); };
+  S.copyCode = function (asLink) { var c = makeCode(); if (!c) return; copy(asLink ? location.origin + location.pathname + '#fcs=' + c : c, asLink ? '설정 링크를 복사했어요. 새 기기 브라우저에서 열면 자동 연결돼요.' : '설정 코드를 복사했어요.'); };
   S.applyCode = async function (s) {
     var o; try { o = parseCode(s); } catch (e) { return u.toast(e.message, 'error'); }
     if (o.b) localStorage.setItem(LS, JSON.stringify({ repo: o.r, branch: o.b }));
@@ -245,8 +245,8 @@
   }
   function checkIdPw(id, pw, pw2) {
     if (!/^[a-z0-9._@-]{3,40}$/.test(normId(id))) return '아이디는 영문·숫자·._@- 로 3~40자로 정하세요.';
-    if (pw.length < 10 || !/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return '비밀번호는 10자 이상, 영문과 숫자를 섞어 주세요. 로그인 파일은 공개 저장소에 올라가므로 쉬운 비밀번호는 위험합니다.';
-    if (pw !== pw2) return '비밀번호 확인이 일치하지 않습니다.';
+    if (pw.length < 10 || !/[A-Za-z]/.test(pw) || !/\d/.test(pw)) return '비밀번호는 10자 이상, 영문과 숫자를 섞어 주세요. 로그인 파일은 공개 저장소에 올라가므로 쉬운 비밀번호는 위험해요.';
+    if (pw !== pw2) return '비밀번호 확인이 일치하지 않아요.';
     return '';
   }
   /* 로그인 파일에 아이디 하나를 더하거나 바꿔서 저장소(data 브랜치)에 바로 올린다 */
@@ -261,10 +261,10 @@
   /* 데이터 전용 data 브랜치가 없으면 빈 브랜치로 만든다 (웹 화면이 나가는 main 과 섞이지 않게) */
   async function ensureBranch(token) {
     var c = { repo: HOME_REPO, token: token };
-    if (!(await gh(c, ''))) throw new Error('토큰으로 ' + HOME_REPO + ' 저장소에 접근하지 못했습니다. 토큰을 만들 때 이 저장소를 골랐는지 확인하세요.');
+    if (!(await gh(c, ''))) throw new Error('토큰으로 ' + HOME_REPO + ' 저장소에 접근하지 못했어요. 토큰을 만들 때 이 저장소를 골랐는지 확인하세요.');
     if (await gh(c, '/branches/' + DATA_BRANCH)) return;
     var post = async function (p, body) { return (await gh(c, p, 'POST', body)).json(); };
-    var tree = await post('/git/trees', { tree: [{ path: 'README.md', mode: '100644', type: 'blob', content: '부부 가계부 암호화 데이터 전용 브랜치입니다. 직접 고치지 마세요.\n' }] });
+    var tree = await post('/git/trees', { tree: [{ path: 'README.md', mode: '100644', type: 'blob', content: '부부 가계부 암호화 데이터 전용 브랜치예요. 직접 고치지 마세요.\n' }] });
     var cm = await post('/git/commits', { message: '가계부 데이터 브랜치', tree: tree.sha, parents: [] });
     await post('/git/refs', { ref: 'refs/heads/' + DATA_BRANCH, sha: cm.sha });
   }
@@ -282,12 +282,12 @@
   S.tokenOpen = function () {
     var info = getJ(LK) || {}, IN2 = u.IN;
     u.modal('token-modal', u.modalHead('token-title', '토큰 바꾸기', 'token-modal')
-      + '<p class="text-[14px] text-slate-600 leading-relaxed">GitHub 토큰이 만료됐거나 다시 만들어져서 <b>401 Bad credentials</b>가 나올 때 씁니다. 새 토큰을 만들어 붙여넣고 내 비밀번호를 넣으면, 이 기기와 로그인 파일이 새 토큰으로 바뀌어 다른 기기도 그대로 로그인됩니다.</p>'
+      + '<p class="text-[14px] text-slate-600 leading-relaxed">GitHub 토큰이 만료됐거나 다시 만들어져서 <b>401 Bad credentials</b>가 나올 때 써요. 새 토큰을 만들어 붙여넣고 내 비밀번호를 넣으면, 이 기기와 로그인 파일이 새 토큰으로 바뀌어 다른 기기도 그대로 로그인돼요.</p>'
       + '<div class="bg-slate-50 rounded-xl p-3.5 space-y-2 text-[13.5px] text-slate-700"><div class="font-semibold text-slate-900">새 토큰 만들 때</div><ul class="list-disc ml-4 space-y-0.5"><li>Repository access: <b>Only select repositories</b> → <b>' + u.esc(HOME_REPO.split('/')[1]) + '</b>' + ((App.db.settings || {}).inboxRepo ? ', <b>' + u.esc(App.db.settings.inboxRepo.split('/')[1]) + '</b>' : ' (알림 수신함을 쓰면 finance-inbox도)') + '</li><li>Permissions: <b>Contents</b> Read and write' + ((App.db.settings || {}).inboxRepo ? ', <b>Issues</b> Read and write' : '') + '</li><li>Expiration: <b>No expiration</b> (안 그러면 또 만료돼요)</li></ul>'
       + '<a target="_blank" rel="noopener" href="' + S.tokenUrl() + '" class="btn sec" style="height:38px">새 토큰 만들기</a></div>'
       + '<div><label class="block text-xs font-semibold text-slate-600 mb-1.5">새 토큰</label><input id="tok-new" type="password" autocomplete="off" placeholder="github_pat_..." class="' + IN2 + '"></div>'
       + '<div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-semibold text-slate-600 mb-1.5">내 아이디</label><input id="tok-id" value="' + u.esc(info.id || '') + '" autocapitalize="none" class="' + IN2 + '"></div><div><label class="block text-xs font-semibold text-slate-600 mb-1.5">내 비밀번호</label><input id="tok-pw" type="password" autocomplete="current-password" class="' + IN2 + '"></div></div>'
-      + '<details class="text-[13.5px]"><summary class="font-semibold text-slate-600 cursor-pointer">배우자 아이디도 같이 바꾸기 (선택)</summary><div class="grid grid-cols-2 gap-3 mt-2"><input id="tok-id2" placeholder="배우자 아이디" autocapitalize="none" class="' + IN2 + '"><input id="tok-pw2" type="password" placeholder="배우자 비밀번호" autocomplete="off" class="' + IN2 + '"></div><p class="text-[12.5px] text-slate-500 mt-1.5">비워 두면 배우자 아이디는 예전 토큰 그대로라, 배우자 기기는 이후에 ☁에서 아이디를 다시 추가해 주면 됩니다.</p></details>'
+      + '<details class="text-[13.5px]"><summary class="font-semibold text-slate-600 cursor-pointer">배우자 아이디도 같이 바꾸기 (선택)</summary><div class="grid grid-cols-2 gap-3 mt-2"><input id="tok-id2" placeholder="배우자 아이디" autocapitalize="none" class="' + IN2 + '"><input id="tok-pw2" type="password" placeholder="배우자 비밀번호" autocomplete="off" class="' + IN2 + '"></div><p class="text-[12.5px] text-slate-500 mt-1.5">비워 두면 배우자 아이디는 예전 토큰 그대로라, 배우자 기기는 이후에 ☁에서 아이디를 다시 추가해 주면 돼요.</p></details>'
       + '<div id="tok-msg" class="text-[13px]"></div><div class="flex justify-end gap-2"><button onclick="App.u.close(\'token-modal\')" class="btn sec">취소</button><button id="tok-go" onclick="App.sync.tokenSave()" class="btn pri px-6">바꾸기</button></div>', 520);
     u.$('tok-new').value = ''; u.$('tok-pw').value = ''; u.$('tok-msg').innerText = '';
     u.open('token-modal');
@@ -314,14 +314,14 @@
       var c = cfg(); c.token = token; localStorage.setItem(LS, JSON.stringify(c));
       var others = Object.keys(L.users).length - pairs.length;
       say('토큰을 바꿨어요.' + (others > 0 ? ' 다른 아이디 ' + others + '개는 아직 예전 토큰이라, 그 기기는 ☁에서 아이디를 다시 추가해 주세요.' : ''), true);
-      u.toast('토큰을 바꿨어요. 동기화를 다시 확인합니다.');
+      u.toast('토큰을 바꿨어요. 동기화를 다시 확인해요.');
       setTimeout(function () { u.close('token-modal'); Promise.resolve(S.check()).then(function () { App.emit('sync-polled'); }); }, others > 0 ? 3500 : 900);
     } catch (e) { say(u.esc(friendly(e))); }
   };
   function friendly(e) {
     var m = e && e.message || String(e);
-    if (/GitHub 401/.test(m)) return '토큰이 올바르지 않거나 만료되었습니다. 토큰을 다시 복사해 붙여넣으세요.';
-    if (/GitHub 403/.test(m)) return '토큰에 쓰기 권한이 없습니다. Contents 권한을 Read and write 로 만드세요.';
+    if (/GitHub 401/.test(m)) return '토큰이 올바르지 않거나 만료되었어요. 토큰을 다시 복사해 붙여넣으세요.';
+    if (/GitHub 403/.test(m)) return '토큰에 쓰기 권한이 없어요. Contents 권한을 Read and write 로 만드세요.';
     return m;
   }
   /* 이 기기를 연결 상태로 만든다 (로그인·처음 시작 공통) */
@@ -346,7 +346,7 @@
     try {
       guard(); say('암호화해서 올리는 중...', 'text-slate-500');
       var n = await saveLogin(c.token, id, pw, conf);
-      say('아이디 <b>' + u.esc(normId(id)) + '</b>를 추가했습니다 (모두 ' + n + '개). 다른 기기에서 이 아이디·비밀번호로 로그인하면 됩니다.', 'text-emerald-700');
+      say('아이디 <b>' + u.esc(normId(id)) + '</b>를 추가했어요 (모두 ' + n + '개). 다른 기기에서 이 아이디·비밀번호로 로그인하면 돼요.', 'text-emerald-700');
       u.$('login-new-pw').value = ''; u.$('login-new-pw2').value = '';
     } catch (e) { say(u.esc(friendly(e))); }
   };
@@ -368,9 +368,9 @@
         + '<div><label class="block text-xs font-semibold text-slate-600 mb-1">비밀번호</label><input id="login-pw" name="password" type="password" autocomplete="current-password" class="' + IN + '"></div>'
         + '<div id="login-setup" class="hidden space-y-4"><div><label class="block text-xs font-semibold text-slate-600 mb-1">비밀번호 확인</label><input id="login-pw2" type="password" autocomplete="new-password" class="' + IN + '"></div>'
         + '<div class="bg-sky-50 border border-sky-200 rounded-xl p-3 space-y-2"><div class="flex items-center justify-between gap-2"><label class="text-xs font-semibold text-sky-900">GitHub 토큰 <span class="font-normal">(이번 한 번만)</span></label><a id="login-token-link" target="_blank" rel="noopener" class="text-[11px] bg-slate-800 text-white px-2.5 py-1 rounded-lg font-semibold whitespace-nowrap"><i class="fa-brands fa-github mr-1"></i>토큰 만들기</a></div>'
-        + '<ol class="list-decimal ml-4 text-[11px] text-sky-900 space-y-0.5"><li>[토큰 만들기]를 눌러 GitHub에 로그인합니다.</li><li>Repository access에서 <b>Only select repositories → ' + u.esc(HOME_REPO.split('/')[1]) + '</b>를 고릅니다.</li><li>Permissions의 <b>Contents</b>가 Read and write, Expiration이 <b>No expiration</b>인지 보고 [Generate token]을 누릅니다.</li><li>나온 토큰(github_pat_…)을 복사해 아래에 붙여넣습니다.</li></ol>'
+        + '<ol class="list-decimal ml-4 text-[11px] text-sky-900 space-y-0.5"><li>[토큰 만들기]를 눌러 GitHub에 로그인해요.</li><li>Repository access에서 <b>Only select repositories → ' + u.esc(HOME_REPO.split('/')[1]) + '</b>를 골라요.</li><li>Permissions의 <b>Contents</b>가 Read and write, Expiration이 <b>No expiration</b>인지 보고 [Generate token]을 눌러요.</li><li>나온 토큰(github_pat_…)을 복사해 아래에 붙여넣어요.</li></ol>'
         + '<input id="login-token" type="password" autocomplete="off" placeholder="github_pat_..." class="' + IN + ' bg-white"></div>'
-        + '<p class="text-[11px] text-slate-500 leading-relaxed">지금 이 기기에 있는 가계부 데이터가 그대로 올라가고, 이후 다른 기기에서는 <b>아이디·비밀번호만</b> 넣으면 됩니다.</p></div>'
+        + '<p class="text-[11px] text-slate-500 leading-relaxed">지금 이 기기에 있는 가계부 데이터가 그대로 올라가고, 이후 다른 기기에서는 <b>아이디·비밀번호만</b> 넣으면 돼요.</p></div>'
         + '<label class="flex items-center gap-2 text-xs text-slate-600"><input id="login-keep" type="checkbox" checked> 이 기기에서 로그인 유지 (내 휴대폰·PC일 때만)</label><div id="login-msg" class="text-xs"></div>'
         + '<button id="login-go" type="submit" class="w-full bg-accent hover:bg-accent-hover text-white py-2.5 rounded-lg font-bold">로그인</button>'
         + '<button type="button" onclick="App.sync.skipLogin()" class="w-full text-xs text-slate-500 hover:text-slate-800">로그인 없이 이 기기에서만 쓰기</button></form></div>');
@@ -388,12 +388,12 @@
     [['login', 'login-tab-login'], ['setup', 'login-tab-setup']].forEach(function (x) { var b = u.$(x[1]); b.className = b.className.replace(on, '').replace(off, '').trim() + ' ' + (gateMode === x[0] ? on : off); });
     u.$('login-setup').classList.toggle('hidden', gateMode !== 'setup');
     u.$('login-pw').autocomplete = gateMode === 'setup' ? 'new-password' : 'current-password';
-    u.$('login-sub').innerText = gateMode === 'setup' ? '아이디·비밀번호를 정하고 토큰을 한 번만 넣으면 끝납니다.' : '아이디와 비밀번호로 내 데이터를 불러옵니다.';
+    u.$('login-sub').innerText = gateMode === 'setup' ? '아이디·비밀번호를 정하고 토큰을 한 번만 넣으면 끝나요.' : '아이디와 비밀번호로 내 데이터를 불러와요.';
     u.$('login-go').innerText = gateMode === 'setup' ? '시작하기' : '로그인';
     u.$('login-msg').innerText = '';
   };
   S.showLogin = function () { gate(true); };
-  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장됩니다. 상단 [로그인]으로 언제든 연결할 수 있습니다.'); };
+  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장돼요. 상단 [로그인]으로 언제든 연결할 수 있어요.'); };
   function gateUi() {
     var msg = u.$('login-msg'), btn = u.$('login-go'), label = btn.innerText;
     return {
@@ -407,21 +407,21 @@
   S.setup = async function () {
     var id = u.val('login-id'), pw = u.val('login-pw'), token = u.val('login-token').trim(), keep = u.$('login-keep').checked, ui = gateUi();
     var bad = checkIdPw(id, pw, u.val('login-pw2')); if (bad) return ui.fail(bad);
-    if (!/^(github_pat_|ghp_)\w{20,}$/.test(token)) return ui.fail('GitHub 토큰(github_pat_…)을 붙여넣으세요. [토큰 만들기]를 누르면 만드는 화면이 열립니다.');
+    if (!/^(github_pat_|ghp_)\w{20,}$/.test(token)) return ui.fail('GitHub 토큰(github_pat_…)을 붙여넣으세요. [토큰 만들기]를 누르면 만드는 화면이 열려요.');
     ui.busy('준비하는 중...');
     try {
       guard();
       await ensureBranch(token);
       var conf = { r: HOME_REPO, p: DATA_PATH, b: DATA_BRANCH, t: token, m: 'rw' };
-      if (await remote({ repo: conf.r, path: conf.p, branch: conf.b, token: token })) return ui.fail('이미 만들어 둔 가계부가 있습니다. [로그인] 탭에서 기존 아이디로 로그인하세요. (배우자 아이디는 로그인한 뒤 ☁ 버튼에서 추가합니다)');
+      if (await remote({ repo: conf.r, path: conf.p, branch: conf.b, token: token })) return ui.fail('이미 만들어 둔 가계부가 있어요. [로그인] 탭에서 기존 아이디로 로그인하세요. (배우자 아이디는 로그인한 뒤 ☁ 버튼에서 추가해요)');
       conf.w = b64(crypto.getRandomValues(new Uint8Array(32)));   /* 데이터 암호 : 사람이 외울 필요 없는 무작위 값 */
       await saveLogin(token, id, pw, conf);
       connect(id, conf, keep);
-      ui.ok('아이디를 만들었습니다. 이 기기 데이터를 올리는 중...');
+      ui.ok('아이디를 만들었어요. 이 기기 데이터를 올리는 중...');
       var ok = await S.push(true);
       ui.done();
-      if (ok) { gate(false); if (App.inbox) { App.inbox.drain(); App.inbox.pull(); } u.toast('준비가 끝났습니다. 다른 기기에서는 아이디·비밀번호만 넣으면 됩니다.'); }
-      else ui.fail('아이디는 만들었지만 첫 업로드에 실패했습니다. ☁ 버튼에서 [지금 업로드]를 눌러 주세요.');
+      if (ok) { gate(false); if (App.inbox) { App.inbox.drain(); App.inbox.pull(); } u.toast('준비가 끝났어요. 다른 기기에서는 아이디·비밀번호만 넣으면 돼요.'); }
+      else ui.fail('아이디는 만들었지만 첫 업로드에 실패했어요. ☁ 버튼에서 [지금 업로드]를 눌러 주세요.');
       App.ui.render();
     } catch (e) { ui.fail(friendly(e)); }
   };
@@ -431,12 +431,12 @@
     ui.busy('확인 중...');
     try {
       guard();
-      var L = await fetchLogins(); if (!L) return ui.fail('아직 만들어진 아이디가 없습니다. [처음 시작] 탭에서 먼저 만드세요.');
+      var L = await fetchLogins(); if (!L) return ui.fail('아직 만들어진 아이디가 없어요. [처음 시작] 탭에서 먼저 만드세요.');
       var rec = L.users[await idKey(id)], conf = null;
       if (rec) { try { conf = await lunseal(rec, pw); } catch (e) { conf = null; } }
-      if (!conf || !conf.r || !conf.t || !conf.w) return ui.fail('아이디 또는 비밀번호가 맞지 않습니다.');
+      if (!conf || !conf.r || !conf.t || !conf.w) return ui.fail('아이디 또는 비밀번호가 맞지 않아요.');
       connect(id, conf, keep);
-      ui.ok('로그인되었습니다. 데이터를 불러옵니다...');
+      ui.ok('로그인되었어요. 데이터를 불러와요...');
       var ok = await S.pull(true);   /* 이 기기의 기존 데이터는 이전본(FC20_PREV)으로 보관 */
       if (ok && App.inbox) { App.inbox.drain(); App.inbox.pull(); }   /* 카드 알림으로 받아 둔 내역 */
       ui.done();
@@ -446,13 +446,13 @@
   };
   S.logout = async function () {
     var info = getJ(LK) || {}, m = meta();
-    var ch = await u.choose('<i class="fa-solid fa-right-from-bracket mr-1.5 text-slate-500"></i>로그아웃', u.esc(info.id || '') + ' 계정 연결을 이 기기에서 해제합니다. 저장소의 데이터는 그대로 남습니다.' + (m.dirty ? '\n\n<span class="text-amber-700">아직 업로드되지 않은 변경이 있습니다.</span>' : ''),
+    var ch = await u.choose('<i class="fa-solid fa-right-from-bracket mr-1.5 text-slate-500"></i>로그아웃', u.esc(info.id || '') + ' 계정 연결을 이 기기에서 해제해요. 저장소의 데이터는 그대로 남아요.' + (m.dirty ? '\n\n<span class="text-amber-700">아직 업로드되지 않은 변경이 있어요.</span>' : ''),
       (m.dirty ? [{ label: '업로드 후 로그아웃 (이 기기 데이터 지우기)', value: 'push-wipe' }] : []).concat([
         { label: '로그아웃 + 이 기기 데이터 지우기 (공용 기기)', value: 'wipe', cls: m.dirty ? 'border-red-300 text-red-600' : null },
         { label: '로그아웃만 (이 기기 데이터는 남김)', value: 'keep', cls: 'border-slate-300 text-slate-600 hover:bg-slate-50' },
         { label: '취소', value: 'cancel', cls: 'border-transparent text-slate-400' }]));
     if (ch === 'cancel' || !ch) return;
-    if (ch === 'push-wipe') { var ok = await S.push(false); if (!ok) { u.toast('업로드하지 못했습니다. 동기화 상태를 확인하세요.', 'error'); return; } }
+    if (ch === 'push-wipe') { var ok = await S.push(false); if (!ok) { u.toast('업로드하지 못했어요. 동기화 상태를 확인하세요.', 'error'); return; } }
     [LS, MS, LK].forEach(function (k) { localStorage.removeItem(k); });
     try { sessionStorage.removeItem(SK); } catch (e) {}
     if (ch !== 'keep') { localStorage.removeItem(DBK); localStorage.removeItem('FC20_PREV'); }
@@ -475,7 +475,7 @@
   S.ready = function () { return !!ready(); };
   /* 다른 저장소(알림 수신함 등)를 같은 토큰으로 부르기 : 응답(404 는 null)을 돌려준다 */
   S.home = HOME_REPO;
-  S.api = function (repo, path, method, body) { var c = cfg(); if (!c.token) return Promise.reject(new Error('로그인이 필요합니다.')); return gh({ repo: repo, token: c.token }, path, method, body); };
+  S.api = function (repo, path, method, body) { var c = cfg(); if (!c.token) return Promise.reject(new Error('로그인이 필요해요.')); return gh({ repo: repo, token: c.token }, path, method, body); };
   S.boot = function () {
     var c = cfg();
     state = c.repo ? (c.mode === 'ro' ? 'ro' : 'ok') : 'off';

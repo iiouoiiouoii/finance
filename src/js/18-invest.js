@@ -60,7 +60,7 @@
   /* ---------- 목록 ---------- */
   V.listHtml = function () {
     var list = db().investments || [];
-    if (!list.length) return '<div class="text-center text-slate-400 text-xs py-4">등록된 투자 자산이 없습니다.<br><span class="text-[11px]">수량·평단으로 기록하면 수익률과 연평균 수익률(CAGR)이 자동 계산됩니다.</span></div>';
+    if (!list.length) return '<div class="text-center text-slate-400 text-xs py-4">등록된 투자 자산이 없어요.<br><span class="text-[11px]">수량·평단으로 기록하면 수익률과 연평균 수익률(CAGR)이 자동 계산돼요.</span></div>';
     var p = V.portfolio();
     var head = '<div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-2 space-y-2"><div class="grid grid-cols-3 gap-2 text-center">'
       + '<div><div class="text-[10px] text-slate-500">투자 원금</div><div class="text-sm font-bold text-slate-800">' + won(p.cost) + '</div></div>'
@@ -77,9 +77,9 @@
         }).join('') + '</div></div>';
     }
     var warn = [];
-    if (p.topWeight >= 0.4) warn.push('단일 종목 비중이 ' + pct(p.topWeight, 0) + '입니다. 집중 위험을 점검하세요.');
-    if (p.fxWeight > 0) warn.push('외화 자산 비중 ' + pct(p.fxWeight, 0) + ' — 환율 변동이 수익률에 직접 반영됩니다.');
-    if (p.stale) warn.push(p.stale + '개 종목의 현재가가 2주 이상 갱신되지 않았습니다.');
+    if (p.topWeight >= 0.4) warn.push('단일 종목 비중이 ' + pct(p.topWeight, 0) + '예요. 집중 위험을 점검하세요.');
+    if (p.fxWeight > 0) warn.push('외화 자산 비중 ' + pct(p.fxWeight, 0) + ' — 환율 변동이 수익률에 직접 반영돼요.');
+    if (p.stale) warn.push(p.stale + '개 종목의 현재가가 2주 이상 갱신되지 않았어요.');
     if (warn.length) head += '<div class="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 leading-relaxed">' + warn.map(function (w) { return '· ' + w; }).join('<br>') + '</div>';
     head += '</div>';
     return head + '<div class="list-wrap">' + p.items.map(function (x) {
@@ -140,7 +140,7 @@
       + '<div class="flex justify-between"><span class="text-slate-500">평가 손익</span><strong class="' + sgn(d.unreal) + '">' + sgnTxt(d.unreal) + ' (' + (d.roi >= 0 ? '+' : '') + pct(d.roi, 2) + ')</strong></div>'
       + (d.dividend || d.fee ? '<div class="flex justify-between"><span class="text-slate-500">배당 포함 총손익</span><strong class="' + sgn(d.totalPnl) + '">' + sgnTxt(d.totalPnl) + ' (' + (d.totalRoi >= 0 ? '+' : '') + pct(d.totalRoi, 2) + ')</strong></div>' : '')
       + (d.cagr !== null ? '<div class="flex justify-between"><span class="text-slate-500">연평균 수익률(CAGR' + (d.dca ? ' · 적립식 보정' : '') + ')</span><strong class="' + sgn(d.cagr) + '">' + (d.cagr >= 0 ? '+' : '') + pct(d.cagr, 2) + '</strong></div>' : '')
-      + (d.cur !== 'KRW' ? '<div class="text-[10px] text-slate-400 pt-1 border-t border-slate-200">환율 ' + d.fx + '원 적용 · 환율 변동도 수익률에 포함됩니다.</div>' : '') + '</div>';
+      + (d.cur !== 'KRW' ? '<div class="text-[10px] text-slate-400 pt-1 border-t border-slate-200">환율 ' + d.fx + '원 적용 · 환율 변동도 수익률에 포함돼요.</div>' : '') + '</div>';
   };
   V.open = function (id) {
     modal();
@@ -165,7 +165,7 @@
     if (f.inputMode === 'QTY' && !(f.qty > 0 && f.avgPrice > 0)) { u.toast('보유 수량과 평균 매수단가를 입력하세요.', 'warning'); return; }
     if (f.inputMode === 'AMOUNT' && !(f.costCur > 0)) { u.toast('투자 원금을 입력하세요.', 'warning'); return; }
     var id = u.val('inv-edit-id'), inv = id ? u.byId(db().investments, id) : null;
-    if (id && !inv) { u.toast('수정할 종목을 찾지 못했습니다.', 'error'); return; }
+    if (id && !inv) { u.toast('수정할 종목을 찾지 못했어요.', 'error'); return; }
     if (!inv) { inv = { id: u.uid(), realized: 0, trades: [], cumCost: 0 }; db().investments.push(inv); }
     Object.keys(f).forEach(function (k) { inv[k] = f[k]; });
     if (f.inputMode === 'QTY' && !(f.curPrice > 0)) inv.curPrice = f.avgPrice;
@@ -174,13 +174,13 @@
     if (!num(inv.cumCost) || !inv.trades.length) inv.cumCost = f.inputMode === 'QTY' ? f.qty * f.avgPrice : f.costCur;
     if (f.inputMode === 'QTY') inv.priceUpdatedAt = u.today();
     var d = V.detail(inv); inv.cost = d.cost; inv.value = d.value;   /* cost/value 는 항상 원화 환산액 */
-    App.store.save(); u.close('investment-modal'); u.toast('투자 \'' + f.name + '\' 이(가) 저장되었습니다.');
+    App.store.save(); u.close('investment-modal'); u.toast('투자 \'' + f.name + '\' 이(가) 저장되었어요.');
   };
   V.remove = function () {
     var inv = u.byId(db().investments, u.val('inv-edit-id')); if (!inv) return;
-    u.confirm('투자 종목 삭제', '[' + inv.name + ']을 삭제합니다. 거래 이력도 함께 사라집니다.', function () {
+    u.confirm('투자 종목 삭제', '[' + inv.name + ']을 삭제해요. 거래 이력도 함께 사라져요.', function () {
       db().investments = db().investments.filter(function (x) { return x.id !== inv.id; });
-      App.store.save(); u.close('investment-modal'); u.toast('삭제되었습니다.');
+      App.store.save(); u.close('investment-modal'); u.toast('삭제되었어요.');
     });
   };
 
@@ -195,7 +195,7 @@
       + '<div class="grid grid-cols-3 gap-2"><div>' + L(null, '거래일') + '<input type="date" id="invt-date" class="' + u.IN + '"></div><div id="invt-qty-wrap">' + L(null, '수량') + '<input type="number" step="any" id="invt-qty" oninput="App.invest.tradePreview()" class="' + u.IN + ' font-bold"></div>'
       + '<div id="invt-price-wrap">' + L('invt-price-label', '단가') + '<input type="number" step="any" id="invt-price" oninput="App.invest.tradePreview()" class="' + u.IN + ' font-bold"></div></div>'
       + '<div class="grid grid-cols-2 gap-2"><div id="invt-amount-wrap" class="hidden">' + L('invt-amount-label', '금액') + '<input type="text" id="invt-amount" data-money oninput="App.invest.tradePreview()" class="' + u.IN + ' font-bold"></div><div>' + L(null, '수수료/세금') + '<input type="text" id="invt-fee" data-money oninput="App.invest.tradePreview()" class="' + u.IN + '"></div></div>'
-      + '<label class="flex items-start gap-2 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2"><input type="checkbox" id="invt-cash" class="mt-0.5"><span>현금 흐름을 가계부에 함께 기록합니다. 매수는 소비가 아닌 <strong>저축/투자</strong>로 분류되어 생활비 분석을 왜곡하지 않습니다.</span></label>'
+      + '<label class="flex items-start gap-2 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2"><input type="checkbox" id="invt-cash" class="mt-0.5"><span>현금 흐름을 가계부에 함께 기록해요. 매수는 소비가 아닌 <strong>저축/투자</strong>로 분류되어 생활비 분석을 왜곡하지 않아요.</span></label>'
       + '<div id="invt-preview" class="text-[11px]"></div><div class="pt-2 flex justify-end gap-2"><button type="button" onclick="App.u.close(\'inv-trade-modal\')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">취소</button><button type="submit" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">기록 저장</button></div></form>'
       + '<div class="pt-3 border-t border-slate-100"><div class="text-xs font-bold text-slate-700 mb-1.5">거래 이력</div><div id="invt-history" class="space-y-1 max-h-[200px] overflow-y-auto"></div></div>', 520);
   }
@@ -221,11 +221,11 @@
     } else if (t === 'SELL') {
       if (isQty) {
         if (!(q > 0 && price > 0)) { r.msg = '수량과 단가를 입력하세요.'; return r; }
-        if (q > qty + 1e-9) { r.msg = '보유 수량(' + qtyTxt(qty) + ')보다 많이 매도할 수 없습니다.'; return r; }
+        if (q > qty + 1e-9) { r.msg = '보유 수량(' + qtyTxt(qty) + ')보다 많이 매도할 수 없어요.'; return r; }
         r.realized = q * (price - avg); r.after = { qty: qty - q, avgPrice: avg, curPrice: price }; r.cash = q * price - fee;
       } else {
         if (!(amount > 0)) { r.msg = '매도 금액을 입력하세요.'; return r; }
-        if (amount > valCur + 1e-9) { r.msg = '평가액보다 많이 매도할 수 없습니다.'; return r; }
+        if (amount > valCur + 1e-9) { r.msg = '평가액보다 많이 매도할 수 없어요.'; return r; }
         var out = costCur * (valCur > 0 ? amount / valCur : 0); r.realized = amount - out; r.after = { costCur: costCur - out, valueCur: valCur - amount }; r.cash = amount - fee;
       }
     } else if (t === 'DIV') { if (!(amount > 0)) { r.msg = '배당·이자 금액을 입력하세요.'; return r; } r.cash = amount - fee; }
@@ -252,7 +252,7 @@
       return '<div class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-2 py-1.5"><span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ' + (CLS[tr.type] || '') + '">' + (LBL[tr.type] || tr.type) + '</span><span class="text-[10px] text-slate-400">' + u.esc(tr.date) + '</span>'
         + '<span class="text-[11px] text-slate-700 flex-1 text-right">' + txt + '</span>' + (tr.realized ? '<span class="text-[10px] font-bold ' + sgn(tr.realized) + '">' + sgnTxt(Math.round(tr.realized)) + '</span>' : '')
         + (i === 0 ? '<button onclick="App.invest.undo(' + inv.id + ')" class="text-[10px] text-slate-400 hover:text-red-500" title="되돌리기"><i class="fa-solid fa-rotate-left"></i></button>' : '') + '</div>';
-    }).join('') : '<div class="text-center text-[11px] text-slate-400 py-3">기록된 거래가 없습니다.</div>';
+    }).join('') : '<div class="text-center text-[11px] text-slate-400 py-3">기록된 거래가 없어요.</div>';
   }
   V.trade = function (id) {
     var inv = u.byId(db().investments, id); if (!inv) return;
@@ -290,17 +290,17 @@
     inv.trades.push({ id: u.uid(), date: date, type: t, qty: q || null, price: price || null, amount: amount || null, fee: fee || null, realized: r.realized || 0, txnId: txnId, snap: snap });
     App.store.save(); u.close('inv-trade-modal');
     var LBL = { BUY: '추가매수', SELL: '매도', DIV: '배당', PRICE: '시세갱신' }, fx2 = (inv.currency || 'KRW') === 'KRW' ? 1 : (num(inv.fxRate) || 1);
-    u.toast(inv.name + ' ' + LBL[t] + ' 기록이 반영되었습니다.' + (r.realized ? ' 실현손익 ' + sgnTxt(Math.round(r.realized * fx2)) : ''));
+    u.toast(inv.name + ' ' + LBL[t] + ' 기록이 반영되었어요.' + (r.realized ? ' 실현손익 ' + sgnTxt(Math.round(r.realized * fx2)) : ''));
   };
   V.undo = function (id) {
     var inv = u.byId(db().investments, id); if (!inv || !(inv.trades || []).length) return;
     var last = inv.trades[inv.trades.length - 1];
-    u.confirm('거래 기록 되돌리기', last.date + ' 거래를 취소하고 직전 상태로 복원합니다. 연동된 가계부 내역도 함께 삭제됩니다.', function () {
+    u.confirm('거래 기록 되돌리기', last.date + ' 거래를 취소하고 직전 상태로 복원해요. 연동된 가계부 내역도 함께 삭제돼요.', function () {
       Object.keys(last.snap || {}).forEach(function (k) { inv[k] = last.snap[k]; });
       if (last.txnId) db().transactions = db().transactions.filter(function (x) { return x.id !== last.txnId; });
       inv.trades.pop();
       var d = V.detail(inv); inv.cost = d.cost; inv.value = d.value;
-      App.store.save(); u.close('inv-trade-modal'); u.toast('거래 기록이 되돌려졌습니다.');
+      App.store.save(); u.close('inv-trade-modal'); u.toast('거래 기록이 되돌려졌어요.');
     });
   };
 })(window.App);

@@ -55,37 +55,37 @@
     var g = u.val('goal-id') ? u.byId(db().goals, u.val('goal-id')) : null;
     if (!g) { g = { id: Date.now() }; db().goals.push(g); }
     g.name = name; g.owner = u.val('goal-owner'); g.target = tgt; g.due = u.val('goal-due') || null; g.initial = u.P(u.val('goal-initial')); g.plan = u.P(u.val('goal-plan'));
-    App.store.save(); u.toast('목표 \'' + name + '\'이(가) 저장되었습니다.');
+    App.store.save(); u.toast('목표 \'' + name + '\'이(가) 저장되었어요.');
   };
   G.contrib = function (id) {
     var g = u.byId(db().goals, id); if (!g) return;
     var amt = u.P(u.val('goal-c-' + id)) || (+g.plan || 0);
     if (!amt) { u.toast('적립할 금액을 입력하세요.', 'warning'); return; }
     db().transactions.push({ id: Date.now(), date: u.today(), type: 'TRANSFER', category: '자산이동', subcategory: '목표적립', payment: '계좌이체', amount: amt, memo: '[목표] ' + g.name, owner: g.owner || 'J', goalId: g.id });
-    App.store.save(); u.toast('\'' + g.name + '\'에 ' + u.K(amt) + '을 적립했습니다. (이체 내역에 기록)');
+    App.store.save(); u.toast('\'' + g.name + '\'에 ' + u.K(amt) + '을 적립했어요. (이체 내역에 기록)');
   };
   G.remove = function (id) {
     var g = u.byId(db().goals, id); if (!g) return;
-    u.confirm('목표 삭제', '[' + g.name + '] 목표를 삭제합니다. 이미 기록된 적립 이체 내역은 그대로 남습니다.', function () {
-      db().goals = db().goals.filter(function (x) { return x.id !== g.id; }); App.store.save(); u.toast('목표가 삭제되었습니다.');
+    u.confirm('목표 삭제', '[' + g.name + '] 목표를 삭제해요. 이미 기록된 적립 이체 내역은 그대로 남아요.', function () {
+      db().goals = db().goals.filter(function (x) { return x.id !== g.id; }); App.store.save(); u.toast('목표가 삭제되었어요.');
     });
   };
   G.setMode = function (m) { editMode = m; App.ui.render(); };
   G.setSave = function () {
-    var s = db().settings; s.saveMode = u.val('save-mode');
+    var s = db().settings; s.saveMode = editMode || (s.saveMode === 'pct' ? 'pct' : 'amt');
     if (s.saveMode === 'pct') s.savePct = Math.max(0, Math.min(90, parseFloat(u.val('save-val')) || 0)); else s.saveTarget = u.P(u.val('save-val'));
-    editMode = null; App.store.save(); u.toast('선저축 목표가 저장되었습니다.');
+    editMode = null; App.store.save(); u.toast('저축 목표를 저장했어요.');
   };
   G.adjustBudgets = function () {
     var mo = App.state.month, p = plan(mo), bud = C.budgetFor(mo), keys = Object.keys(bud);
     if (!p.T) { u.toast('먼저 월 저축·투자 목표를 정하세요.', 'warning'); return; }
     var fixedSum = u.sum(keys.filter(function (k) { return FIXEDCAT.test(k); }), function (k) { return bud[k]; });
     var vars = keys.filter(function (k) { return !FIXEDCAT.test(k) && bud[k] > 0; }), varSum = u.sum(vars, function (k) { return bud[k]; }), room = p.avail - fixedSum;
-    if (room <= 0 || !varSum) { u.toast('고정성 예산만으로 가용액을 넘습니다. 저축 목표나 고정비를 먼저 점검하세요.', 'warning'); return; }
+    if (room <= 0 || !varSum) { u.toast('고정성 예산만으로 가용액을 넘어요. 저축 목표나 고정비를 먼저 점검하세요.', 'warning'); return; }
     var f = Math.min(1, room / varSum);
-    u.confirm('예산 선저축 기준 조정', '주거·금융·보험·세금 예산은 그대로 두고, 나머지 ' + vars.length + '개 카테고리 예산을 ' + Math.round(f * 100) + '% 수준으로 줄여 총액을 ' + u.K(p.avail) + ' 이내로 맞춥니다.', function () {
+    u.confirm('예산 선저축 기준 조정', '주거·금융·보험·세금 예산은 그대로 두고, 나머지 ' + vars.length + '개 카테고리 예산을 ' + Math.round(f * 100) + '% 수준으로 줄여 총액을 ' + u.K(p.avail) + ' 이내로 맞춰요.', function () {
       var ch = {}; vars.forEach(function (k) { ch[k] = Math.floor(bud[k] * f / 1000) * 1000; });
-      App.budget.change(ch, { msg: '예산을 선저축 기준으로 조정했습니다.' });
+      App.budget.change(ch, { msg: '예산을 선저축 기준으로 조정했어요.' });
     });
   };
 
@@ -93,21 +93,18 @@
     var s = db().settings, p = plan(mo), over = p.B - p.avail, gl = (db().goals || []).map(C.goalInfo), reqSum = u.sum(gl.filter(function (i) { return i.req; }), function (i) { return i.req; }), pc = p.T ? p.S / p.T * 100 : 0;
     var mode = editMode || (s.saveMode === 'pct' ? 'pct' : 'amt');
     var val = mode === 'pct' ? (s.savePct || '') : (s.saveTarget ? u.n0(s.saveTarget) : '');
-    return '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex flex-wrap justify-between items-center gap-3 pb-3 border-b border-slate-100"><div><h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-piggy-bank text-accent mr-2"></i>먼저 저축하고, 남은 돈으로 쓰기</h3>'
-      + '<p class="text-xs text-slate-400 mt-0.5">수입이 들어오면 저축·투자 목표액부터 떼고, 나머지를 생활비 예산으로 나눕니다. (' + mo + ' 기준)</p></div>'
-      + '<div class="flex items-center gap-2 text-xs"><select id="save-mode" onchange="App.goals.setMode(this.value)" class="border border-slate-300 rounded-lg px-2 py-2"><option value="amt"' + (mode === 'amt' ? ' selected' : '') + '>월 금액</option><option value="pct"' + (mode === 'pct' ? ' selected' : '') + '>수입 대비 %</option></select>'
-      + '<input id="save-val" type="text" ' + (mode === 'amt' ? 'data-money ' : '') + 'value="' + val + '" placeholder="' + (mode === 'pct' ? '예: 30' : '예: 2,000,000') + '" class="w-32 border border-slate-300 rounded-lg px-2 py-2 text-right"><button onclick="App.goals.setSave()" class="bg-slate-900 text-white px-3.5 py-2 rounded-lg font-semibold">저장</button></div></div>'
-      + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-3">'
-      + u.statCell('기준 수입', u.K(p.b.base), p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입 합계 사용' : '이번 달 수입 기록 합계')
-      + u.statCell('저축·투자 목표', u.K(p.T), s.saveMode === 'pct' ? '수입의 ' + (+s.savePct || 0) + '%' : '월 고정 금액', 'text-accent')
-      + u.statCell('생활비 가용액', u.K(p.avail), '이 안에 고정비+할부 ' + u.K(p.fixed) + ' 포함', p.avail < 0 ? 'text-red-600' : 'text-slate-800')
-      + u.statCell('카테고리 예산 합계', u.K(p.B), over > 0 ? '가용액보다 ' + u.K(over) + ' 많음' : '가용액 이내', over > 0 ? 'text-red-600' : 'text-emerald-600')
-      + u.statCell('이번 달 실제 저축·투자', u.K(p.S), (p.T ? '목표의 ' + pc.toFixed(0) + '% · ' : '') + '수입-지출 잉여 ' + u.K(p.surplus), p.T && p.S >= p.T ? 'text-emerald-600' : 'text-slate-800')
-      + '</div>' + (p.T ? u.bar(pc, pc >= 100 ? 'bg-emerald-500' : 'bg-accent') : '')
-      + '<div class="flex flex-wrap items-center gap-3 text-xs">'
-      + (over > 0 && p.T ? '<div class="flex-1 min-w-[240px] bg-red-50 border border-red-200 text-red-800 rounded-lg px-3 py-2">예산을 다 쓰면 저축 목표를 지킬 수 없습니다. 예산을 ' + u.K(over) + ' 줄여야 합니다.</div><button onclick="App.goals.adjustBudgets()" class="bg-red-600 text-white px-3.5 py-2 rounded-lg font-semibold">예산 자동 조정</button>' : '')
-      + (reqSum ? '<div class="flex-1 min-w-[240px] ' + (reqSum > p.T ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-800') + ' border rounded-lg px-3 py-2">목표 달성에 필요한 월 적립 합계 <b>' + u.K(reqSum) + '</b> · 선저축 목표 ' + u.K(p.T) + (reqSum > p.T ? ' → 목표 시점을 늦추거나 저축액을 ' + u.K(reqSum - p.T) + ' 늘려야 합니다.' : ' 안에서 감당할 수 있습니다.') + '</div>' : '')
-      + '<div class="text-[11px] text-slate-400 w-full">실제 저축·투자 = 이번 달 [이체 › 자산이동] 기록(투자매도 제외). 적금 납입·투자매수·목표적립·연금 납입을 이체로 기록하면 자동 집계됩니다.</div></div></div>';
+    var notes = [];
+    if (over > 0 && p.T) notes.push('<span class="text-red-600">예산을 다 쓰면 저축 목표를 못 지켜요. 예산을 ' + u.K(over) + ' 줄여야 해요.</span> <button onclick="App.goals.adjustBudgets()" class="more">예산 자동으로 줄이기</button>');
+    if (reqSum) notes.push(reqSum > p.T ? '목표들을 기한에 맞추려면 매달 ' + u.K(reqSum) + '이 필요해요. 저축을 ' + u.K(reqSum - p.T) + ' 늘리거나 기한을 늦춰 보세요.' : '목표들에 필요한 돈(월 ' + u.K(reqSum) + ')이 저축 목표 안에 들어와요.');
+    return '<div class="card"><div class="card-h"><h3><i class="fa-solid fa-piggy-bank"></i>먼저 저축하고 남은 돈으로 쓰기</h3></div>'
+      + '<div class="flex flex-wrap items-center gap-2 mb-4"><span class="text-[14px] text-slate-600 mr-1">매달 저축 · 투자</span><div class="seg"><button onclick="App.goals.setMode(\'amt\')" class="' + (mode === 'amt' ? 'on' : '') + '">금액</button><button onclick="App.goals.setMode(\'pct\')" class="' + (mode === 'pct' ? 'on' : '') + '">수입의 %</button></div>'
+      + '<input id="save-val" type="text" ' + (mode === 'amt' ? 'data-money ' : '') + 'inputmode="numeric" value="' + val + '" placeholder="' + (mode === 'pct' ? '예: 30' : '예: 2,000,000') + '" class="fc-in w-36 text-right">'
+      + '<button onclick="App.goals.setSave()" class="btn pri" style="height:44px">저장</button></div>'
+      + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>수입</small><b>' + u.KS(p.b.base) + '</b></div><div><small><i class="fa-solid fa-piggy-bank"></i>저축 목표</small><b>' + u.KS(p.T) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>쓸 수 있는 돈</small><b' + (p.avail < 0 ? ' class="text-red-600"' : '') + '>' + u.KS(p.avail) + '</b></div></div>'
+      + (p.T ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">이번 달 실제로 모은 돈</span><span><b>' + u.K(p.S) + '</b> <span class="text-slate-400">· ' + pc.toFixed(0) + '%</span></span></div>'
+        + '<div class="track mt-2" style="height:6px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:#0B7A57"></div></div></div>' : '')
+      + (notes.length ? '<div class="mt-4 space-y-1.5 text-[14px] text-slate-600 leading-relaxed">' + notes.map(function (n) { return '<p>' + n + '</p>'; }).join('') + '</div>' : '')
+      + '<p class="text-[13px] text-slate-400 mt-3">' + (p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입으로 계산했어요. ' : '') + '적금 · 투자 · 목표로 보낸 이체를 모은 돈으로 세요.</p></div>';
   }
 
   App.views.add({

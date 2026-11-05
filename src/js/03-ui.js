@@ -13,11 +13,13 @@
   };
 
   /* 메뉴 : [묶음, 이름, 아이콘, 월 이동 표시 여부] — 자주 쓰는 것 위, 가끔 쓰는 계산기는 아래 */
+  /* [묶음, 이름, 아이콘, 월 이동 표시, 부모 화면(있으면 메뉴에 안 보이고 제목 옆에 뒤로 버튼)] */
   var NAV = {
     dashboard: ['', '홈', 'fa-house', 1], transactions: ['', '내역', 'fa-list-ul', 1], budget: ['', '예산', 'fa-chart-simple', 1], report: ['', '월말 리포트', 'fa-file-lines', 1],
-    fixed: ['매달 나가는 돈', '고정비 · 할부', 'fa-rotate', 1], cards: ['매달 나가는 돈', '카드', 'fa-credit-card', 1],
-    assets: ['모으는 돈', '자산 · 대출', 'fa-building-columns', 0], goals: ['모으는 돈', '목표 · 저축', 'fa-flag', 1], loan: ['모으는 돈', '대출 갚기 계산', 'fa-scale-balanced', 0],
-    tax: ['계산기', '연말정산', 'fa-calculator', 0], retire: ['계산기', '은퇴 준비', 'fa-umbrella-beach', 0],
+    fixed: ['돈 관리', '고정비 · 할부', 'fa-rotate', 1], cards: ['돈 관리', '카드', 'fa-credit-card', 1],
+    assets: ['돈 관리', '자산 · 대출', 'fa-building-columns', 0], goals: ['돈 관리', '목표 · 저축', 'fa-flag', 1],
+    tools: ['도구', '계산기', 'fa-calculator', 0],
+    loan: ['도구', '대출 먼저 갚을까', 'fa-scale-balanced', 0, 'tools'], tax: ['도구', '연말정산', 'fa-receipt', 0, 'tools'], retire: ['도구', '은퇴 준비', 'fa-umbrella-beach', 0, 'tools'],
     settings: ['설정', '설정', 'fa-gear', 0]
   };
   ui.label = function (id) { return NAV[id] ? NAV[id][1] : (byId[id] ? byId[id].title : ''); };
@@ -56,12 +58,13 @@
     });
     var el = section(v.id);
     el.classList.remove('hidden');
-    u.$('page-title').innerText = ui.label(v.id);
+    var par = NAV[v.id] && NAV[v.id][4];
+    u.$('page-title').innerHTML = (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + u.esc(ui.label(v.id));
     document.title = ui.label(v.id) + ' · 우리집 가계부';
     renderNav(v.id);
     renderHeader(v.id);
     ui.renderFoot();
-    try { v.render(el); } catch (e) { console.error('[화면 ' + v.id + ']', e); el.innerHTML = '<div class="p-6 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">이 화면을 그리는 중 오류가 났습니다: ' + u.esc(e.message) + '</div>'; }
+    try { v.render(el); } catch (e) { console.error('[화면 ' + v.id + ']', e); el.innerHTML = '<div class="p-6 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">이 화면을 그리는 중 오류가 났어요: ' + u.esc(e.message) + '</div>'; }
     App.emit('rendered', v.id);
   };
   App.on('saved', function () { ui.invalidate(); });
@@ -70,10 +73,11 @@
   function renderNav(cur) {
     var nav = u.$('side-nav'); if (!nav) return;
     var html = '', group = null;
-    list.filter(function (v) { return v.nav && NAV[v.id]; }).sort(function (a, b) { return Object.keys(NAV).indexOf(a.id) - Object.keys(NAV).indexOf(b.id); }).forEach(function (v) {
+    var on = NAV[cur] && NAV[cur][4] ? NAV[cur][4] : cur;
+    list.filter(function (v) { return v.nav && NAV[v.id] && !NAV[v.id][4]; }).sort(function (a, b) { return Object.keys(NAV).indexOf(a.id) - Object.keys(NAV).indexOf(b.id); }).forEach(function (v) {
       var n = NAV[v.id];
       if (n[0] !== group) { group = n[0]; if (group && group !== '설정') html += '<div class="nav-group">' + group + '</div>'; else if (group === '설정') html += '<div class="nav-sep"></div>'; }
-      html += '<button onclick="App.ui.go(\'' + v.id + '\')" class="nav-item' + (v.id === cur ? ' on' : '') + '"' + (v.id === cur ? ' aria-current="page"' : '') + '><i class="fa-solid ' + n[2] + '"></i><span>' + n[1] + '</span></button>';
+      html += '<button onclick="App.ui.go(\'' + v.id + '\')" class="nav-item' + (v.id === on ? ' on' : '') + '"' + (v.id === on ? ' aria-current="page"' : '') + '><i class="fa-solid ' + n[2] + '"></i><span>' + n[1] + '</span></button>';
     });
     nav.innerHTML = html;
     u.qa('#mobile-bar [data-t]').forEach(function (b) { b.classList.toggle('on', b.dataset.t === cur); });
@@ -119,8 +123,8 @@
     };
     u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 기록할까요?</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div class="space-y-1.5">'
-      + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 오지 않는 지출 · 수입을 넣습니다.')
-      + row('App.paste.open()', 'fa-paste', '여러 건 한꺼번에', '알림이 빠진 달이나 지난 내역을 카드 앱에서 복사해 붙여넣거나 엑셀 파일로 올립니다. 이미 있는 건은 걸러집니다.')
+      + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 오지 않는 지출 · 수입을 넣어요.')
+      + row('App.paste.open()', 'fa-paste', '여러 건 한꺼번에', '알림이 빠진 달이나 지난 내역을 카드 앱에서 복사해 붙여넣거나 엑셀 파일로 올려요. 이미 있는 건은 걸러져요.')
       + '</div>', 460);
     u.open('add-modal');
   };
@@ -138,7 +142,7 @@
   ui.setMode = function (m) {
     try { localStorage.setItem(MODE_KEY, m); } catch (e) {}
     applyMode(); ui.render();
-    u.toast({ auto: '화면 크기: 기기에 맞춤', pc: 'PC 화면으로 표시합니다.', m: '휴대폰 화면으로 표시합니다.' }[m]);
+    u.toast({ auto: '화면 크기: 기기에 맞춤', pc: 'PC 화면으로 표시해요.', m: '휴대폰 화면으로 표시해요.' }[m]);
   };
   ui.modeHtml = function () {
     var m = mode();

@@ -32,7 +32,7 @@
   }
   App.on('saved', u.safe('예산 알림', function () { notify(false); }));
   B.boot = function () { setTimeout(u.safe('예산 알림', function () { notify(true); }), 2200); };
-  B.setWarn = function (v) { db().settings.budgetWarn = Math.max(50, Math.min(100, +v || 80)); seen = {}; App.store.save(); u.toast('예산 경고 기준이 ' + db().settings.budgetWarn + '%로 저장되었습니다.'); };
+  B.setWarn = function (v) { db().settings.budgetWarn = Math.max(50, Math.min(100, +v || 80)); seen = {}; App.store.save(); u.toast('예산 경고 기준이 ' + db().settings.budgetWarn + '%로 저장되었어요.'); };
   App.ui.headerItems.push([40, function () {
     var n = B.alerts().filter(function (a) { return a.lv !== 'pace'; }).length;
     return '<button onclick="App.ui.go(\'budget\')" title="' + (n ? '예산을 넘었거나 거의 다 쓴 항목 ' + n + '개' : '예산 알림 없음') + '" aria-label="예산 알림" class="hdr-icon"><i class="fa-regular fa-bell"></i>'
@@ -68,7 +68,7 @@
       if (scope !== 'month' && scope !== 'forward') { App.ui.render(); return; }
       keys.forEach(function (k) { applyChange(mo, k, changes[k], scope); }); clean();
       App.store.save();
-      u.toast(opt && opt.msg ? opt.msg : (scope === 'month' ? mo + ' 예산만 변경했습니다. 다른 달은 그대로입니다.' : mo + '부터 기본 예산을 변경했습니다. 지난달 예산은 그대로 유지됩니다.'));
+      u.toast(opt && opt.msg ? opt.msg : (scope === 'month' ? mo + ' 예산만 변경했어요. 다른 달은 그대로예요.' : mo + '부터 기본 예산을 변경했어요. 지난달 예산은 그대로 유지돼요.'));
       if (opt && opt.after) opt.after();
     };
     if (!needAsk(mo)) { finish('forward'); return; }
@@ -84,17 +84,17 @@
   B.editIdx = function (i, v) { var c = db().categories[i]; if (c) B.edit(c.name, v); };
   B.resetMonth = function () {
     var mo = App.state.month;
-    u.confirm('이 달 전용 예산 해제', mo + '의 전용 예산을 지우고 기본 예산을 적용합니다.', function () { delete db().budgetsByMonth[mo]; App.store.save(); u.toast(mo + '에 기본 예산을 적용했습니다.'); });
+    u.confirm('이 달 전용 예산 해제', mo + '의 전용 예산을 지우고 기본 예산을 적용해요.', function () { delete db().budgetsByMonth[mo]; App.store.save(); u.toast(mo + '에 기본 예산을 적용했어요.'); });
   };
   B.recommend = function () {
     var mo = App.state.month, prev = u.addM(mo, -1), tx = C.monthTx(prev).filter(function (t) { return t.type === 'EXPENSE' && !C.isInstTx(t); });
-    if (!tx.length) { u.toast('지난달(' + prev + ') 지출 데이터가 없습니다.', 'warning'); return; }
+    if (!tx.length) { u.toast('지난달(' + prev + ') 지출 데이터가 없어요.', 'warning'); return; }
     var ch = {};
     db().categories.forEach(function (c) { var s = u.sum(tx.filter(function (t) { return t.category === c.name; }), function (t) { return t.amount; }); if (s > 0) ch[c.name] = Math.ceil(s * 1.05 / 1000) * 1000; });
     B.change(ch, {
-      msg: '지난달(' + prev + ') 지출 기반 예산이 반영되었습니다.', after: function () {
+      msg: '지난달(' + prev + ') 지출 기반 예산이 반영되었어요.', after: function () {
         var T = C.savingTarget(mo), avail = C.incomeBase(mo).base - T, tot = C.budgetTotal(mo);
-        if (T && tot > avail) setTimeout(function () { u.toast('지난달 기준 예산이 선저축 후 가용액보다 ' + u.K(tot - avail) + ' 많습니다. [목표 · 선저축]에서 조정하세요.', 'warning'); }, 600);
+        if (T && tot > avail) setTimeout(function () { u.toast('지난달 기준 예산이 선저축 후 가용액보다 ' + u.K(tot - avail) + ' 많아요. [목표 · 선저축]에서 조정하세요.', 'warning'); }, 600);
       }
     });
   };

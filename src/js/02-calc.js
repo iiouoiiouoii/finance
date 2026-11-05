@@ -103,7 +103,7 @@
   C.badge = function (c, inferred) {
     c = BC[c] ? c : 'J';
     return '<span class="own-badge inline-block align-middle text-[10px] font-bold px-1.5 py-0.5 rounded border ' + BC[c] + '"'
-      + (inferred ? ' style="border-style:dashed" title="지정하지 않은 값입니다 (지출은 공동, 수입은 메모의 이름으로 추정). 수정 화면에서 지정할 수 있습니다."' : '') + '>' + u.esc(C.short(c)) + '</span>';
+      + (inferred ? ' style="border-style:dashed" title="지정하지 않은 값이에요 (지출은 공동, 수입은 메모의 이름으로 추정). 수정 화면에서 지정할 수 있어요."' : '') + '>' + u.esc(C.short(c)) + '</span>';
   };
   C.ownerOptions = function (isTxn) {
     return C.OW.map(function (c) { return '<option value="' + c + '">' + u.esc(c === 'J' ? (isTxn ? '공동 생활비' : '공동 (부부 공동)') : C.nm(c) + (isTxn ? ' 개인 (용돈)' : '')) + '</option>'; }).join('');

@@ -100,12 +100,12 @@
     }
     if (!before) db().transactions.push(t);
     App.store.save(); u.close('transaction-modal');
-    u.toast((before ? '고쳤습니다.' : '기록했습니다.') + App.cat.learnToast([learned], t.category, t.subcategory));
+    u.toast((before ? '고쳤어요.' : '기록했어요.') + App.cat.learnToast([learned], t.category, t.subcategory));
   };
   T.remove = function (id) {
     u.confirm('내역 삭제', '이 내역을 지울까요?', function () {
       db().transactions = db().transactions.filter(function (t) { return t.id !== Number(id); });
-      App.store.save(); u.toast('거래 내역이 삭제되었습니다.');
+      App.store.save(); u.toast('거래 내역이 삭제되었어요.');
     });
   };
 
@@ -201,7 +201,7 @@
   T.bulkDelete = function () {
     var ids = selIds(); if (!ids.length) return;
     var linked = db().transactions.filter(function (t) { return SEL[t.id] && t.investmentId; }).length;
-    u.confirm('선택 내역 삭제', ids.length + '건을 삭제합니다.' + (linked ? ' (투자 거래 연동 ' + linked + '건 포함 · 투자 이력은 유지됩니다)' : '') + ' 삭제 직후 되돌릴 수 있습니다.', function () {
+    u.confirm('선택 내역 삭제', ids.length + '건을 삭제해요.' + (linked ? ' (투자 거래 연동 ' + linked + '건 포함 · 투자 이력은 유지돼요)' : '') + ' 삭제 직후 되돌릴 수 있어요.', function () {
       undoBuf = db().transactions.filter(function (t) { return SEL[t.id]; });
       db().transactions = db().transactions.filter(function (t) { return !SEL[t.id]; }); SEL = {};
       App.store.save();
@@ -212,7 +212,7 @@
   };
   T.undoDelete = function () {
     if (!undoBuf) return;
-    db().transactions = db().transactions.concat(undoBuf); u.toast(undoBuf.length + '건을 복원했습니다.'); undoBuf = null;
+    db().transactions = db().transactions.concat(undoBuf); u.toast(undoBuf.length + '건을 복원했어요.'); undoBuf = null;
     var x = u.$('undo-bar'); if (x) x.remove();
     App.store.save();
   };
@@ -232,7 +232,7 @@
       }
       if (p) t.payment = p; if (d) t.date = d; if (o) t.owner = o;
     });
-    u.toast(ids.length + '건을 일괄 변경했습니다.' + App.cat.learnToast(learned, c, sub)); App.store.save();
+    u.toast(ids.length + '건을 일괄 변경했어요.' + App.cat.learnToast(learned, c, sub)); App.store.save();
   };
 
   /* ---------- CSV ---------- */
@@ -242,7 +242,7 @@
       return [t.date, { INCOME: '수입', EXPENSE: '지출', TRANSFER: '이체' }[t.type] || t.type, t.category, t.subcategory, C.short(C.ownerOf(t)), t.payment, t.memo, t.amount];
     }));
     u.download('가계부_내역_' + u.nowM() + '.csv', '﻿' + rows.map(function (r) { return r.map(q).join(','); }).join('\r\n'), 'text/csv;charset=utf-8');
-    u.toast('전체 거래내역 ' + db().transactions.length + '건을 CSV로 내보냈습니다.');
+    u.toast('전체 거래내역 ' + db().transactions.length + '건을 CSV로 내보냈어요.');
   };
 
   /* ---------- 화면 ---------- */
@@ -263,7 +263,7 @@
         + sel('pay', F.pay, pays, '결제수단') + sel('owner', F.owner, [['ALL', '누구 돈이든'], ['J', '공동 생활비'], ['H', C.nm('H') + ' 개인'], ['W', C.nm('W') + ' 개인']], '누구 돈')
         + (nf || F.q ? '<button onclick="App.txn.resetFilters()" class="flt-btn">조건 지우기</button>' : '') + '</div>'
         + '<div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 text-[13px] text-slate-600"><span class="font-semibold text-slate-700">분류 규칙</span>'
-        + '<button onclick="App.cat.openReclass(\'MONTH\')" class="flt-btn flt-sm" title="키워드 규칙으로 이 달 내역을 다시 분류합니다">이 달 다시 분류</button><button onclick="App.cat.undo()" class="flt-btn flt-sm">되돌리기</button>'
+        + '<button onclick="App.cat.openReclass(\'MONTH\')" class="flt-btn flt-sm" title="키워드 규칙으로 이 달 내역을 다시 분류해요">이 달 다시 분류</button><button onclick="App.cat.undo()" class="flt-btn flt-sm">되돌리기</button>'
         + '<label class="flex items-center gap-1.5 cursor-pointer select-none ml-1"><input type="checkbox" ' + (db().ui.autoReclassify ? 'checked' : '') + ' onchange="App.cat.setAuto(this.checked)" class="accent-emerald-600"> 내역을 열 때마다 자동으로</label>'
         + '<button onclick="App.txn.exportCSV()" class="flt-btn flt-sm ml-auto"><i class="fa-solid fa-download"></i> 전체 내역 CSV로 받기</button></div></div>'
         + '<div id="txn-sum" class="text-[14px] text-slate-600 mt-3"></div></div>'

@@ -32,17 +32,17 @@
   RP.advice = function (r) {
     var a = [], s = db().settings, H = C.short('H'), W = C.short('W');
     var over = r.cats.filter(function (c) { return c.b > 0 && c.s > c.b; }).sort(function (x, y) { return (y.s - y.b) - (x.s - x.b); });
-    if (r.h.efMonths != null && r.h.efMonths < 3) a.push(['high', '비상자금이 ' + r.h.efMonths.toFixed(1) + '개월치뿐입니다. 저축·투자보다 먼저 생활비 3개월치(' + u.K(r.h.avgExp * 3) + ')를 파킹통장에 채우세요.']);
-    if (r.h.dsr != null && r.h.dsr >= 40) a.push(['high', '대출·할부 상환이 정기 수입의 ' + r.h.dsr.toFixed(0) + '%입니다(권장 40% 이하). 새 할부를 멈추고 [대출 상환 판단 도우미]에서 금리 높은 빚부터 정리하세요.']);
-    if (r.T > 0 && r.S < r.T) a.push(['high', '선저축 목표 ' + u.K(r.T) + ' 중 ' + u.K(r.S) + '만 저축·투자했습니다(' + u.K(r.T - r.S) + ' 부족). 다음 달은 월급날 자동이체로 저축부터 떼세요.']);
-    if (!r.T) a.push(['mid', '저축·투자 목표가 없습니다. 이번 달 잉여 ' + u.K(Math.max(0, r.surplus)) + '을 참고해 [목표 · 선저축]에서 월 목표액을 정하세요.']);
+    if (r.h.efMonths != null && r.h.efMonths < 3) a.push(['high', '비상자금이 ' + r.h.efMonths.toFixed(1) + '개월치뿐이에요. 저축·투자보다 먼저 생활비 3개월치(' + u.K(r.h.avgExp * 3) + ')를 파킹통장에 채우세요.']);
+    if (r.h.dsr != null && r.h.dsr >= 40) a.push(['high', '대출·할부 상환이 정기 수입의 ' + r.h.dsr.toFixed(0) + '%예요(권장 40% 이하). 새 할부를 멈추고 [계산기 › 대출 먼저 갚을까]에서 금리 높은 빚부터 정리하세요.']);
+    if (r.T > 0 && r.S < r.T) a.push(['high', '저축 목표 ' + u.K(r.T) + ' 중 ' + u.K(r.S) + '만 저축·투자했어요(' + u.K(r.T - r.S) + ' 부족). 다음 달은 월급날 자동이체로 저축부터 떼세요.']);
+    if (!r.T) a.push(['mid', '저축·투자 목표가 없어요. 이번 달 남은 돈 ' + u.K(Math.max(0, r.surplus)) + '을 참고해 [목표 · 저축]에서 월 목표액을 정하세요.']);
     if (over.length) a.push(['high', '예산 초과: ' + over.slice(0, 3).map(function (c) { return c.name + ' ' + u.K(c.s - c.b); }).join(', ') + '. 다음 달엔 이 항목부터 지켜보세요.']);
-    if (r.T > 0 && r.budgetTotal > r.avail) a.push(['mid', '예산 합계가 선저축 후 가용액보다 ' + u.K(r.budgetTotal - r.avail) + ' 많습니다. 예산을 줄이거나 저축 목표를 조정해야 둘 다 지킬 수 있습니다.']);
-    ['H', 'W'].forEach(function (c) { var lim = +s[c === 'H' ? 'allowanceH' : 'allowanceW'] || 0, used = r.cpl.exp[c]; if (lim && used > lim) a.push(['mid', (c === 'H' ? H : W) + ' 용돈이 한도보다 ' + u.K(used - lim) + ' 많았습니다. 다음 달 한도를 다시 정하거나 개인 지출을 줄이기로 이야기해 보세요.']); });
-    if (r.ending.length) a.push(['good', '이번 달로 끝나는 할부 ' + r.ending.length + '건(월 ' + u.K(u.sum(r.ending, function (x) { return x.c.thisCharge; })) + ')이 있습니다. 다음 달부터 그만큼을 저축으로 돌리면 생활 수준을 바꾸지 않고 저축이 늘어납니다.']);
-    if (r.fixedUnapplied.length && r.mo <= u.nowM()) a.push(['low', '지출에 반영하지 않은 고정비 ' + r.fixedUnapplied.length + '건(' + r.fixedUnapplied.slice(0, 3).map(function (f) { return f.name; }).join(', ') + ')이 있습니다. 실제로 나갔다면 [고정비] 화면에서 반영하세요.']);
-    r.goals.forEach(function (x) { var pl = +x.g.plan || 0; if (x.i.rem > 0 && x.i.req && pl < x.i.req) a.push(['mid', '목표 \'' + x.g.name + '\'를 기한에 맞추려면 월 ' + u.K(x.i.req) + '이 필요합니다(계획 ' + u.K(pl) + '). 기한을 늦추거나 적립액을 늘리세요.']); });
-    if (r.rate != null && r.rate >= 30 && !over.length) a.push(['good', '저축률 ' + r.rate.toFixed(0) + '%로 예산도 지켰습니다. 이 흐름을 유지하세요.']);
+    if (r.T > 0 && r.budgetTotal > r.avail) a.push(['mid', '예산 합계가 저축하고 남는 돈보다 ' + u.K(r.budgetTotal - r.avail) + ' 많아요. 예산을 줄이거나 저축 목표를 조정해야 둘 다 지킬 수 있어요.']);
+    ['H', 'W'].forEach(function (c) { var lim = +s[c === 'H' ? 'allowanceH' : 'allowanceW'] || 0, used = r.cpl.exp[c]; if (lim && used > lim) a.push(['mid', (c === 'H' ? H : W) + ' 용돈이 한도보다 ' + u.K(used - lim) + ' 많았어요. 다음 달 한도를 다시 정하거나 개인 지출을 줄이기로 이야기해 보세요.']); });
+    if (r.ending.length) a.push(['good', '이번 달로 끝나는 할부 ' + r.ending.length + '건(월 ' + u.K(u.sum(r.ending, function (x) { return x.c.thisCharge; })) + ')이 있어요. 다음 달부터 그만큼을 저축으로 돌리면 생활 수준을 바꾸지 않고 저축이 늘어나요.']);
+    if (r.fixedUnapplied.length && r.mo <= u.nowM()) a.push(['low', '지출에 반영하지 않은 고정비 ' + r.fixedUnapplied.length + '건(' + r.fixedUnapplied.slice(0, 3).map(function (f) { return f.name; }).join(', ') + ')이 있어요. 실제로 나갔다면 [고정비 · 할부] 화면에서 반영하세요.']);
+    r.goals.forEach(function (x) { var pl = +x.g.plan || 0; if (x.i.rem > 0 && x.i.req && pl < x.i.req) a.push(['mid', '목표 \'' + x.g.name + '\'를 기한에 맞추려면 월 ' + u.K(x.i.req) + '이 필요해요(계획 ' + u.K(pl) + '). 기한을 늦추거나 적립액을 늘리세요.']); });
+    if (r.rate != null && r.rate >= 30 && !over.length) a.push(['good', '저축률 ' + r.rate.toFixed(0) + '%로 예산도 지켰어요. 이 흐름을 유지하세요.']);
     return a;
   };
 
@@ -104,7 +104,7 @@
     return L.join('\n');
   };
   RP.copy = function () {
-    var t = RP.text(App.state.month), done = function () { u.toast('리포트 요약을 복사했습니다. 메신저에 붙여넣으세요.'); };
+    var t = RP.text(App.state.month), done = function () { u.toast('리포트 요약을 복사했어요. 메신저에 붙여넣으세요.'); };
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, function () { prompt('아래 내용을 복사하세요', t); });
     else prompt('아래 내용을 복사하세요', t);
   };
@@ -113,7 +113,8 @@
   App.views.add({
     id: 'report', order: 65, title: '월말 리포트', nav: { label: '월말 리포트', icon: 'fa-file-lines', color: 'text-amber-300' },
     render: function (el) {
-      el.innerHTML = RP.html(App.state.month);
+      el.innerHTML = RP.html(App.state.month) + '<div class="rp" style="padding-top:.5rem">' + App.dash.analysisHtml(App.state.month) + '</div>';
+      App.dash.drawCharts(App.state.month);
     }
   });
 })(window.App);

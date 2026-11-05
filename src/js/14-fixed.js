@@ -22,7 +22,7 @@
   Fx.addRecommended = function (i) {
     var r = recommendations()[i]; if (!r) return;
     db().fixedExpenses.push({ id: u.uid(), name: r.memo, day: 15, amount: r.avg, type: 'EXPENSE', owner: 'J', payment: '계좌이체', auto: false });
-    App.store.save(); u.toast('\'' + r.memo + '\' (' + u.K(r.avg) + ') 항목이 월 고정비로 등록되었습니다.');
+    App.store.save(); u.toast('\'' + r.memo + '\' (' + u.K(r.avg) + ') 항목이 월 고정비로 등록되었어요.');
   };
 
   /* 그 달에 이미 들어갔나 : 이 항목으로 만든 내역, 또는 같은 구분·금액에 이름이 들어간 내역(붙여넣기로 먼저 들어온 경우) */
@@ -47,13 +47,13 @@
   Fx.apply = function (id) {
     var f = u.byId(db().fixedExpenses, id); if (!f) return;
     db().transactions.push(txnFor(f, App.state.month));
-    App.store.save(); u.toast('\'' + f.name + '\' (' + u.K(f.amount) + ') 내역이 ' + (isInc(f) ? '수입' : '지출') + '에 반영되었습니다.');
+    App.store.save(); u.toast('\'' + f.name + '\' (' + u.K(f.amount) + ') 내역이 ' + (isInc(f) ? '수입' : '지출') + '에 반영되었어요.');
   };
   Fx.applyAll = function () {
     var n = 0, s = 0, mo = App.state.month;
     db().fixedExpenses.forEach(function (f) { if (!Fx.isApplied(f, mo)) { db().transactions.push(txnFor(f, mo)); n++; s += isInc(f) ? 0 : f.amount; } });
-    if (!n) { u.toast('이번 달에 반영할 고정 항목이 없습니다.', 'warning'); return; }
-    App.store.save(); u.toast('고정 항목 ' + n + '건을 이번 달 내역에 반영했습니다.' + (s ? ' (지출 ' + u.K(s) + ')' : ''));
+    if (!n) { u.toast('이번 달에 반영할 고정 항목이 없어요.', 'warning'); return; }
+    App.store.save(); u.toast('고정 항목 ' + n + '건을 이번 달 내역에 반영했어요.' + (s ? ' (지출 ' + u.K(s) + ')' : ''));
   };
 
   /* ---------- 매달 자동 반영 ---------- */
@@ -86,7 +86,7 @@
   Fx.setAuto = function (id, on) {
     var f = u.byId(db().fixedExpenses, id); if (!f) return;
     setAutoFlag(f, on); App.store.save();
-    u.toast(on ? '\'' + f.name + '\' : 매달 ' + f.day + '일이 지나면 자동으로 내역에 넣습니다.' : '\'' + f.name + '\' 자동 반영을 껐습니다.');
+    u.toast(on ? '\'' + f.name + '\' : 매달 ' + f.day + '일이 지나면 자동으로 내역에 넣어요.' : '\'' + f.name + '\' 자동 반영을 껐어요.');
     if (on) Fx.autoRun();
   };
   function setAutoFlag(f, on) {
@@ -116,7 +116,7 @@
       + u.field('fixed-amount', '월 금액 (원)', { money: true, attrs: 'required' }) + '</div>'
       + '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">결제수단</label><select id="fixed-payment" class="' + u.IN + '"></select></div>'
       + '<label class="flex items-start gap-2 text-xs text-slate-700 bg-emerald-50/60 border border-emerald-200 rounded-lg p-2.5 cursor-pointer"><input type="checkbox" id="fixed-auto" class="accent-emerald-600 mt-0.5">'
-      + '<span><b>매달 자동 반영</b><br><span class="text-[11px] text-slate-500">앱을 열었을 때 이번 달 날짜가 지났으면 내역에 자동으로 넣습니다. 이미 들어간 달은 건너뜁니다.</span></span></label>'
+      + '<span><b>매달 자동 반영</b><br><span class="text-[11px] text-slate-500">앱을 열었을 때 이번 달 날짜가 지났으면 내역에 자동으로 넣어요. 이미 들어간 달은 건너뛰어요.</span></span></label>'
       + '<div class="flex justify-end gap-2 pt-2"><button type="button" onclick="App.u.close(\'fixed-modal\')" class="px-3 py-1.5 bg-slate-100 text-xs rounded-lg">취소</button><button type="submit" class="px-3 py-1.5 bg-accent text-white text-xs font-semibold rounded-lg">저장하기</button></div></form>', 420);
     var f = id ? u.byId(db().fixedExpenses, id) : null;
     u.$('fixed-owner').innerHTML = C.ownerOptions(true);
@@ -136,13 +136,13 @@
     var rec = { name: u.val('fixed-name').trim(), day: Math.min(31, Math.max(1, parseInt(u.val('fixed-day'), 10) || 1)), amount: u.P(u.val('fixed-amount')), type: u.val('fixed-type') === 'INCOME' ? 'INCOME' : 'EXPENSE', owner: u.val('fixed-owner') || 'J', payment: u.val('fixed-payment') || '계좌이체' };
     if (f) Object.keys(rec).forEach(function (k) { f[k] = rec[k]; }); else { f = rec; f.id = u.uid(); f.auto = false; db().fixedExpenses.push(f); }
     setAutoFlag(f, u.$('fixed-auto').checked);
-    App.store.save(); u.close('fixed-modal'); u.toast(id ? '고정 항목이 수정되었습니다.' : '고정 항목이 추가되었습니다.');
+    App.store.save(); u.close('fixed-modal'); u.toast(id ? '고정 항목이 수정되었어요.' : '고정 항목이 추가되었어요.');
     if (f.auto) Fx.autoRun();
   };
   Fx.remove = function (id) {
-    u.confirm('고정 항목 삭제', '이 고정 항목을 삭제하시겠습니까? 이미 반영된 내역은 남습니다.', function () {
+    u.confirm('고정 항목 삭제', '이 고정 항목을 삭제할까요? 이미 반영된 내역은 남아요.', function () {
       db().fixedExpenses = db().fixedExpenses.filter(function (f) { return f.id !== Number(id); });
-      App.store.save(); u.toast('고정 항목이 삭제되었습니다.');
+      App.store.save(); u.toast('고정 항목이 삭제되었어요.');
     });
   };
 
@@ -180,7 +180,7 @@
           : '<div class="empty">월세 · 관리비 · 통신비 · 보험 · 월급처럼 매달 같은 돈을 등록해 두면, 버튼 한 번(또는 자동으로) 이 달 내역에 들어가요.</div>')
         + '</div>'
         + '<div class="card"><div class="card-h"><h3>카드 할부</h3><button onclick="App.inst.open()" class="btn sec" style="height:38px">+ 할부 등록</button></div>'
-        + '<label class="fx-auto' + (ia.on ? ' on' : '') + ' mb-2" title="진행 중인 할부의 이 달 청구분을 청구일이 지나면 지출로 넣습니다"><input type="checkbox" ' + (ia.on ? 'checked' : '') + ' onchange="App.inst.setAuto(this.checked)"> 매달 청구분을 자동으로 지출에 넣기</label>'
+        + '<label class="fx-auto' + (ia.on ? ' on' : '') + ' mb-2" title="진행 중인 할부의 이 달 청구분을 청구일이 지나면 지출로 넣어요"><input type="checkbox" ' + (ia.on ? 'checked' : '') + ' onchange="App.inst.setAuto(this.checked)"> 매달 청구분을 자동으로 지출에 넣기</label>'
         + '<div id="installment-list">' + App.inst.panelHtml() + '</div></div></div>'
         + (rec.length ? '<div class="card"><div class="card-h" style="margin-bottom:.25rem"><h3>반복해서 나간 돈</h3></div><p class="text-[13px] text-slate-500 mb-2">고정비로 등록하면 매달 자동으로 넣을 수 있어요.</p>'
           + rec.map(function (r, i) {

@@ -77,15 +77,15 @@
     var t = u.val('asset-subtype'), amount = u.P(u.val('asset-amount')), rate = parseFloat(u.val('asset-rate')) || 0, months = parseInt(u.val('asset-months'), 10) || 12;
     if (C.EXT[t]) {
       var pm = u.P(u.val('asset-pen-monthly')), pa = +u.val('asset-pen-age') || 65, ct = u.P(u.val('asset-pen-contrib')), msg;
-      if (t === '국민연금') msg = '예상 수령: 월 <b>' + u.K(pm) + '</b> (연 ' + u.K(pm * 12) + ') · ' + pa + '세부터<br><span class="text-slate-500">팔거나 인출할 수 없는 권리라 순자산에는 넣지 않고, 은퇴 시뮬레이터의 연금 수입으로 반영합니다. 예상액은 국민연금공단 \'내 곁에 국민연금\'에서 확인할 수 있습니다.</span>';
-      else if (t === '전세보증금') msg = '보증금 <b>' + u.K(amount) + '</b>은 순자산에 포함하지만, 바로 쓸 수 없는 돈이라 <b>비상자금(유동자산)과 은퇴 준비자산에서는 제외</b>합니다.';
-      else if (t === 'ISA') msg = 'ISA 평가액 <b>' + u.K(amount) + '</b> · 올해 납입 ' + u.K(ct) + ' (연 2,000만 원 한도). 유동자산으로 봅니다.';
-      else msg = '적립금 <b>' + u.K(amount) + '</b> · 연금 개시 전 인출이 어려워 비상자금에서는 제외하고 은퇴 준비자산에 포함합니다.'
+      if (t === '국민연금') msg = '예상 수령: 월 <b>' + u.K(pm) + '</b> (연 ' + u.K(pm * 12) + ') · ' + pa + '세부터<br><span class="text-slate-500">팔거나 인출할 수 없는 권리라 순자산에는 넣지 않고, 은퇴 시뮬레이터의 연금 수입으로 반영해요. 예상액은 국민연금공단 \'내 곁에 국민연금\'에서 확인할 수 있어요.</span>';
+      else if (t === '전세보증금') msg = '보증금 <b>' + u.K(amount) + '</b>은 순자산에 포함하지만, 바로 쓸 수 없는 돈이라 <b>비상자금(유동자산)과 은퇴 준비자산에서는 제외</b>해요.';
+      else if (t === 'ISA') msg = 'ISA 평가액 <b>' + u.K(amount) + '</b> · 올해 납입 ' + u.K(ct) + ' (연 2,000만 원 한도). 유동자산으로 봐요.';
+      else msg = '적립금 <b>' + u.K(amount) + '</b> · 연금 개시 전 인출이 어려워 비상자금에서는 제외하고 은퇴 준비자산에 포함해요.'
         + (t !== '퇴직연금' ? '<br>올해 납입 ' + u.K(ct) + ' → 세액공제 대상 약 ' + u.K(Math.min(ct, t === '연금저축' ? 6e6 : 9e6)) + ' (연금저축 600만 · IRP 합산 900만 한도, 부부 각자 본인 계좌만 공제)' : '')
         + (pm ? '<br>예상 월 수령 ' + u.K(pm) + ' · ' + pa + '세부터 (참고)' : '');
       box.innerHTML = '<div class="text-[11px] leading-relaxed text-slate-700">' + msg + '</div>'; return;
     }
-    if (amount <= 0) { box.innerHTML = '<span class="text-slate-400">금액과 이율을 입력하시면 세후 이자가 자동 산출됩니다.</span>'; return; }
+    if (amount <= 0) { box.innerHTML = '<span class="text-slate-400">금액과 이율을 입력하시면 세후 이자가 자동 산출돼요.</span>'; return; }
     var d = C.depositDetail({ subType: t, amount: amount, rate: rate, months: months });
     if (t === '예금' || t === '적금') box.innerHTML = '<div class="font-bold text-emerald-800 text-xs flex justify-between"><span>' + months + '개월 만기 예상 수령액 (세후):</span><span class="text-sm">' + u.K(d.maturityAmount) + '</span></div><div class="text-[11px] text-slate-600 flex justify-between"><span>' + (t === '적금' ? '총 납입원금' : '원금') + ': ' + u.K(d.totalPrincipal) + '</span><span>세전이자: ' + u.K(d.preTaxInterest) + ' | 세금(15.4%): ' + u.K(d.tax) + '</span></div>';
     else if (rate > 0) box.innerHTML = '<div class="font-bold text-purple-800 text-xs flex justify-between"><span>연간 세후 이자 수익:</span><span class="text-sm">' + u.K(d.postTaxInterest) + '</span></div><div class="text-[11px] text-slate-600 flex justify-between"><span>월 예상 세후 이자: 약 ' + u.K(d.monthlyPostTaxInterest) + '</span><span>연 세전이자: ' + u.K(d.preTaxInterest) + ' (세금 ' + u.K(d.tax) + ')</span></div>';
@@ -120,11 +120,11 @@
       a.annualContrib = u.P(u.val('asset-pen-contrib')); a.leaseEnd = u.val('asset-lease-end') || null;
       if (a.subType === '국민연금') { a.pensionPaid = a.amount; a.amount = 0; a.rate = 0; }
     }
-    App.store.save(); u.close('asset-modal'); u.toast(id ? '자산 정보가 수정되었습니다.' : '자산 계좌가 등록되었습니다.');
+    App.store.save(); u.close('asset-modal'); u.toast(id ? '자산 정보가 수정되었어요.' : '자산 계좌가 등록되었어요.');
   };
   A.remove = function (id) {
-    u.confirm('자산 삭제', '선택한 자산을 삭제하시겠습니까?', function () {
-      db().assets = db().assets.filter(function (a) { return a.id !== Number(id); }); App.store.save(); u.toast('자산이 삭제되었습니다.');
+    u.confirm('자산 삭제', '선택한 자산을 삭제할까요?', function () {
+      db().assets = db().assets.filter(function (a) { return a.id !== Number(id); }); App.store.save(); u.toast('자산이 삭제되었어요.');
     });
   };
 

@@ -74,8 +74,8 @@
       + cell(r.past ? '월 변동 생활비 예산' : '오늘까지 써도 되는 금액', u.K(r.past ? r.V : r.allowed), r.past ? '지난달 최종 비교' : '예산 ' + u.K(r.V) + ' × ' + r.asOf + '/' + r.D + '일')
       + (r.cur ? cell('이번 주 남은 사용 가능액', u.K(r.week), '~' + md(r.mo, r.weekEnd) + '(일)까지' + (r.perDay != null ? ' · 남은 기간 하루 ' + u.K(Math.max(0, r.perDay)) : ''), r.week > 0 ? 'text-accent' : 'text-red-600')
         : cell(r.past ? '예산 대비' : '이번 주 남은 사용 가능액', r.past ? (r.V ? Math.round(r.est / r.V * 100) + '%' : '-') : '-', r.past ? (r.est > r.V ? u.K(r.est - r.V) + ' 초과' : u.K(r.V - r.est) + ' 남음') : '이번 달에만 계산', r.past && r.est > r.V ? 'text-red-600' : ''))
-      + cell(r.past ? '월 최종 지출' : '월말 예상 지출 (현재 속도)', u.K(r.proj), r.V ? '예산 대비 ' + Math.round(r.proj / r.V * 100) + '%' + (r.proj > r.V ? ' · ' + u.K(r.proj - r.V) + ' 초과 예상' : '') : '변동 생활비 예산을 정하면 비교합니다', r.V && r.proj > r.V ? 'text-red-600' : 'text-slate-800');
-    var msg = !r.hasData || r.past ? '' : '<div class="text-[11px] ' + (over ? 'text-red-700' : 'text-emerald-700') + '">오늘까지 기준보다 <b>' + u.K(Math.abs(r.diff)) + '</b> ' + (over ? '더 썼습니다. 남은 기간에 나눠 줄여야 합니다.' : '덜 썼습니다.') + '</div>';
+      + cell(r.past ? '월 최종 지출' : '월말 예상 지출 (현재 속도)', u.K(r.proj), r.V ? '예산 대비 ' + Math.round(r.proj / r.V * 100) + '%' + (r.proj > r.V ? ' · ' + u.K(r.proj - r.V) + ' 초과 예상' : '') : '변동 생활비 예산을 정하면 비교해요', r.V && r.proj > r.V ? 'text-red-600' : 'text-slate-800');
+    var msg = !r.hasData || r.past ? '' : '<div class="text-[11px] ' + (over ? 'text-red-700' : 'text-emerald-700') + '">오늘까지 기준보다 <b>' + u.K(Math.abs(r.diff)) + '</b> ' + (over ? '더 썼어요. 남은 기간에 나눠 줄여야 해요.' : '덜 썼어요.') + '</div>';
     return { cells: c, msg: msg };
   }
   function savingHtml(r) {
@@ -83,8 +83,8 @@
     var over = r.est > s.allowed, projOver = s.proj > s.room;
     return '<div class="p-3 rounded-lg border text-xs space-y-1 ' + (projOver ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-800') + '"><div class="font-bold"><i class="fa-solid fa-piggy-bank mr-1"></i>선저축 가용액 기준</div>'
       + '<div>수입 ' + u.K(s.base) + (s.fromReg ? ' (정기 수입)' : '') + ' − 선저축 ' + u.K(s.T) + ' − 고정비 ' + u.K(s.fixP) + ' = 변동비 가용 <b>' + u.K(s.room) + '</b></div>'
-      + (s.room > 0 ? '<div>오늘까지 가용 ' + u.K(s.allowed) + ' 대비 누적 ' + u.K(r.est) + ' → ' + (over ? '<b>' + u.K(r.est - s.allowed) + ' 초과</b>' : u.K(s.allowed - r.est) + ' 여유') + ' · 월말 예상 ' + u.K(s.proj) + (projOver ? ' → 선저축을 지키려면 <b>' + u.K(s.proj - s.room) + '</b> 줄여야 합니다.' : ' (가용액 이내)') + '</div>'
-        : '<div class="text-red-700">선저축과 고정비만으로 수입을 넘습니다. 저축 목표나 고정비를 먼저 점검하세요.</div>')
+      + (s.room > 0 ? '<div>오늘까지 가용 ' + u.K(s.allowed) + ' 대비 누적 ' + u.K(r.est) + ' → ' + (over ? '<b>' + u.K(r.est - s.allowed) + ' 초과</b>' : u.K(s.allowed - r.est) + ' 여유') + ' · 월말 예상 ' + u.K(s.proj) + (projOver ? ' → 선저축을 지키려면 <b>' + u.K(s.proj - s.room) + '</b> 줄여야 해요.' : ' (가용액 이내)') + '</div>'
+        : '<div class="text-red-700">선저축과 고정비만으로 수입을 넘어요. 저축 목표나 고정비를 먼저 점검하세요.</div>')
       + '<div class="text-[10px] opacity-70">고정비 = 고정성 예산(주거·통신·금융·보험·세금) ' + u.K(s.fixB) + '과 등록 고정비+할부 ' + u.K(s.fixR) + ' 중 큰 값</div></div>';
   }
   function cardTable(r) {
@@ -94,11 +94,11 @@
         var perf = !c ? '<span class="text-slate-300">-</span>' : !tgt ? '<span class="text-slate-400">목표 없음</span>' : '<div class="min-w-[90px]">' + (a.est >= tgt ? '<b class="text-emerald-600">달성</b>' : u.K(tgt - a.est) + ' 남음') + ' <span class="text-slate-400">/ ' + u.K(tgt) + '</span>' + u.bar(pc, a.est >= tgt ? 'bg-emerald-500' : 'bg-accent') + '</div>';
         return '<tr class="border-t border-slate-100 align-top"><td class="py-1.5 pr-2">' + name + '</td><td class="py-1.5 pr-2 text-right">' + (a.check == null ? '<span class="text-slate-300">-</span>' : u.K(a.check) + '<div class="text-[10px] text-slate-400">' + md(r.mo, a.checkDay) + ' 점검</div>') + '</td>'
           + '<td class="py-1.5 pr-2 text-right">' + (a.n ? u.K(a.actual) + '<div class="text-[10px] text-slate-400">' + a.n + '건 · ~' + md(r.mo, a.L) + '</div>' : '<span class="text-slate-300">-</span>') + '</td><td class="py-1.5 pr-2 text-right font-bold">' + u.K(a.est) + '</td><td class="py-1.5">' + perf + '</td></tr>';
-      }).join('') + '</tbody></table></div><div class="text-[10px] text-slate-400">카드별 누적·실적은 모든 카테고리 기준, 위 페이스는 주거·통신·금융·보험·세금을 뺀 변동 생활비 기준입니다.</div>';
+      }).join('') + '</tbody></table></div><div class="text-[10px] text-slate-400">카드별 누적·실적은 모든 카테고리 기준, 위 페이스는 주거·통신·금융·보험·세금을 뺀 변동 생활비 기준이에요.</div>';
   }
   function histHtml(r) {
-    if (!r.list.length) return '<div class="text-[11px] text-slate-400">' + r.mo + ' 주간 점검 기록이 없습니다.</div>';
-    return '<div class="text-[11px] font-bold text-slate-600">' + r.mo + ' 점검 기록' + (r.hasActual ? ' <span class="font-normal text-slate-400">— 실제 내역이 생겨 참고(추정)로만 씁니다</span>' : '') + '</div>'
+    if (!r.list.length) return '<div class="text-[11px] text-slate-400">' + r.mo + ' 주간 점검 기록이 없어요.</div>';
+    return '<div class="text-[11px] font-bold text-slate-600">' + r.mo + ' 점검 기록' + (r.hasActual ? ' <span class="font-normal text-slate-400">— 실제 내역이 생겨 참고(추정)로만 써요</span>' : '') + '</div>'
       + r.list.map(function (c) {
         var real = r.hasActual && dayOf(c.date) <= r.maxL, saved = W.checks(r.mo).some(function (x) { return x.date === c.date; });
         return '<div class="flex items-center gap-2 text-[11px] px-2 py-1.5 rounded border border-slate-200 bg-slate-50"><b>' + u.esc(c.date) + '</b><span>' + u.K(checkTotal(c)) + '</span>'
@@ -110,7 +110,7 @@
   /* ---------- 모달 ---------- */
   function modal() {
     return u.modal('weekly-modal', '<div class="flex justify-between items-center pb-3 border-b border-slate-100"><h3 class="font-bold text-slate-800"><i class="fa-solid fa-calendar-check text-accent mr-1.5"></i>주간 빠른 점검</h3><button onclick="App.u.close(\'weekly-modal\')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button></div>'
-      + '<p class="text-[11px] text-slate-500 leading-relaxed">카드 앱 첫 화면의 <b>이번 달 이용금액(누적)</b>을 카드마다 그대로 옮겨 적으세요. 거래 내역은 만들지 않고 예산 속도만 계산합니다. 통신비·보험료처럼 카드로 자동결제되는 고정비가 이미 포함돼 있다면 그만큼 빼고 적으면 더 정확합니다.</p>'
+      + '<p class="text-[11px] text-slate-500 leading-relaxed">카드 앱 첫 화면의 <b>이번 달 이용금액(누적)</b>을 카드마다 그대로 옮겨 적으세요. 거래 내역은 만들지 않고 예산 속도만 계산해요. 통신비·보험료처럼 카드로 자동결제되는 고정비가 이미 포함돼 있다면 그만큼 빼고 적으면 더 정확해요.</p>'
       + '<div class="grid grid-cols-2 gap-3"><div><label class="block font-semibold text-slate-600 mb-1 text-xs">점검일</label><input id="weekly-date" type="date" onchange="App.weekly.fill()" class="' + u.IN + '"></div><div id="weekly-prev" class="text-[10px] text-slate-400 self-end pb-1"></div></div>'
       + '<div id="weekly-inputs" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>'
       + '<div class="flex justify-end gap-2"><button onclick="App.u.close(\'weekly-modal\')" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">닫기</button><button onclick="App.weekly.save()" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">점검 저장</button></div>'
@@ -127,10 +127,10 @@
       var k = String(c.id), v = same && same.byCard && same.byCard[k] != null ? same.byCard[k] : null, ph = prev && prev.byCard && prev.byCard[k] != null ? prev.byCard[k] : null;
       return moneyIn('weekly-c-' + i, u.esc(c.name) + (c.owner ? ' <span class="font-normal text-slate-400">(' + u.esc(c.owner) + ')</span>' : ''), ph, v);
     }).join('');
-    if (!cards().length) html = '<div class="sm:col-span-2 text-[11px] text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">등록된 카드가 없습니다. [보유 카드] 탭에서 카드를 등록하면 카드별로 입력할 수 있습니다.</div>';
+    if (!cards().length) html = '<div class="sm:col-span-2 text-[11px] text-slate-500 bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3">등록된 카드가 없어요. [보유 카드] 탭에서 카드를 등록하면 카드별로 입력할 수 있어요.</div>';
     html += moneyIn('weekly-other', '계좌이체 · 현금 생활비 <span class="font-normal text-slate-400">(선택)</span>', prev ? prev.other : null, same ? same.other : null);
     u.$('weekly-inputs').innerHTML = html;
-    u.$('weekly-prev').innerHTML = same ? '<span class="text-amber-700">이 날짜의 점검 기록을 수정합니다.</span>' : prev ? '흐린 글씨는 ' + u.esc(prev.date) + ' 점검값입니다.' : '';
+    u.$('weekly-prev').innerHTML = same ? '<span class="text-amber-700">이 날짜의 점검 기록을 수정해요.</span>' : prev ? '흐린 글씨는 ' + u.esc(prev.date) + ' 점검값이에요.' : '';
     W.preview();
   };
   function readDraft() {
@@ -145,7 +145,7 @@
     var draft = dirty ? { date: dr.date, byCard: dr.byCard, other: dr.other } : null, d = u.val('weekly-date') || u.today(), r = W.compute(d.slice(0, 7), draft), s = status(r), sc = summaryCells(r);
     u.$('weekly-result').innerHTML = '<div class="flex items-center gap-2 flex-wrap"><b class="text-sm text-slate-800">' + r.mo + ' 예산 속도</b><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + s[1] + '">' + s[0] + '</span>'
       + (draft ? '<span class="text-[10px] text-accent">입력값 미리보기</span>' : '') + '<span class="ml-auto text-[10px] text-slate-400">월 변동 생활비 예산 ' + u.K(r.V) + '</span></div>'
-      + (r.V ? '' : '<div class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">변동 생활비 예산이 0원입니다. [예산 관리]에서 식비·교통 등 카테고리 예산을 정하면 속도를 비교합니다.</div>')
+      + (r.V ? '' : '<div class="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">변동 생활비 예산이 0원이에요. [예산 관리]에서 식비·교통 등 카테고리 예산을 정하면 속도를 비교해요.</div>')
       + '<div class="grid grid-cols-2 gap-2">' + sc.cells + '</div>' + paceBar(r) + sc.msg + savingHtml(r) + cardTable(r);
     u.$('weekly-hist').innerHTML = histHtml(r);
   };
@@ -159,7 +159,7 @@
   W.save = function () {
     var dr = readDraft();
     if (!dr.date) { u.toast('점검일을 선택하세요.', 'warning'); return; }
-    if (dr.date > u.today()) { u.toast('미래 날짜로는 점검할 수 없습니다.', 'warning'); return; }
+    if (dr.date > u.today()) { u.toast('미래 날짜로는 점검할 수 없어요.', 'warning'); return; }
     if (!dr.any) { u.toast('카드 누적 이용액을 하나 이상 입력하세요.', 'warning'); return; }
     var mo = dr.date.slice(0, 7), list = (store()[mo] || []).filter(function (c) { return c && c.date !== dr.date; });
     list.push({ date: dr.date, byCard: dr.byCard, other: dr.other }); list.sort(byDate); store()[mo] = list;
@@ -170,18 +170,18 @@
   };
   W.remove = function (date) {
     var mo = String(date).slice(0, 7);
-    u.confirm('주간 점검 삭제', date + ' 주간 점검 기록을 삭제합니다. 거래 내역에는 영향이 없습니다.', function () {
+    u.confirm('주간 점검 삭제', date + ' 주간 점검 기록을 삭제해요. 거래 내역에는 영향이 없어요.', function () {
       store()[mo] = (store()[mo] || []).filter(function (c) { return c.date !== date; }); if (!store()[mo].length) delete store()[mo];
-      App.store.save(); u.toast('주간 점검 기록을 삭제했습니다.'); if (u.isOpen('weekly-modal')) W.fill();
+      App.store.save(); u.toast('주간 점검 기록을 삭제했어요.'); if (u.isOpen('weekly-modal')) W.fill();
     });
   };
 
   /* ---------- 대시보드 카드 · 알림 점 ---------- */
   function nagInfo() {
     var lc = lastCheck();
-    if (!lc) return { nag: true, txt: '아직 주간 점검 기록이 없습니다. 일주일에 한 번, 카드 앱의 이번 달 이용금액만 옮겨 적으면 월중에도 예산 속도를 알 수 있습니다.' };
+    if (!lc) return { nag: true, txt: '아직 주간 점검 기록이 없어요. 일주일에 한 번, 카드 앱의 이번 달 이용금액만 옮겨 적으면 월중에도 예산 속도를 알 수 있어요.' };
     var n = u.daysBetween(lc.date, u.today());
-    return n > 7 ? { nag: true, txt: '마지막 주간 점검이 ' + n + '일 전(' + lc.date + ')입니다.' } : { nag: false };
+    return n > 7 ? { nag: true, txt: '마지막 주간 점검이 ' + n + '일 전(' + lc.date + ')이에요.' } : { nag: false };
   }
   W.nag = function () { return { nag: false }; };   /* 알림 자동 기록을 쓰므로 정기 점검을 재촉하지 않는다 */
   W.paceHtml = function (mo) {
@@ -189,8 +189,8 @@
     return '<div id="dash-pace" class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3"><div class="flex flex-wrap items-center gap-2"><h3 class="font-bold text-slate-800 text-sm"><i class="fa-solid fa-gauge-high text-accent mr-1.5"></i>이번 달 페이스 <span class="text-[11px] text-slate-400 font-normal">(' + mo + ' · 변동 생활비 예산 ' + u.K(r.V) + ')</span></h3>'
       + '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + s[1] + '">' + s[0] + '</span><button onclick="App.weekly.open()" class="ml-auto bg-slate-800 hover:bg-slate-900 text-white text-xs px-3.5 py-2 rounded-lg font-semibold"><i class="fa-solid fa-calendar-check text-amber-400 mr-1"></i>주간 점검</button></div>'
       + (showNag ? '<div class="flex flex-wrap items-center gap-2 text-xs bg-amber-50 border border-amber-200 text-amber-900 rounded-lg px-3 py-2"><i class="fa-solid fa-bell"></i><span class="flex-1 min-w-[200px]">' + ng.txt + '</span><button onclick="App.weekly.open()" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg font-semibold">이번 주 점검하기</button></div>' : '')
-      + (r.hasData ? '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + sc.cells + '</div>' + paceBar(r) + sc.msg : '<div class="text-[11px] text-slate-400">' + mo + ' 지출 기록과 주간 점검이 아직 없습니다.</div>')
-      + '<div class="text-[10px] text-slate-400">' + (r.hasActual ? '실제 내역이 있는 날짜까지는 내역 합계를, 그 뒤는 주간 점검값을 씁니다. 점검 기록 ' + r.list.length + '회는 참고(추정)입니다.' : r.list.length ? '주간 점검 ' + r.list.length + '회 기록 기준 추정치입니다. 월말에 이용내역을 붙여넣으면 실제 값으로 바뀝니다.' : '') + '</div></div>';
+      + (r.hasData ? '<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">' + sc.cells + '</div>' + paceBar(r) + sc.msg : '<div class="text-[11px] text-slate-400">' + mo + ' 지출 기록과 주간 점검이 아직 없어요.</div>')
+      + '<div class="text-[10px] text-slate-400">' + (r.hasActual ? '실제 내역이 있는 날짜까지는 내역 합계를, 그 뒤는 주간 점검값을 써요. 점검 기록 ' + r.list.length + '회는 참고(추정)예요.' : r.list.length ? '주간 점검 ' + r.list.length + '회 기록 기준 추정치예요. 월말에 이용내역을 붙여넣으면 실제 값으로 바뀌어요.' : '') + '</div></div>';
   };
   App.on('rendered', u.safe('주간 알림 점', function () { var d = u.$('weekly-mdot'); if (d) d.style.display = 'none'; if (u.isOpen('weekly-modal')) W.preview(); }));
 })(window.App);

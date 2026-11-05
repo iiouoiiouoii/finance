@@ -76,7 +76,7 @@
     }).join('');
     var ev = events(p).map(function (e) { var bal = e.y === 0 ? p.assets : (s.rows[e.y - 1] || {}).n; return '<tr class="border-t border-slate-100"><td class="p-2">' + (Y + e.y) + '년</td><td class="p-2 text-center">' + (p.aAge + e.y) + ' / ' + (p.bAge + e.y) + '</td><td class="p-2">' + u.esc(e.label) + '</td><td class="p-2 text-right">' + u.K(bal) + '</td></tr>'; }).join('');
     out.innerHTML = '<div class="p-4 rounded-xl border text-sm font-bold ' + (ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800') + '">'
-      + (ok ? '현재 계획이면 두 사람 모두 기대수명(' + A + ' ' + p.aLife + '세 · ' + B + ' ' + p.bLife + '세)까지 자금이 유지됩니다.' : '현재 계획이면 ' + A + ' ' + s.depl.aA + '세 · ' + B + ' ' + s.depl.bA + '세 무렵 자금이 고갈됩니다.') + '</div>'
+      + (ok ? '현재 계획이면 두 사람 모두 기대수명(' + A + ' ' + p.aLife + '세 · ' + B + ' ' + p.bLife + '세)까지 자금이 유지돼요.' : '현재 계획이면 ' + A + ' ' + s.depl.aA + '세 · ' + B + ' ' + s.depl.bA + '세 무렵 자금이 고갈돼요.') + '</div>'
       + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">' + card('두 사람 모두 은퇴할 때 자산', u.K(s.atR), (Y + rY) + '년 · 현재가치 ' + u.K(s.atR / inf)) + card('필요 은퇴자산', u.K(nd), '현재가치 ' + u.K(nd / inf))
       + card('자금 충족률', ratio.toFixed(0) + '%', '예상 ÷ 필요', ratio >= 100 ? 'text-emerald-600' : ratio >= 70 ? 'text-amber-600' : 'text-red-600')
       + card('필요 월 저축', req == null ? '산출 불가' : req === 0 ? '추가 불필요' : u.K(req), '현재 ' + u.K(p.save) + (req > p.save ? ' · 월 ' + u.K(req - p.save) + ' 부족' : ''), req == null || req > p.save ? 'text-red-600' : 'text-emerald-600')
@@ -84,7 +84,7 @@
       + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><div class="text-xs font-bold text-slate-700 mb-2">연도별 자산 추이 <span class="font-normal text-slate-400">(가로축: ' + A + ' 나이 / ' + B + ' 나이)</span></div><div style="height:260px"><canvas id="q-chart"></canvas></div></div>'
       + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">부부 생애 이벤트</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">연도</th><th class="p-2">' + A + ' / ' + B + '</th><th class="p-2 text-left">이벤트</th><th class="p-2 text-right">그 시점 자산</th></tr></thead><tbody>' + ev + '</tbody></table></div>'
       + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">수익률 시나리오</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">시나리오</th><th class="p-2 text-right">은퇴 시점 자산</th><th class="p-2 text-left">결과</th></tr></thead><tbody>' + sc + '</tbody></table></div></div>'
-      + '<div class="text-[11px] text-slate-400 leading-relaxed">※ 한 사람만 은퇴한 기간에는 은퇴한 사람의 소득 몫만큼 저축이 줄고, 생활비는 남은 근로소득으로 충당한다고 가정합니다. 두 사람이 모두 은퇴하면 자산에서 생활비를 꺼내 쓰고 연금으로 일부를 메웁니다. 한 사람이 떠난 뒤에는 생활비를 설정 비율로 줄이고, 남은 사람은 \'본인 연금 + 유족연금의 30%\'와 \'유족연금\' 중 큰 쪽을 받는다고 봅니다. 세금·건강보험료·주택(전세보증금 포함)은 반영하지 않은 단순 시뮬레이션이며 투자 결과를 보장하지 않습니다.</div>';
+      + '<div class="text-[11px] text-slate-400 leading-relaxed">※ 한 사람만 은퇴한 기간에는 은퇴한 사람의 소득 몫만큼 저축이 줄고, 생활비는 남은 근로소득으로 충당한다고 가정해요. 두 사람이 모두 은퇴하면 자산에서 생활비를 꺼내 쓰고 연금으로 일부를 메워요. 한 사람이 떠난 뒤에는 생활비를 설정 비율로 줄이고, 남은 사람은 \'본인 연금 + 유족연금의 30%\'와 \'유족연금\' 중 큰 쪽을 받는다고 봐요. 세금·건강보험료·주택(전세보증금 포함)은 반영하지 않은 단순 시뮬레이션이며 투자 결과를 보장하지 않아요.</div>';
     var cv = u.$('q-chart');
     if (window.Chart && cv) {
       if (chartInst) { try { chartInst.destroy(); } catch (e) {} }
@@ -92,7 +92,7 @@
         options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + u.K(c.parsed.y); } } } }, scales: { y: { ticks: { callback: function (v) { return (v / 1e8).toFixed(1) + '억'; } } } } } });
     }
   };
-  R.auto = function () { setForm(R.defaults()); R.run(true); u.toast('가계부 데이터로 나이·연금·자산·저축·생활비를 채웠습니다.'); };
+  R.auto = function () { setForm(R.defaults()); R.run(true); u.toast('가계부 데이터로 나이·연금·자산·저축·생활비를 채웠어요.'); };
 
   App.views.add({
     id: 'retire', order: 100, title: '부부 은퇴자금 시뮬레이터', nav: { label: '부부 은퇴자금 시뮬레이터', icon: 'fa-umbrella-beach', color: 'text-rose-400' },
@@ -100,10 +100,10 @@
       var inp = function (f) { return u.field('q-' + f[0], f[1], { money: !!f[2], on: 'App.retire.run(1)' }); };
       var col = function (title, icon, list, cls) { return '<div class="p-4 rounded-xl border space-y-3 ' + cls + '"><div class="font-bold text-slate-800 text-xs"><i class="fa-solid ' + icon + ' mr-1.5"></i>' + title + '</div><div class="grid grid-cols-2 gap-3">' + list.map(inp).join('') + '</div></div>'; };
       el.innerHTML = '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex flex-wrap justify-between items-center gap-3 pb-3 border-b border-slate-100"><div><h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-umbrella-beach text-rose-500 mr-2"></i>부부 은퇴자금 시뮬레이터</h3>'
-        + '<p class="text-xs text-slate-400 mt-0.5">두 사람의 나이·은퇴 시기·연금 개시를 따로 넣고, 한 사람이 먼저 떠난 뒤의 생활비와 유족연금까지 반영합니다.</p></div>'
+        + '<p class="text-xs text-slate-400 mt-0.5">두 사람의 나이·은퇴 시기·연금 개시를 따로 넣고, 한 사람이 먼저 떠난 뒤의 생활비와 유족연금까지 반영해요.</p></div>'
         + '<button onclick="App.retire.auto()" class="text-xs bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-2 rounded-lg"><i class="fa-solid fa-rotate mr-1"></i>가계부 데이터로 자동 채우기</button></div>'
         + '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' + col(u.esc(C.nm('H')), 'fa-user text-sky-600', PA, 'bg-sky-50/50 border-sky-200') + col(u.esc(C.nm('W')), 'fa-user text-rose-600', PB, 'bg-rose-50/50 border-rose-200') + col('가계 공통', 'fa-house text-slate-600', PH, 'bg-slate-50 border-slate-200') + '</div>'
-        + '<div class="text-[11px] text-slate-400">자동 채우기: 나이는 [설정 › 부부 재무 규칙]의 출생연도, 연금은 명의별 \'국민연금\' 자산, 준비자산은 예적금·연금계좌·투자 합계(전세보증금 제외), 저축액은 선저축 목표(없으면 최근 3개월 평균 잉여)에서 가져옵니다.</div></div>'
+        + '<div class="text-[11px] text-slate-400">자동 채우기: 나이는 [설정 › 부부 재무 규칙]의 출생연도, 연금은 명의별 \'국민연금\' 자산, 준비자산은 예적금·연금계좌·투자 합계(전세보증금 제외), 저축액은 선저축 목표(없으면 최근 3개월 평균 잉여)에서 가져와요.</div></div>'
         + '<div id="q-out" class="space-y-4"></div>';
       setForm(Object.assign({}, R.defaults(), db().retire2 || {}));
       R.run(false);
