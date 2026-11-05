@@ -73,7 +73,7 @@ window.App = window.App || {};
     return '<div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1"><div class="h-full ' + cls + '" style="width:' + Math.max(0, Math.min(100, p || 0)) + '%"></div></div>';
   };
   u.statCell = function (t, v, sub, cls) {
-    return '<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 min-w-0"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-lg font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div>'
+    return '<div class="py-2.5 border-t border-slate-100 min-w-0"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-lg font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div>'
       + (sub ? '<div class="text-[11px] text-slate-400 mt-0.5 leading-snug">' + sub + '</div>' : '') + '</div>';
   };
 

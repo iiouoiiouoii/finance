@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-05 11:46 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-05 11:50 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -366,6 +366,60 @@ button.bg-slate-900.text-white:hover, button.bg-slate-800.text-white:hover { bac
 /* 명의 꼬리표 : 색 대신 회색 글자로 차분하게 */
 .own-badge { background: #F2F4F6 !important; color: #6B7684 !important; border: 0 !important; font-weight: 600 !important; font-size: 11.5px !important; }
 
+/* =========================================================
+   평평한 화면 : 회색 바탕 위 흰 상자(카드)를 없애고, 흰 바탕에 구역을 얇은 줄로만 나눈다
+   ========================================================= */
+body { background: #fff; }
+.card { background: transparent; border-radius: 0; padding: 1.5rem 0; border-bottom: 1px solid #EEF0F2; }
+body.fc-m .card { padding: 1.25rem 0; border-radius: 0; }
+#view-dashboard > * + *, .home-col, .home-grid { gap: 0 !important; }
+#view-dashboard > * + * { margin-top: 0 !important; }
+.view.space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0 !important; }
+.home-grid { column-gap: 3rem !important; }
+.view > .grid, .view > div > .grid { row-gap: 0 !important; }
+.view .grid.gap-5 { column-gap: 3rem; row-gap: 0; }
+body.fc-m .gap-5, body.fc-m .gap-6 { gap: 0 !important; }
+.big { font-size: 30px; }
+body.fc-m .big { font-size: 26px; }
+.card-h h3 { font-size: 16px; }
+
+/* 상자 안의 작은 회색 상자들도 걷어낸다 */
+.kv { gap: 0; border-top: 1px solid #F2F4F6; border-bottom: 1px solid #F2F4F6; }
+.kv > div { background: none; border-radius: 0; padding: .75rem 0; }
+.kv > div + div { padding-left: 1rem; border-left: 1px solid #F2F4F6; }
+body.fc-m .kv > div { padding: .7rem 0; }
+body.fc-m .kv > div + div { padding-left: .75rem; }
+.todo { background: none; border-radius: 0; border-top: 1px solid #F2F4F6; }
+.todo + .todo { margin-top: 0; }
+.todo:hover { background: #F9FAFB; }
+.todo-main { padding-left: 0; border-radius: 0; }
+.todo-x { border-radius: 0; }
+.todo .dotc { background: #F2F4F6 !important; }
+details.fold > summary, details.fold > .fold-body { background: none; border-radius: 0 !important; padding-left: 0; padding-right: 0; }
+details.fold { border-bottom: 1px solid #EEF0F2; }
+body.fc-m details.fold > summary, body.fc-m details.fold > .fold-body { padding-left: 0; padding-right: 0; }
+.it { border-radius: 0; padding-left: 0; padding-right: 0; }
+.it:hover { background: none; }
+.it:active { background: #F9FAFB; }
+#txn-list.card { padding: 0 !important; }
+#txn-bar.card { padding: .75rem 0 1rem !important; }
+.txn-row, .txn-day, .txn-all, body.fc-m .txn-row, body.fc-m .txn-day, body.fc-m .txn-all { padding-left: 0; padding-right: 0; }
+.txn-row:hover { background: #F9FAFB; }
+
+/* 예전 화면들의 흰 상자 · 그림자 · 테두리 */
+#content .bg-white.rounded-xl, #content .bg-white.rounded-2xl, #content .view > .bg-white, #content .view > div > .bg-white { background: transparent !important; box-shadow: none !important; border-width: 0 0 1px 0 !important; border-color: #EEF0F2 !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+#content .shadow-sm { box-shadow: none !important; }
+
+/* 바탕이 흰색이 되었으니 위쪽 버튼들은 옅은 회색으로 */
+.mon-sw, .hdr-chip, .hdr-icon { background: #F2F4F6; }
+.hdr-chip:hover { background: #E5E8EB; }
+.mon-sw > button:hover { background: #E5E8EB; }
+#sidebar { border-right-color: #EEF0F2; }
+body.fc-m #content { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+body.fc-m header { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+/* 예전 화면의 회색 테두리 상자 : 배경·테두리를 빼고 글자만 */
+#content .bg-slate-50.border.border-slate-200, #content .bg-slate-50.rounded-xl, #content .bg-slate-50.rounded-lg { background: none !important; border-width: 1px 0 0 0 !important; border-color: #F2F4F6 !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
@@ -473,7 +527,7 @@ window.App = window.App || {};
     return '<div class="h-1.5 bg-slate-100 rounded-full overflow-hidden mt-1"><div class="h-full ' + cls + '" style="width:' + Math.max(0, Math.min(100, p || 0)) + '%"></div></div>';
   };
   u.statCell = function (t, v, sub, cls) {
-    return '<div class="p-3 rounded-lg bg-slate-50 border border-slate-200 min-w-0"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-lg font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div>'
+    return '<div class="py-2.5 border-t border-slate-100 min-w-0"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-lg font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div>'
       + (sub ? '<div class="text-[11px] text-slate-400 mt-0.5 leading-snug">' + sub + '</div>' : '') + '</div>';
   };
 
