@@ -118,10 +118,11 @@
           + '<div class="col-span-2"><div class="track" style="height:6px"><div class="fill" style="width:' + Math.min(100, rate) + '%;background:' + (rate >= 100 ? '#E5484D' : rate >= 80 ? '#E8A10A' : '#0B7A57') + '"></div></div>'
           + '<div class="flex justify-between text-[13px] mt-1.5"><span class="text-slate-500">쓴 돈 ' + won(sv) + '</span>' + (bv ? '<span class="' + (rem < 0 ? 'text-red-600 font-semibold' : 'text-slate-600') + '">' + (rem < 0 ? won(-rem) + ' 넘음' : won(rem) + ' 남음') + '</span>' : '') + '</div></div></div>';
       }).join('');
-      el.innerHTML = '<div class="card"><div class="sub">' + m + '월 예산</div>'
+      el.innerHTML = '<div class="card"><div class="sub">' + m + '월 예산 · 고정비까지 모든 항목</div>'
         + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub mt-1">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
           + '<div class="track mt-4"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
           : '<div class="big mt-1">아직 예산이 없어요</div><p class="sub mt-2">아래 항목에 금액을 넣거나, 지난달 쓴 만큼으로 한 번에 채울 수 있어요.</p>')
+        + (tot ? '<p class="text-[13px] text-slate-500 mt-3">홈의 “남은 생활비”는 여기서 월세 · 관리비 같은 고정비를 뺀 금액이라 숫자가 달라요.</p>' : '')
         + (bs.inst ? '<p class="text-[13px] text-slate-500 mt-3">카드 할부 ' + won(bs.inst) + '은 이미 정해진 돈이라 고정비처럼 따로 묶고, 예산에는 넣지 않았어요.</p>' : '')
         + plan + '</div>'
         + '<div class="card"><div class="card-h"><h3>항목별 예산</h3><button onclick="App.budget.recommend()" class="btn sec" style="height:38px"><i class="fa-solid fa-wand-magic-sparkles"></i>지난달 쓴 만큼 채우기</button></div>'

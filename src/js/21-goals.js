@@ -20,16 +20,22 @@
   }
   function goalCard(g) {
     var i = C.goalInfo(g), s = status(g, i), thisM = u.sum(db().transactions.filter(function (t) { return t.goalId === g.id && String(t.date).indexOf(u.nowM()) === 0; }), function (t) { return t.amount; });
-    return '<div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5"><div class="flex justify-between items-start gap-2"><div class="font-bold text-slate-800 text-sm">' + u.esc(g.name) + ' ' + C.badge(g.owner || 'J') + '</div><span class="text-[10px] font-bold px-2 py-0.5 rounded-full ' + s[1] + '">' + s[0] + '</span></div>'
-      + '<div class="flex justify-between text-xs"><span>' + u.K(i.saved) + ' / <b>' + u.K(i.tgt) + '</b></span><span class="font-bold text-accent">' + i.pc.toFixed(0) + '%</span></div>' + u.bar(i.pc, 'bg-accent')
-      + '<div class="grid grid-cols-3 gap-2 text-[11px] text-slate-500"><div>남은 금액<br><b class="text-slate-800">' + u.K(i.rem) + '</b></div><div>기한<br><b class="text-slate-800">' + (g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월)' : '') : '-') + '</b></div>'
-      + '<div>필요 월 적립<br><b class="text-slate-800">' + (i.req == null ? '-' : u.K(i.req)) + '</b>' + (g.plan ? '<br>계획 ' + u.K(g.plan) : '') + '</div></div>'
-      + '<div class="flex items-center gap-2 pt-1 border-t border-slate-200/70"><span class="text-[11px] text-slate-500">이번 달 ' + u.K(thisM) + '</span>'
-      + '<input id="goal-c-' + g.id + '" type="text" data-money placeholder="' + (g.plan ? u.n0(g.plan) : '적립액') + '" class="ml-auto w-28 border border-slate-300 rounded-lg px-2 py-1.5 text-xs text-right">'
-      + '<button onclick="App.goals.contrib(' + g.id + ')" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-semibold">적립</button>'
-      + '<button onclick="App.goals.edit(' + g.id + ')" class="text-slate-400 hover:text-accent text-xs p-1" title="수정"><i class="fa-solid fa-pen-to-square"></i></button>'
-      + '<button onclick="App.goals.remove(' + g.id + ')" class="text-slate-400 hover:text-red-500 text-xs p-1" title="삭제"><i class="fa-solid fa-trash-can"></i></button></div></div>';
+    var warn = /부족|필요|경과/.test(s[0]);
+    return u.item({
+      tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name),
+      meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월 남음)' : '') + '까지' : '기한 없음', i.req == null ? '' : '매달 ' + u.K(i.req) + ' 필요']),
+      val: i.pc.toFixed(0) + '%', valSub: u.KS(i.saved) + ' / ' + u.KS(i.tgt),
+      bar: i.pc, barColor: i.rem <= 0 ? '#0B7A57' : warn ? '#E8A10A' : '#0B7A57',
+      note: s[0] + (g.plan ? ' · 계획 월 ' + u.K(g.plan) : '') + ' · 이번 달 ' + u.K(thisM) + ' 모음', noteCls: warn ? 'warn' : '',
+      act: '<input id="goal-c-' + g.id + '" type="text" data-money inputmode="numeric" placeholder="' + (g.plan ? u.n0(g.plan) : '모은 금액') + '" class="w-32 border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1.5 text-[14px] text-right">'
+        + '<button onclick="App.goals.contrib(' + g.id + ')" class="it-btn">모았어요</button>'
+    });
   }
+  G.menu = function (id) {
+    var g = u.byId(db().goals, id); if (!g) return;
+    u.sheet(u.esc(g.name), [['수정 (금액 · 기한 · 계획)', 'App.goals.edit(' + id + ')'], ['삭제', 'App.goals.remove(' + id + ')', 1]]);
+  };
+
   G.form = function (g) {
     var f = u.$('goal-form'); if (!f) return;
     f.classList.remove('hidden');
@@ -108,12 +114,11 @@
     id: 'goals', order: 90, title: '목표 · 선저축 계획', nav: { label: '목표 · 선저축 계획', icon: 'fa-flag-checkered', color: 'text-emerald-400' },
     render: function (el) {
       var list = (db().goals || []).slice().sort(function (a, b) { return (a.due || '9999') < (b.due || '9999') ? -1 : 1; });
-      el.innerHTML = presaveHtml(App.state.month)
-        + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="flex justify-between items-center pb-3 border-b border-slate-100 gap-3"><div><h3 class="font-bold text-slate-800 text-base"><i class="fa-solid fa-flag-checkered text-accent mr-2"></i>목표별 자금</h3>'
-        + '<p class="text-xs text-slate-400 mt-0.5">목표마다 기한과 월 적립 계획을 두고, [적립]을 누르면 이체 내역에 기록되어 진행률이 올라갑니다.</p></div>'
-        + '<button onclick="App.goals.form(null)" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-4 py-2 rounded-lg shrink-0"><i class="fa-solid fa-plus text-amber-400 mr-1"></i>목표 추가</button></div>'
-        + '<div id="goal-form" class="hidden p-4 bg-amber-50/60 border border-amber-200 rounded-xl"></div>'
-        + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + (list.length ? list.map(goalCard).join('') : '<div class="text-xs text-slate-400 p-6 text-center border border-dashed border-slate-300 rounded-xl lg:col-span-2">아직 목표가 없습니다. 주택 자금, 자녀 교육비, 차량 교체, 여행처럼 쓸 곳이 정해진 돈을 목표로 등록해 보세요.</div>') + '</div></div>';
+      el.innerHTML = '<div class="card"><div class="card-h"><h3>목표별로 모으기</h3><button onclick="App.goals.form(null)" class="btn sec" style="height:38px">+ 목표 추가</button></div>'
+        + '<div id="goal-form" class="hidden p-4 bg-slate-50 rounded-xl mb-3"></div>'
+        + '<div class="list-wrap">' + (list.length ? list.map(goalCard).join('') : '<div class="empty">아직 목표가 없어요. 집 마련, 아이 교육비, 차 바꾸기, 여행처럼 쓸 곳이 정해진 돈을 목표로 넣어 보세요.</div>') + '</div>'
+        + (list.length ? '<p class="text-[13px] text-slate-500 mt-3">금액을 적고 [모았어요]를 누르면 이체 내역에 기록되고 진행률이 올라가요. 목표를 누르면 고치거나 지울 수 있어요.</p>' : '') + '</div>'
+        + presaveHtml(App.state.month);
     }
   });
 })(window.App);

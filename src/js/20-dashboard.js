@@ -40,11 +40,11 @@
     if (r.cur && r.hasData) {
       note = r.diff >= 0 ? '오늘까지 기준보다 <b>' + won(r.diff) + '</b> 덜 썼어요.' : '오늘까지 기준보다 <b class="text-red-600">' + won(-r.diff) + '</b> 더 썼어요.';
       if (r.perDay != null) note += r.perDay > 0 ? ' 남은 기간엔 하루 <b>' + won(r.perDay) + '</b>씩 쓰면 돼요.' : ' 남은 기간엔 지출을 멈춰야 예산을 지킬 수 있어요.';
-    } else if (r.past) note = '예산 ' + won(V) + ' 중 ' + Math.round(r.est / V * 100) + '%를 썼어요.';
+    }
     else if (!r.hasData) note = '아직 이번 달 지출 기록이 없어요. 카드 앱에서 이용내역을 복사해 넣어 보세요.';
     return '<div class="card" style="order:1"><div class="flex items-center justify-between gap-2"><div class="sub">' + label + ' 생활비' + (r.past ? '' : ' · 고정비 빼고') + '</div>' + pill + '</div>'
       + '<div class="big mt-1">' + (over ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div>'
-      + '<div class="sub mt-1">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
+      + '<div class="sub mt-1">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요 (' + Math.round(r.est / V * 100) + '%)' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
       + '<div class="track mt-5"><div class="fill" style="width:' + p + '%;background:' + (fast || over ? '#E5484D' : warn ? '#E8A10A' : '#0B7A57') + '"></div>' + (r.cur ? '<div class="mark" style="left:calc(' + m + '% - 1px)" title="오늘까지 써도 되는 선"></div>' : '') + '</div>'
       + (r.cur ? '<div class="relative h-5 text-[12px] text-slate-500 mt-1.5"><span class="absolute left-0">1일</span><span class="absolute whitespace-nowrap" style="left:' + Math.max(14, Math.min(86, m)) + '%;transform:translateX(-50%)">오늘 기준선</span><span class="absolute right-0">' + r.D + '일</span></div>' : '')
       + (note ? '<p class="text-[14.5px] text-slate-700 mt-3 leading-relaxed">' + note + '</p>' : '') + btns + '</div>';
@@ -92,7 +92,7 @@
     return '<div class="card" style="order:2"><div class="card-h"><h3>지금 할 일' + (L.length ? ' <span class="text-accent">' + L.length + '</span>' : '') + '</h3>'
       + (hid ? '<button onclick="App.dash.restore()" class="more">끝낸 일 ' + hid + '개 다시 보기</button>' : '') + '</div>'
       + (L.length ? L.map(function (t) {
-        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main"><span class="dotc bg-white text-slate-500"><i class="fa-solid ' + t[0] + '"></i></span><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><span class="go">' + t[4] + '</span></button>'
+        return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main"><span class="dotc bg-white text-slate-500"><i class="fa-solid ' + t[0] + '"></i></span><span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
           + '<button onclick="App.dash.done(\'' + u.esc(t[5]).replace(/'/g, '') + '\')" class="todo-x" title="끝냈어요 (숨기기)" aria-label="끝냈어요"><i class="fa-regular fa-circle-check"></i></button></div>';
       }).join('') : '<div class="empty">' + (hid ? '할 일을 모두 끝냈어요.' : '지금은 할 일이 없어요.') + '</div>') + '</div>';
   }

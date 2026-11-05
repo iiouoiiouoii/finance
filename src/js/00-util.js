@@ -129,6 +129,28 @@ window.App = window.App || {};
     return '<div class="flex justify-between items-center"><h3 id="' + titleId + '" class="text-lg font-bold text-slate-900">' + title + '</h3>'
       + '<button type="button" onclick="App.u.close(\'' + closeId + '\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>';
   };
+  /* ---------- 목록 한 줄 · 누르면 나오는 메뉴 ----------
+     화면마다 연필 · 휴지통 · 색 꼬리표가 붙던 것을 하나로 : 줄을 누르면 할 수 있는 일이 아래에서 올라온다.
+     o = { tap, title, meta, val, valCls, valSub, bar(0~100), barColor, note, noteCls, act(줄 안 버튼 html) } */
+  u.item = function (o) {
+    return '<div class="it" role="button" tabindex="0" onclick="' + o.tap + '" onkeydown="if(event.key===\'Enter\')this.click()">'
+      + '<div class="it-t"><b>' + o.title + '</b>' + (o.meta ? '<small>' + o.meta + '</small>' : '') + '</div>'
+      + '<div class="it-v">' + (o.val != null ? '<b class="' + (o.valCls || '') + '">' + o.val + '</b>' : '') + (o.valSub ? '<small>' + o.valSub + '</small>' : '') + '</div>'
+      + (o.bar != null ? '<div class="it-bar"><i style="width:' + Math.max(0, Math.min(100, o.bar)) + '%;background:' + (o.barColor || '#0B7A57') + '"></i></div>' : '')
+      + (o.note ? '<div class="it-note ' + (o.noteCls || '') + '">' + o.note + '</div>' : '')
+      + (o.act ? '<div class="it-act" onclick="event.stopPropagation()">' + o.act + '</div>' : '') + '</div>';
+  };
+  u.dots = function (arr) { return arr.filter(function (x) { return x; }).join(' · '); };
+  /* acts = [[글자, 실행할 코드, 위험(빨강)], ...] — 빈 값은 건너뛴다 */
+  u.sheet = function (title, acts, sub) {
+    var m = u.$('sheet-modal'); if (m) m.remove();
+    u.modal('sheet-modal', '<div class="flex justify-between items-start gap-2"><div class="min-w-0"><h3 class="text-lg font-bold text-slate-900 truncate">' + title + '</h3>' + (sub ? '<p class="text-[13px] text-slate-500 mt-0.5">' + sub + '</p>' : '') + '</div>'
+      + '<button type="button" onclick="App.u.close(\'sheet-modal\')" class="w-9 h-9 -mr-2 -mt-1 text-slate-400 hover:text-slate-700 shrink-0" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
+      + '<div class="sheet-list">' + acts.filter(Boolean).map(function (a) {
+        return '<button type="button" onclick="App.u.close(\'sheet-modal\');' + a[1] + '" class="sheet-btn' + (a[2] ? ' bad' : '') + '">' + a[0] + '</button>';
+      }).join('') + '</div>', 420);
+    u.open('sheet-modal');
+  };
   u.open = function (id) { var m = u.$(id); if (m) m.classList.remove('hidden'); };
   u.close = function (id) { var m = u.$(id); if (m) m.classList.add('hidden'); };
   u.isOpen = function (id) { var m = u.$(id); return !!m && !m.classList.contains('hidden'); };

@@ -135,22 +135,28 @@
       + '<p class="text-[13px] text-slate-500 mt-3 leading-relaxed">금액은 지금까지 기록한 내역 기준이에요. 은행 내역을 넣으면 카드값이 나간 것을 찾아 자동으로 "냈어요"가 돼요.' + (noDay.length ? ' 결제일이 없는 카드: ' + noDay.map(function (c) { return '<button onclick="App.cards.open(' + c.id + ')" class="more">' + u.esc(c.name) + '</button>'; }).join(' ') : '') + '</p></div>';
   }
 
+  CD.menu = function (id) {
+    var c = u.byId(db().cards, id); if (!c) return;
+    u.sheet(u.esc(c.name), [['수정 (결제일 · 실적 · 혜택)', 'App.cards.open(' + id + ')'], ['삭제', 'App.cards.remove(' + id + ')', 1]], u.dots([u.esc(c.owner || ''), u.esc(c.type)]));
+  };
+
   App.views.add({
     id: 'cards', order: 30, title: '카드', nav: { label: '카드', icon: 'fa-credit-card' },
     render: function (el) {
       var mo = App.state.month;
       var grid = db().cards.length ? db().cards.map(function (card) {
-        var spent = spentOf(card, mo), rate = card.targetAmount > 0 ? Math.min(Math.round(spent / card.targetAmount * 100), 100) : 0;
-        return '<div class="bg-slate-50 rounded-2xl p-4 space-y-3"><div class="flex justify-between items-start gap-2"><div class="min-w-0"><div class="text-[13px] text-slate-500">' + u.esc(card.owner || '') + ' · ' + u.esc(card.type) + (C.isCredit(card) ? ' · 매달 ' + card.payDay + '일 결제' : '') + '</div>'
-          + '<h4 class="font-bold text-slate-900 text-[15px] truncate">' + u.esc(card.name) + '</h4></div>'
-          + '<div class="shrink-0"><button onclick="App.cards.open(' + card.id + ')" class="fx-ic" aria-label="고치기"><i class="fa-solid fa-pen"></i></button><button onclick="App.cards.remove(' + card.id + ')" class="fx-ic" aria-label="삭제"><i class="fa-solid fa-trash-can"></i></button></div></div>'
-          + '<div><div class="flex justify-between text-[13px]"><span class="text-slate-500">' + (+mo.slice(5)) + '월 사용</span><span class="font-semibold text-slate-900">' + u.n0(spent) + '원' + (card.targetAmount ? ' <span class="text-slate-400 font-normal">/ 실적 ' + u.n0(card.targetAmount) + '원</span>' : '') + '</span></div>'
-          + (card.targetAmount ? '<div class="track mt-1.5" style="height:6px"><div class="fill" style="width:' + rate + '%;background:' + (rate >= 100 ? '#0B7A57' : '#E8A10A') + '"></div></div>' : '') + '</div>'
-          + (card.benefits ? '<div class="text-[13px] text-slate-500 truncate">혜택: ' + u.esc(card.benefits) + '</div>' : '') + '</div>';
-      }).join('') : '<div class="md:col-span-3 empty">등록된 카드가 없어요.</div>';
+        var spent = spentOf(card, mo), rate = card.targetAmount > 0 ? Math.min(Math.round(spent / card.targetAmount * 100), 100) : null;
+        return u.item({
+          tap: 'App.cards.menu(' + card.id + ')', title: u.esc(card.name),
+          meta: u.dots([u.esc(card.owner || ''), u.esc(card.type), C.isCredit(card) && card.payDay ? '매달 ' + card.payDay + '일 결제' : '']),
+          val: u.n0(spent) + '원', valSub: card.targetAmount ? '실적 ' + u.n0(card.targetAmount) + '원' + (rate >= 100 ? ' 채움' : '') : (+mo.slice(5)) + '월 사용',
+          bar: rate, barColor: rate >= 100 ? '#0B7A57' : '#E8A10A',
+          note: card.benefits ? '혜택: ' + u.esc(card.benefits) : ''
+        });
+      }).join('') : '<div class="empty">등록된 카드가 없어요.</div>';
       el.innerHTML = billsHtml()
         + '<div class="card"><div class="card-h"><h3>내 카드</h3><button onclick="App.cards.open()" class="btn sec" style="height:38px">+ 카드 등록</button></div>'
-        + '<div class="grid grid-cols-1 md:grid-cols-3 gap-3">' + grid + '</div></div>'
+        + '<div class="list-wrap">' + grid + '</div></div>'
         + '<div class="card space-y-4">' + optimizerHtml() + '</div>';
     }
   });

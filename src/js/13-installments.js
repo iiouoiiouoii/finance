@@ -19,61 +19,55 @@
   I.panelHtml = function () {
     if (C.autoCloseInstallments()) App.store.save({ quiet: true });
     var s = split(), v = view(), won = u.K, esc = u.esc;
-    function tab(key, label, n) {
-      var on = v === key;
-      return '<button onclick="App.inst.setView(\'' + key + '\')" class="flex-1 py-1.5 text-[11px] font-bold rounded-lg border transition ' + (on ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400') + '">' + label + ' <span class="' + (on ? 'text-white/80' : 'text-slate-400') + '">' + n + '</span></button>';
-    }
-    var h = '<li class="pt-1"><div class="flex gap-1.5 mb-2">' + tab('ACTIVE', '진행 중', s.act.length) + tab('SETTLED', '완납', s.set.length) + '</div></li>';
+    var h = '<div class="seg mb-3"><button onclick="App.inst.setView(\'ACTIVE\')" class="' + (v === 'ACTIVE' ? 'on' : '') + '">진행 중 ' + s.act.length + '</button>'
+      + '<button onclick="App.inst.setView(\'SETTLED\')" class="' + (v === 'SETTLED' ? 'on' : '') + '">다 갚음 ' + s.set.length + '</button></div>';
     if (v === 'ACTIVE') {
-      var charge = 0, unapplied = 0, endM = null;
-      s.act.forEach(function (x) { if (x.c.status === 'ACTIVE') { charge += x.c.thisCharge; if (!applied(x.i.id, s.cm)) unapplied += x.c.thisCharge; } if (!endM || u.mIdx(x.c.lastMonth) > u.mIdx(endM)) endM = x.c.lastMonth; });
+      if (!s.act.length) return h + '<div class="empty">진행 중인 할부가 없어요.</div>';
+      var charge = 0, unapplied = 0;
+      s.act.forEach(function (x) { if (x.c.status === 'ACTIVE') { charge += x.c.thisCharge; if (!applied(x.i.id, s.cm)) unapplied += x.c.thisCharge; } });
       var remaining = u.sum(s.act, function (x) { return x.c.remaining; }), next = u.sum(s.act, function (x) { return x.c.nextMonthCharge; });
-      h += '<li class="py-2"><div class="grid grid-cols-3 gap-2 text-center">'
-        + '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2"><div class="text-[10px] text-slate-500">이번 달 청구</div><div class="text-sm font-bold text-red-500">' + won(charge) + '</div></div>'
-        + '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2"><div class="text-[10px] text-slate-500">미상환 잔액</div><div class="text-sm font-bold text-slate-800">' + won(remaining) + '</div></div>'
-        + '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2"><div class="text-[10px] text-slate-500">다음 달 청구</div><div class="text-sm font-bold text-slate-700">' + won(next) + '</div></div></div>'
-        + (endM ? '<div class="text-[11px] text-slate-500 mt-2">마지막 할부 종료 <strong class="text-slate-700">' + endM + '</strong></div>' : '')
-        + (unapplied > 0 ? '<button onclick="App.inst.applyActive()" class="mt-2 w-full text-[11px] bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-semibold py-1.5 rounded-lg">진행 중 할부 ' + won(unapplied) + ' 지출에 일괄 반영</button>' : '');
-      var pend = s.set.filter(function (x) { return x.c.thisCharge > 0 && !applied(x.i.id, s.cm); });
-      if (pend.length) h += '<div class="mt-2 text-[10px] bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-2">이번 달 완납된 ' + pend.length + '건의 당월 청구분이 지출에 반영되지 않았습니다. 완납 탭에서 확인하세요.</div>';
-      h += '</li>';
-      h += s.act.length ? s.act.map(function (x) {
-        var i = x.i, c = x.c, badge = c.status === 'SCHEDULED'
-          ? '<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 font-bold text-[10px]">' + esc(i.startMonth) + ' 시작</span>'
-          : '<span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold text-[10px]">' + c.roundNo + '/' + i.months + '회차</span>';
-        var btn = c.status === 'ACTIVE' && c.thisCharge > 0 ? (applied(i.id, s.cm) ? '<span class="text-[10px] text-emerald-600 font-semibold"><i class="fa-solid fa-check"></i> 반영됨</span>'
-          : '<button onclick="App.inst.apply(' + i.id + ')" class="text-[10px] bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">당월 반영</button>') : '';
-        return '<li class="py-2.5 border-t border-slate-100"><div class="flex justify-between items-center gap-2"><div class="flex items-center gap-1.5 min-w-0">' + badge + '<span class="font-bold text-slate-800 text-xs truncate">' + esc(i.title) + '</span></div>'
-          + '<div class="flex items-center gap-1 shrink-0"><button onclick="App.inst.detail(' + i.id + ')" class="text-slate-400 hover:text-slate-700 text-[11px] p-1"><i class="fa-solid fa-list-ul"></i></button>'
-          + '<button onclick="App.inst.open(' + i.id + ')" class="text-slate-400 hover:text-accent text-[11px] p-1"><i class="fa-solid fa-pen-to-square"></i></button>'
-          + '<button onclick="App.inst.remove(' + i.id + ')" class="text-slate-300 hover:text-red-500 text-[11px] p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>'
-          + '<div class="flex justify-between text-[11px] text-slate-500 mt-1"><span>월 ' + won(c.thisCharge || c.nextMonthCharge) + ' · 잔여 <strong class="text-slate-700">' + c.remainRounds + '회</strong></span><span>잔액 <strong class="text-red-500">' + won(c.remaining) + '</strong></span></div>'
-          + '<div class="w-full h-1.5 bg-slate-100 rounded-full mt-1.5 overflow-hidden"><div class="h-full ' + (c.status === 'SCHEDULED' ? 'bg-slate-400' : 'bg-accent') + ' rounded-full" style="width:' + c.progress + '%"></div></div>'
-          + '<div class="flex justify-between items-center mt-1.5"><span class="text-[10px] text-slate-400">' + esc(i.payment || '') + ' · ' + esc(c.lastMonth) + ' 종료</span>'
-          + '<div class="flex items-center gap-1">' + btn + '<button onclick="App.inst.openPrepay(' + i.id + ')" class="text-[10px] bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold px-1.5 py-0.5 rounded">선결제</button>'
-          + '<button onclick="App.inst.settle(' + i.id + ')" class="text-[10px] bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 font-semibold px-1.5 py-0.5 rounded">완납처리</button></div></div></li>';
-      }).join('') : '<li class="py-5 text-center text-slate-400 text-xs border-t border-slate-100">진행 중인 할부가 없습니다.' + (s.set.length ? '<br><span class="text-[11px]">완납 탭에 ' + s.set.length + '건이 보관되어 있습니다.</span>' : '') + '</li>';
-    } else if (!s.set.length) {
-      h += '<li class="py-5 text-center text-slate-400 text-xs">완납된 할부가 아직 없습니다.</li>';
-    } else {
-      var early = s.set.filter(function (x) { return x.c.earlyClosed; });
-      h += '<li class="py-2"><div class="grid grid-cols-3 gap-2 text-center">'
-        + '<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-2"><div class="text-[10px] text-emerald-700">완납 건수</div><div class="text-sm font-bold text-emerald-800">' + s.set.length + '건</div></div>'
-        + '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2"><div class="text-[10px] text-slate-500">완납 원금 누계</div><div class="text-sm font-bold text-slate-800">' + won(u.sum(s.set, function (x) { return x.i.total; })) + '</div></div>'
-        + '<div class="bg-slate-50 border border-slate-200 rounded-lg p-2"><div class="text-[10px] text-slate-500">조기상환 / 절감</div><div class="text-sm font-bold text-blue-600">' + early.length + '건 · ' + won(u.sum(s.set, function (x) { return x.c.savedInterest; })) + '</div></div></div></li>';
-      h += s.set.map(function (x) {
-        var i = x.i, c = x.c;
-        return '<li class="py-2.5 border-t border-slate-100"><div class="flex justify-between items-center gap-2"><div class="flex items-center gap-1.5 min-w-0">'
-          + (c.earlyClosed ? '<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-bold text-[10px]">조기상환</span>' : '<span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]">정상완납</span>')
-          + '<span class="font-bold text-slate-600 text-xs truncate line-through decoration-slate-300">' + esc(i.title) + '</span></div><div class="flex items-center gap-1 shrink-0">'
-          + '<button onclick="App.inst.detail(' + i.id + ')" class="text-slate-400 hover:text-slate-700 text-[11px] p-1"><i class="fa-solid fa-list-ul"></i></button>'
-          + ((i.prepayments || []).length ? '<button onclick="App.inst.reopen(' + i.id + ')" class="text-[10px] bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-semibold px-1.5 py-0.5 rounded">되돌리기</button>' : '')
-          + '<button onclick="App.inst.remove(' + i.id + ')" class="text-slate-300 hover:text-red-500 text-[11px] p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>'
-          + '<div class="flex justify-between text-[11px] text-slate-500 mt-1"><span>' + esc(i.closedMonth || c.lastMonth) + ' 완납 · 총 ' + i.months + '회</span><span>원금 <strong class="text-slate-700">' + won(i.total || 0) + '</strong></span></div>'
-          + (c.earlyClosed && c.savedInterest > 0 ? '<div class="text-[10px] text-emerald-600 mt-1">조기상환으로 수수료 ' + won(c.savedInterest) + ' 절감</div>' : '') + '</li>';
-      }).join('');
+      h += '<div class="kv mb-2"><div><small>이번 달</small><b>' + u.KS(charge) + '</b></div><div><small>다음 달</small><b>' + u.KS(next) + '</b></div><div><small>남은 돈</small><b>' + u.KS(remaining) + '</b></div></div>';
+      if (unapplied > 0) h += '<div class="flex items-center justify-between gap-3 py-2 text-[14px] text-slate-600"><span>이번 달 할부금 ' + won(unapplied) + '이 아직 내역에 없어요.</span><button onclick="App.inst.applyActive()" class="it-btn">넣기</button></div>';
+      h += '<div class="list-wrap">' + s.act.map(function (x) {
+        var i = x.i, c = x.c, sched = c.status === 'SCHEDULED';
+        return u.item({
+          tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title),
+          meta: u.dots([sched ? esc(i.startMonth) + ' 시작' : c.roundNo + '/' + i.months + '회', '월 ' + won(c.thisCharge || c.nextMonthCharge), esc(c.lastMonth) + ' 끝']),
+          val: won(c.remaining), valSub: c.remainRounds + '회 남음',
+          bar: c.progress, barColor: sched ? '#B0B8C1' : '#0B7A57'
+        });
+      }).join('') + '</div>';
+      return h;
     }
-    return h;
+    if (!s.set.length) return h + '<div class="empty">다 갚은 할부가 아직 없어요.</div>';
+    return h + '<div class="list-wrap">' + s.set.map(function (x) {
+      var i = x.i, c = x.c;
+      return u.item({
+        tap: 'App.inst.menu(' + i.id + ')', title: esc(i.title),
+        meta: u.dots([esc(i.closedMonth || c.lastMonth) + ' 다 갚음', i.months + '개월', c.earlyClosed ? '미리 갚음' : '']),
+        val: won(i.total || 0), valSub: c.earlyClosed && c.savedInterest > 0 ? '수수료 ' + won(c.savedInterest) + ' 아낌' : '',
+        valCls: 'text-slate-500'
+      });
+    }).join('') + '</div>';
+  };
+  /* 할부 한 줄을 누르면 : 할 수 있는 일 */
+  I.menu = function (id) {
+    var i = get(id); if (!i) return;
+    var c = C.calcInst(i, App.state.month);
+    if (c.settled) return u.sheet(u.esc(i.title), [
+      ['갚는 일정 보기', 'App.inst.detail(' + id + ')'],
+      (i.prepayments || []).length ? ['다 갚음 되돌리기', 'App.inst.reopen(' + id + ')'] : null,
+      ['삭제', 'App.inst.remove(' + id + ')', 1]
+    ], '다 갚은 할부');
+    var canApply = c.status === 'ACTIVE' && c.thisCharge > 0 && !applied(id, App.state.month);
+    u.sheet(u.esc(i.title), [
+      canApply ? ['이번 달 ' + u.K(c.thisCharge) + ' 내역에 넣기', 'App.inst.apply(' + id + ')'] : null,
+      ['갚는 일정 보기', 'App.inst.detail(' + id + ')'],
+      ['일부 미리 갚기', 'App.inst.openPrepay(' + id + ')'],
+      ['남은 돈 한 번에 다 갚았어요', 'App.inst.settle(' + id + ')'],
+      ['수정', 'App.inst.open(' + id + ')'],
+      ['삭제', 'App.inst.remove(' + id + ')', 1]
+    ], c.roundNo + '/' + i.months + '회 · 남은 돈 ' + u.K(c.remaining));
   };
 
   /* ---------- 당월 반영 ---------- */

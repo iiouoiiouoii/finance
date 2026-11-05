@@ -82,28 +82,22 @@
     if (p.stale) warn.push(p.stale + '개 종목의 현재가가 2주 이상 갱신되지 않았습니다.');
     if (warn.length) head += '<div class="text-[10px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 leading-relaxed">' + warn.map(function (w) { return '· ' + w; }).join('<br>') + '</div>';
     head += '</div>';
-    return head + p.items.map(function (x) {
-      var inv = x.inv, d = x.d, w = p.value > 0 ? d.value / p.value : 0;
-      return '<div class="p-3 bg-white border border-slate-200 rounded-xl space-y-1.5 mb-2"><div class="flex justify-between items-center gap-2"><div class="flex items-center gap-1.5 min-w-0 flex-wrap">'
-        + '<span class="inline-block w-1.5 h-1.5 rounded-full ' + (CLS_COLOR[inv.assetClass] || 'bg-slate-400') + '"></span><span class="font-bold text-slate-800 text-xs truncate">' + u.esc(inv.name) + '</span>'
-        + '<span class="text-[9px] font-semibold bg-slate-50 border border-slate-200 text-slate-500 px-1 rounded">' + u.esc(inv.assetClass || '기타') + '</span>'
-        + (d.cur !== 'KRW' ? '<span class="text-[9px] font-bold bg-indigo-50 border border-indigo-200 text-indigo-600 px-1 rounded">' + u.esc(d.cur) + '</span>' : '')
-        + (d.closed ? '<span class="text-[9px] font-bold bg-slate-100 border border-slate-200 text-slate-500 px-1 rounded">청산</span>' : '') + ' ' + C.badge(inv.owner || 'J', !inv.owner) + '</div>'
-        + '<div class="flex items-center gap-1 shrink-0"><button onclick="App.invest.trade(' + inv.id + ')" class="text-[10px] bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-semibold px-1.5 py-0.5 rounded">거래기록</button>'
-        + '<button onclick="App.invest.open(' + inv.id + ')" class="text-slate-400 hover:text-accent text-xs p-1"><i class="fa-solid fa-pen-to-square"></i></button></div></div>'
-        + '<div class="flex justify-between items-end"><div class="text-[11px] text-slate-500 space-y-0.5">'
-        + (d.mode === 'QTY' ? '<div>' + qtyTxt(d.qty) + '주 · 평단 ' + priceTxt(d.avg, d.cur) + ' → 현재 ' + priceTxt(d.cp || d.avg, d.cur) + '</div>' : '<div>원금 ' + won(d.cost) + (d.dca ? ' · 월 ' + won(Math.round(num(inv.monthly) * d.fx)) + ' 적립' : '') + '</div>')
-        + '<div>비중 ' + pct(w, 1) + (inv.targetWeight != null ? ' / 목표 ' + inv.targetWeight + '%' : '') + (inv.broker ? ' · ' + u.esc(inv.broker) : '') + '</div></div>'
-        + '<div class="text-right"><div class="text-sm font-bold text-slate-800">' + won(d.value) + '</div><div class="text-[11px] font-bold ' + sgn(d.unreal) + '">' + sgnTxt(d.unreal) + ' (' + (d.roi >= 0 ? '+' : '') + pct(d.roi, 2) + ')</div></div></div>'
-        + '<div class="flex flex-wrap gap-x-3 gap-y-0.5 pt-1 border-t border-slate-100 text-[10px] text-slate-500">'
-        + (d.dividend ? '<span>배당 <strong class="text-blue-600">' + won(d.dividend) + '</strong> (YoC ' + pct(d.yoc, 2) + ')</span>' : '')
-        + (d.realized ? '<span>실현 <strong class="' + sgn(d.realized) + '">' + sgnTxt(d.realized) + '</strong></span>' : '')
-        + (d.fee ? '<span>비용 <strong class="text-slate-600">' + won(d.fee) + '</strong></span>' : '')
-        + (d.dividend || d.realized || d.fee ? '<span>총수익률 <strong class="' + sgn(d.totalPnl) + '">' + (d.totalRoi >= 0 ? '+' : '') + pct(d.totalRoi, 2) + '</strong></span>' : '')
-        + (d.cagr !== null ? '<span>CAGR <strong class="' + sgn(d.cagr) + '">' + (d.cagr >= 0 ? '+' : '') + pct(d.cagr, 2) + '</strong>' + (d.dca ? ' (적립식 보정)' : '') + '</span>' : '')
-        + (d.stale != null && d.stale >= 14 ? '<span class="text-amber-600">현재가 ' + d.stale + '일 전</span>' : '') + '</div></div>';
-    }).join('');
+    return head + '<div class="list-wrap">' + p.items.map(function (x) {
+      var inv = x.inv, d = x.d, w = p.value > 0 ? d.value / p.value : 0, pnlCol = sgn(d.unreal);
+      var extra = u.dots([d.dividend ? '배당 ' + won(d.dividend) : '', d.realized ? '실현 ' + sgnTxt(d.realized) : '', d.cagr !== null ? '연평균 ' + (d.cagr >= 0 ? '+' : '') + pct(d.cagr, 1) : '', d.stale != null && d.stale >= 14 ? '현재가 ' + d.stale + '일 전 값' : '']);
+      return u.item({
+        tap: 'App.invest.menu(' + inv.id + ')', title: u.esc(inv.name),
+        meta: u.dots([u.esc(inv.assetClass || '기타'), d.cur !== 'KRW' ? u.esc(d.cur) : '', d.closed ? '청산' : '', inv.broker ? u.esc(inv.broker) : '', '비중 ' + pct(w, 0), u.esc(C.short(inv.owner || 'J'))]),
+        val: won(d.value), valSub: '<span class="' + pnlCol + ' font-semibold">' + sgnTxt(d.unreal) + ' (' + (d.roi >= 0 ? '+' : '') + pct(d.roi, 1) + ')</span>',
+        note: (d.mode === 'QTY' ? qtyTxt(d.qty) + '주 · 평단 ' + priceTxt(d.avg, d.cur) + ' → 현재 ' + priceTxt(d.cp || d.avg, d.cur) : '원금 ' + won(d.cost) + (d.dca ? ' · 월 ' + won(Math.round(num(inv.monthly) * d.fx)) + ' 적립' : '')) + (extra ? '<br>' + extra : '')
+      });
+    }).join('') + '</div>';
   };
+  V.menu = function (id) {
+    var inv = u.byId(db().investments, id); if (!inv) return;
+    u.sheet(u.esc(inv.name), [['사고팔기 · 배당 기록', 'App.invest.trade(' + id + ')'], ['수정 (현재가 · 수량)', 'App.invest.open(' + id + ')']], u.esc(inv.assetClass || ''));
+  };
+
 
   /* ---------- 종목 등록 · 수정 ---------- */
   function modal() {

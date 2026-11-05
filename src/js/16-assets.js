@@ -15,19 +15,27 @@
     return '<div class="mt-1 pt-1.5 border-t border-slate-200/60 text-[11px] text-slate-500">' + txt + '</div>';
   }
   A.listHtml = function () {
-    if (!db().assets.length) return '<div class="text-center text-slate-400 text-xs py-4">등록된 자산이 없습니다.</div>';
-    return db().assets.map(function (a) {
-      var d = C.depositDetail(a), badge = { '파킹': 'bg-purple-100 text-purple-800 border-purple-200', '예금': 'bg-emerald-100 text-emerald-800 border-emerald-200', '적금': 'bg-blue-100 text-blue-800 border-blue-200' }[d.subType] || (C.EXT[d.subType] ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : 'bg-slate-100 text-slate-700 border-slate-200');
-      var extra = '';
-      if (d.subType === '예금' || d.subType === '적금') extra = '<div class="mt-1 pt-1.5 border-t border-slate-200/60 flex justify-between text-[11px]"><span class="text-slate-500">' + d.months + '개월 만기수령 (세후):</span><strong class="text-emerald-700">' + u.K(d.maturityAmount) + '</strong></div>';
-      else if (d.subType === '파킹') extra = '<div class="mt-1 pt-1.5 border-t border-slate-200/60 flex justify-between text-[11px]"><span class="text-slate-500">연 세후이자 (월 약 ' + u.K(d.monthlyPostTaxInterest) + '):</span><strong class="text-purple-700">' + u.K(d.postTaxInterest) + '</strong></div>';
-      return '<div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1 hover:border-slate-300 transition"><div class="flex justify-between items-start"><div class="flex items-center gap-1.5 flex-wrap">'
-        + '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-white text-slate-600">' + u.esc(d.bankName) + '</span><span class="text-[10px] font-bold px-1.5 py-0.5 rounded border ' + badge + '">' + u.esc(d.subType) + '</span>'
-        + '<span class="font-bold text-slate-800 text-xs">' + u.esc(d.name) + '</span> ' + C.badge(a.owner || 'J', !a.owner) + '</div>'
-        + '<div class="flex items-center gap-1"><button onclick="App.assets.open(' + a.id + ')" class="text-slate-400 hover:text-accent text-xs p-1"><i class="fa-solid fa-pen-to-square"></i></button><button onclick="App.assets.remove(' + a.id + ')" class="text-slate-300 hover:text-red-500 text-xs p-1"><i class="fa-solid fa-trash-can"></i></button></div></div>'
-        + '<div class="flex justify-between items-center text-xs pt-1"><span class="text-slate-500">' + (d.subType === '적금' ? '월 납입금' : d.subType === '국민연금' ? '누적 납부액' : '현재 잔액') + ': <strong class="text-slate-800">' + u.K(d.subType === '국민연금' ? a.pensionPaid : d.amount) + '</strong></span>'
-        + (C.EXT[d.subType] === 'NPS' || C.EXT[d.subType] === 'LEASE' ? '' : '<span class="text-slate-500">이율: <strong class="text-accent">' + d.rate + '%</strong></span>') + '</div>' + extra + extLine(a) + '</div>';
-    }).join('');
+    if (!db().assets.length) return '<div class="empty">등록된 통장 · 예적금 · 연금이 없어요.</div>';
+    return '<div class="list-wrap">' + db().assets.map(function (a) {
+      var d = C.depositDetail(a), t = d.subType, nps = t === '국민연금', note = '';
+      if (t === '예금' || t === '적금') note = d.months + '개월 뒤 받을 돈(세후) ' + u.K(d.maturityAmount);
+      else if (t === '파킹') note = '1년 이자(세후) ' + u.K(d.postTaxInterest) + ' · 한 달 약 ' + u.K(d.monthlyPostTaxInterest);
+      else if (t === '국민연금') note = '예상 월 ' + u.K(a.pensionMonthly) + ' · ' + (a.pensionStartAge || 65) + '세부터 · 순자산엔 안 넣어요';
+      else if (t === '전세보증금') note = (a.leaseEnd ? '계약 만기 ' + u.esc(a.leaseEnd) + ' · ' : '') + '비상금에선 빼요';
+      else if (t === 'ISA') note = '올해 넣은 돈 ' + u.K(a.annualContrib) + ' / 한도 2,000만';
+      else if (C.EXT[t]) note = u.dots([t !== '퇴직연금' ? '올해 넣은 돈 ' + u.K(a.annualContrib) : '', a.pensionMonthly ? '예상 월 ' + u.K(a.pensionMonthly) + ' (' + (a.pensionStartAge || 65) + '세~)' : '', '비상금에선 빼요']);
+      return u.item({
+        tap: 'App.assets.menu(' + a.id + ')', title: u.esc(d.name),
+        meta: u.dots([u.esc(d.bankName), u.esc(t), u.esc(C.short(a.owner || 'J'))]),
+        val: (t === '적금' ? '월 ' : '') + u.K(nps ? a.pensionPaid : d.amount),
+        valSub: nps ? '낸 돈 누적' : (C.EXT[t] === 'LEASE' ? '' : '연 ' + d.rate + '%'),
+        note: note
+      });
+    }).join('') + '</div>';
+  };
+  A.menu = function (id) {
+    var a = u.byId(db().assets, id); if (!a) return;
+    u.sheet(u.esc(a.name), [['수정 (잔액 · 이율)', 'App.assets.open(' + id + ')'], ['삭제', 'App.assets.remove(' + id + ')', 1]], u.dots([u.esc(a.bankName), u.esc(a.subType)]));
   };
 
   /* ---------- 등록 · 수정 모달 ---------- */
@@ -125,7 +133,7 @@
   function curTab() { var c = null; try { c = localStorage.getItem('FC19_ASSET_TAB'); } catch (e) {} return c == null ? '0' : c; }
   A.tab = function (k) { try { localStorage.setItem('FC19_ASSET_TAB', String(k)); } catch (e) {} App.ui.render(); };
   function panel(i, title, icon, btn, body) {
-    return '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-3" data-panel="' + i + '"><div class="flex justify-between items-center pb-2 border-b border-slate-100"><h4 class="font-bold text-slate-800 flex items-center gap-1.5">' + icon + ' ' + title + '</h4>' + btn + '</div>' + body + '</div>';
+    return '<div class="card" data-panel="' + i + '"><div class="card-h"><h3>' + title + '</h3>' + btn + '</div>' + body + '</div>';
   }
   App.views.add({
     id: 'assets', order: 50, title: '자산 · 대출', nav: { label: '자산 · 대출', icon: 'fa-building-columns' },
@@ -136,10 +144,10 @@
       var nps = u.sum(db().assets.filter(function (a) { return a.subType === '국민연금'; }), function (a) { return a.pensionMonthly; });
       var cell = function (t, v, sub, cls) { return '<div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm"><div class="text-[11px] font-semibold text-slate-500">' + t + '</div><div class="text-base font-extrabold ' + (cls || 'text-slate-800') + '">' + v + '</div><div class="text-[10px] text-slate-400 mt-0.5">' + sub + '</div></div>'; };
       var panels = [
-        panel(0, '예적금 · 연금 · 보증금', '<i class="fa-solid fa-wallet text-emerald-600"></i>', '<button onclick="App.assets.open()" class="text-xs text-accent font-semibold hover:underline">+ 등록</button>', '<div id="asset-items-list" class="asset-list space-y-2.5 text-xs">' + A.listHtml() + '</div>'),
-        panel(1, '부동산 자산', '<i class="fa-solid fa-building text-amber-600"></i>', '<button onclick="App.re.open()" class="text-xs text-amber-600 font-semibold hover:underline">+ 등록</button>', '<div id="realestate-items-grid" class="asset-list space-y-2 text-xs">' + App.re.listHtml() + '</div>'),
-        panel(2, '투자 평가액', '<i class="fa-solid fa-chart-line text-blue-600"></i>', '<button onclick="App.invest.open()" class="text-xs text-accent font-semibold hover:underline">+ 종목 추가</button>', '<div id="investment-items-list" class="asset-list space-y-2 text-xs">' + App.invest.listHtml() + '</div>'),
-        panel(3, '대출 및 부채', '<i class="fa-solid fa-hand-holding-dollar text-red-500"></i>', '<button onclick="App.loans.open()" class="text-xs text-red-500 font-semibold hover:underline">+ 부채 등록</button>', '<div id="liability-items-list" class="asset-list space-y-2.5 text-xs">' + App.loans.listHtml() + '</div>')
+        panel(0, '예적금 · 연금 · 보증금', '<i class="fa-solid fa-wallet text-emerald-600"></i>', '<button onclick="App.assets.open()" class="btn sec" style="height:38px">+ 등록</button>', '<div id="asset-items-list" class="asset-list">' + A.listHtml() + '</div>'),
+        panel(1, '부동산 자산', '<i class="fa-solid fa-building text-amber-600"></i>', '<button onclick="App.re.open()" class="btn sec" style="height:38px">+ 등록</button>', '<div id="realestate-items-grid" class="asset-list">' + App.re.listHtml() + '</div>'),
+        panel(2, '투자 평가액', '<i class="fa-solid fa-chart-line text-blue-600"></i>', '<button onclick="App.invest.open()" class="btn sec" style="height:38px">+ 종목 추가</button>', '<div id="investment-items-list" class="asset-list">' + App.invest.listHtml() + '</div>'),
+        panel(3, '대출 및 부채', '<i class="fa-solid fa-hand-holding-dollar text-red-500"></i>', '<button onclick="App.loans.open()" class="btn sec" style="height:38px">+ 부채 등록</button>', '<div id="liability-items-list" class="asset-list">' + App.loans.listHtml() + '</div>')
       ];
       var won = function (v) { return u.n0(v) + '원'; };
       el.innerHTML = '<div class="card"><div class="sub">우리 집 순자산</div><div id="asset-summary-networth" class="big mt-1' + (n.nw < 0 ? ' text-red-600' : '') + '">' + won(n.nw) + '</div>'

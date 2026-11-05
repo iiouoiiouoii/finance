@@ -122,6 +122,7 @@
     }).sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
   }
   T.setFilter = function (k, v) { F[k] = v; if (k === 'q') { renderRows(); return; } App.ui.render(); };
+  var PICK = false;   /* 여러 건 고치기 모드일 때만 체크칸을 보인다 */
   function selIds() { return Object.keys(SEL).filter(function (k) { return SEL[k]; }).map(Number); }
 
   var WD = ['일', '월', '화', '수', '목', '금', '토'];
@@ -133,7 +134,7 @@
     var meta = [tr ? u.esc(t.subcategory || '이체') : u.esc(t.category) + (t.subcategory ? ' · ' + u.esc(t.subcategory) : ''), u.esc(t.payment || '')].filter(Boolean).join(' · ')
       + (own !== 'J' ? ' · ' + u.esc(C.short(own)) + ' 개인' : '') + (t.installmentId ? ' · <span class="text-amber-700 font-semibold">할부</span>' : '') + lock;
     return '<div data-id="' + t.id + '" class="txn-row' + (on ? ' sel' : '') + '" onclick="App.txn.rowClick(event,' + t.id + ')">'
-      + '<input type="checkbox" class="txn-ck" aria-label="선택" ' + (on ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="App.txn.sel(' + t.id + ',this.checked)">'
+      + (PICK ? '<input type="checkbox" class="txn-ck" aria-label="선택" ' + (on ? 'checked' : '') + ' onclick="event.stopPropagation()" onchange="App.txn.sel(' + t.id + ',this.checked)">' : '')
       + '<span class="txn-dot" style="background:' + col + '"></span>'
       + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + meta + '</small></div>'
       + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : 'text-slate-900') + '">' + (inc ? '+' : tr ? '' : '-') + u.n0(t.amount) + '원</div></div>';
@@ -153,17 +154,19 @@
       html += rowHtml(t);
     });
     var allOn = list.length > 0 && list.every(function (t) { return SEL[t.id]; });
-    box.innerHTML = list.length ? '<label class="txn-all"><input type="checkbox" id="txn-all" ' + (allOn ? 'checked' : '') + ' onchange="App.txn.selAll(this.checked)"> 보이는 내역 모두 선택</label>' + html
+    box.innerHTML = list.length ? (PICK ? '<div class="flex items-center justify-between pr-4"><label class="txn-all"><input type="checkbox" id="txn-all" ' + (allOn ? 'checked' : '') + ' onchange="App.txn.selAll(this.checked)"> 보이는 내역 모두 선택</label><button onclick="App.txn.pick(false)" class="text-[14px] font-semibold text-accent">완료</button></div>' : '') + html
       : '<div class="empty py-12">' + (F.q || nFilters() ? '조건에 맞는 내역이 없어요.' : '이 달에는 내역이 없어요.<br><button onclick="App.ui.addMenu()" class="btn pri mt-4">기록하기</button>') + '</div>';
     var inc = C.sumType(list, 'INCOME'), exp = C.sumType(list, 'EXPENSE');
-    u.$('txn-sum').innerHTML = '<b class="text-slate-900">' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + ' <span class="mx-1 text-slate-300">|</span> 들어온 돈 <b class="text-accent">' + u.n0(inc) + '원</b> <span class="mx-1 text-slate-300">|</span> 나간 돈 <b class="text-slate-900">' + u.n0(exp) + '원</b>';
+    u.$('txn-sum').innerHTML = '<div class="flex items-start justify-between gap-3"><div class="leading-relaxed"><b class="text-slate-900">' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + ' · 나간 돈 <b class="text-slate-900 whitespace-nowrap">' + u.n0(exp) + '원</b>' + (inc ? ' · 들어온 돈 <b class="text-accent whitespace-nowrap">' + u.n0(inc) + '원</b>' : '') + '</div>'
+      + (list.length && !PICK ? '<button onclick="App.txn.pick(true)" class="shrink-0 text-[13.5px] font-semibold text-slate-500 hover:text-slate-900">여러 건 고치기</button>' : '') + '</div>';
     renderBulk();
   }
   function nFilters() { return (F.type !== 'ALL') + (F.pay !== 'ALL') + (F.owner !== 'ALL'); }
   var showF = false;
   T.toggleFilters = function () { showF = !showF; var f = u.$('txn-filters'); if (f) f.classList.toggle('hidden', !showF); };
   T.resetFilters = function () { F.type = F.pay = F.owner = 'ALL'; F.q = ''; App.ui.render(); };
-  T.rowClick = function (e, id) { if (e.target.closest('button,input,a,i,label')) return; if (selIds().length) { T.sel(id, !SEL[id]); return; } T.openEdit(id); };
+  T.rowClick = function (e, id) { if (e.target.closest('button,input,a,i,label')) return; if (PICK || selIds().length) { T.sel(id, !SEL[id]); return; } T.openEdit(id); };
+  T.pick = function (on) { PICK = !!on; if (!on) SEL = {}; renderRows(); };
   T.sel = function (id, on) {
     SEL[id] = on;
     var tr = document.querySelector('#txn-list .txn-row[data-id="' + id + '"]');
@@ -171,7 +174,7 @@
     renderBulk();
   };
   T.selAll = function (on) { filtered().forEach(function (t) { SEL[t.id] = on; }); renderRows(); };
-  T.clearSel = function () { SEL = {}; renderRows(); };
+  T.clearSel = function () { SEL = {}; PICK = false; renderRows(); };
 
   /* ---------- 일괄 편집 ---------- */
   function renderBulk() {

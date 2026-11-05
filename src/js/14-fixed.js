@@ -148,15 +148,22 @@
 
   function itemHtml(f) {
     var applied = Fx.isApplied(f), own = f.owner && f.owner !== 'J';
-    var btn = applied ? '<span class="fx-done"><i class="fa-solid fa-check"></i> 들어감</span>'
-      : '<button onclick="App.fixed.apply(' + f.id + ')" class="fx-put">넣기</button>';
-    var auto = '<label class="fx-auto' + (f.auto ? ' on' : '') + '" title="날짜가 지나면 이 달 내역에 알아서 들어갑니다"><input type="checkbox" ' + (f.auto ? 'checked' : '') + ' onchange="App.fixed.setAuto(' + f.id + ', this.checked)"> 매달 자동</label>';
-    return '<li class="fx-row"><div class="min-w-0 flex-1"><div class="font-semibold text-[15px] text-slate-900 truncate">' + u.esc(f.name) + (own ? ' <span class="text-[13px] font-normal text-slate-500">· ' + u.esc(C.short(f.owner)) + '</span>' : '') + '</div>'
-      + '<div class="text-[13px] text-slate-500 mt-0.5">매달 ' + f.day + '일 · ' + u.esc(f.payment || '계좌이체') + '</div></div>'
-      + '<div class="text-right shrink-0"><div class="font-bold text-[15px] ' + (isInc(f) ? 'text-accent' : 'text-slate-900') + '">' + (isInc(f) ? '+' : '') + u.n0(f.amount) + '원</div></div>'
-      + '<div class="fx-act">' + auto + btn
-      + '<button onclick="App.fixed.open(' + f.id + ')" class="fx-ic" aria-label="고치기"><i class="fa-solid fa-pen"></i></button><button onclick="App.fixed.remove(' + f.id + ')" class="fx-ic" aria-label="삭제"><i class="fa-solid fa-trash-can"></i></button></div></li>';
+    return u.item({
+      tap: 'App.fixed.menu(' + f.id + ')', title: u.esc(f.name),
+      meta: u.dots(['매달 ' + f.day + '일', u.esc(f.payment || '계좌이체'), own ? u.esc(C.short(f.owner)) : '', f.auto ? '자동' : '']),
+      val: (isInc(f) ? '+' : '') + u.n0(f.amount) + '원', valCls: isInc(f) ? 'text-accent' : '',
+      valSub: applied ? '<span class="it-ok"><i class="fa-solid fa-check"></i> 들어감</span>' : '<button onclick="event.stopPropagation();App.fixed.apply(' + f.id + ')" class="it-btn mt-1">넣기</button>'
+    });
   }
+  Fx.menu = function (id) {
+    var f = u.byId(db().fixedExpenses, id); if (!f) return;
+    u.sheet(u.esc(f.name), [
+      Fx.isApplied(f) ? null : ['이번 달 내역에 넣기', 'App.fixed.apply(' + id + ')'],
+      [f.auto ? '매달 자동으로 넣기 끄기' : '매달 자동으로 넣기 켜기', 'App.fixed.setAuto(' + id + ',' + (!f.auto) + ')'],
+      ['수정', 'App.fixed.open(' + id + ')'],
+      ['삭제', 'App.fixed.remove(' + id + ')', 1]
+    ], '매달 ' + f.day + '일 · ' + u.n0(f.amount) + '원' + (f.auto ? ' · 자동으로 들어가요' : ''));
+  };
 
   App.views.add({
     id: 'fixed', order: 40, title: '고정비 · 할부', nav: { label: '고정비 · 할부', icon: 'fa-rotate' },
@@ -168,14 +175,14 @@
         + '<div class="card"><div class="card-h"><h3>매달 나가고 들어오는 돈</h3><button onclick="App.fixed.open()" class="btn sec" style="height:38px">+ 추가</button></div>'
         + (unapplied ? '<div class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-50 text-[14px] text-amber-900 mb-2"><span>' + m + '월 내역에 아직 안 들어간 항목이 <b>' + unapplied + '건</b> 있어요.</span><button onclick="App.fixed.applyAll()" class="btn pri" style="height:38px">모두 넣기</button></div>'
           : (list.length ? '<div class="text-[14px] text-slate-500 mb-2">' + m + '월 내역에 모두 들어갔어요.</div>' : ''))
-        + (list.length ? (exp.length ? '<div class="fx-sec"><span>나가는 돈</span><span>' + sum(exp) + '</span></div><ul>' + exp.map(itemHtml).join('') + '</ul>' : '')
-          + (inc.length ? '<div class="fx-sec"><span>들어오는 돈</span><span class="text-accent">+' + sum(inc) + '</span></div><ul>' + inc.map(itemHtml).join('') + '</ul>' : '')
+        + (list.length ? (exp.length ? '<div class="fx-sec"><span>나가는 돈</span><span>' + sum(exp) + '</span></div><div class="list-wrap">' + exp.map(itemHtml).join('') + '</div>' : '')
+          + (inc.length ? '<div class="fx-sec"><span>들어오는 돈</span><span class="text-accent">+' + sum(inc) + '</span></div><div class="list-wrap">' + inc.map(itemHtml).join('') + '</div>' : '')
           : '<div class="empty">월세 · 관리비 · 통신비 · 보험 · 월급처럼 매달 같은 돈을 등록해 두면, 버튼 한 번(또는 자동으로) 이 달 내역에 들어가요.</div>')
         + '</div>'
         + '<div class="card"><div class="card-h"><h3>카드 할부</h3><button onclick="App.inst.open()" class="btn sec" style="height:38px">+ 할부 등록</button></div>'
         + '<label class="fx-auto' + (ia.on ? ' on' : '') + ' mb-2" title="진행 중인 할부의 이 달 청구분을 청구일이 지나면 지출로 넣습니다"><input type="checkbox" ' + (ia.on ? 'checked' : '') + ' onchange="App.inst.setAuto(this.checked)"> 매달 청구분을 자동으로 지출에 넣기</label>'
-        + '<ul id="installment-list" class="divide-y divide-slate-100 text-xs space-y-1">' + App.inst.panelHtml() + '</ul></div></div>'
-        + (rec.length ? '<div class="card"><div class="card-h"><h3>반복해서 나간 돈</h3><span class="text-[13px] text-slate-500">고정비로 등록하면 매달 자동으로 넣을 수 있어요</span></div>'
+        + '<div id="installment-list">' + App.inst.panelHtml() + '</div></div></div>'
+        + (rec.length ? '<div class="card"><div class="card-h" style="margin-bottom:.25rem"><h3>반복해서 나간 돈</h3></div><p class="text-[13px] text-slate-500 mb-2">고정비로 등록하면 매달 자동으로 넣을 수 있어요.</p>'
           + rec.map(function (r, i) {
             return '<div class="row"><div class="t"><b>' + u.esc(r.memo) + '</b><small>지난 ' + r.count + '번 · 평균 ' + u.n0(r.avg) + '원</small></div><button onclick="App.fixed.addRecommended(' + i + ')" class="btn sec" style="height:36px">고정비로 등록</button></div>';
           }).join('') + '</div>' : '');

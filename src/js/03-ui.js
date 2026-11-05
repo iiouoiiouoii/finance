@@ -102,7 +102,7 @@
     var mo = App.state.month, monthly = NAV[cur] ? NAV[cur][3] : 1, now = u.nowM();
     var items = ui.headerItems.slice().sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1](); }).join('');
     box.innerHTML = (monthly ? '<div class="mon-sw"><button onclick="App.ui.shiftMonth(-1)" aria-label="이전 달"><i class="fa-solid fa-chevron-left"></i></button>'
-      + '<label class="mon-lb" onclick="App.ui.pickMonth(event)">' + u.monthLabel(mo) + '<input type="month" id="global-month-picker" value="' + mo + '" onchange="App.ui.setMonth(this.value)" tabindex="-1" aria-hidden="true"></label>'
+      + '<label class="mon-lb" onclick="App.ui.pickMonth(event)">' + (document.body.classList.contains('fc-m') && mo.slice(0, 4) === now.slice(0, 4) ? (+mo.slice(5)) + '월' : u.monthLabel(mo)) + '<input type="month" id="global-month-picker" value="' + mo + '" onchange="App.ui.setMonth(this.value)" tabindex="-1" aria-hidden="true"></label>'
       + '<button onclick="App.ui.shiftMonth(1)" aria-label="다음 달"><i class="fa-solid fa-chevron-right"></i></button></div>'
       + (mo !== now ? '<button onclick="App.ui.setMonth(\'' + now + '\')" class="hdr-chip">이번 달</button>' : '') : '')
       + items
