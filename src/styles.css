@@ -641,3 +641,16 @@ body.fc-m #view-assets .grid.lg\:grid-cols-4 { grid-template-columns: minmax(0, 
 /* 창 닫기 버튼이 창 밖으로 삐져나오지 않게 */
 .modal-box .-mr-2 { margin-right: 0; }
 .modal-box input.text-2xl { font-size: 24px !important; font-weight: 700; min-height: 56px; }
+
+/* ---------- 아이폰 Safari 보정 ---------- */
+/* 날짜 · 달 입력칸 : 아이폰은 기본 최소 폭이 있어 옆 칸을 덮는다 → 칸 폭에 맞추고 왼쪽 정렬 */
+input[type=date], input[type=month], input[type=time] { -webkit-appearance: none; appearance: none; display: block; width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; text-align: left; line-height: 1.2; }
+input[type=date]::-webkit-date-and-time-value, input[type=month]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.grid > div, .grid > label { min-width: 0; }
+/* 입력칸 글자 16px 이상 : 아이폰은 이보다 작으면 누를 때 화면을 확대한다 */
+body.fc-m .modal-box input:not([type=checkbox]):not([type=radio]), body.fc-m .modal-box select, body.fc-m .modal-box textarea,
+body.fc-m #content input:not([type=checkbox]):not([type=radio]), body.fc-m #content select, body.fc-m #content textarea { font-size: 16px !important; }
+body.fc-m .modal-box input.text-2xl:not([type=checkbox]):not([type=radio]) { font-size: 24px !important; }
+/* 아래 창 : Safari 아래 주소 막대에 버튼이 가리지 않게 높이를 줄이고 아래 여백을 넉넉히, 끝까지 올려 볼 수 있게 */
+body.fc-m .app-modal > div { max-height: calc(100dvh - 56px) !important; }
+@media (display-mode: browser) { body.fc-m .app-modal > div { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; } }
