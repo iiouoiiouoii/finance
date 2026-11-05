@@ -654,3 +654,76 @@ body.fc-m .modal-box input.text-2xl:not([type=checkbox]):not([type=radio]) { fon
 /* 아래 창 : Safari 아래 주소 막대에 버튼이 가리지 않게 높이를 줄이고 아래 여백을 넉넉히, 끝까지 올려 볼 수 있게 */
 body.fc-m .app-modal > div { max-height: calc(100dvh - 56px) !important; }
 @media (display-mode: browser) { body.fc-m .app-modal > div { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; } }
+
+/* =====================================================================
+   아기자기 테마 — 산호색 하나를 주인공으로, 아이콘만 파스텔, 모서리는 더 둥글게, 제목은 둥근 글씨(Jua)
+   ===================================================================== */
+:root { --pri: #FF7E67; --pri-d: #F2654D; --pri-l: #FFF1EC; --green: #2BB673; --red: #F04452; }
+body { background: #FFFDFB; }
+#app-header, main, #content { background: #FFFDFB; }
+#sidebar { background: #FFFDFB; }
+
+/* 둥근 글씨 : 화면 제목 · 구역 제목 · 큰 숫자 */
+#page-title, .card-h h3, .rp-h h3, .rp-top h2, .modal-box h3, .big, .kv b, details.fold > summary { font-family: 'Jua', 'Pretendard', sans-serif !important; font-weight: 400 !important; letter-spacing: 0 !important; }
+#page-title { font-size: 24px !important; }
+body.fc-m #page-title { font-size: 22px !important; }
+.big, body.fc-m .big, .rp-hero .big, body.fc-m .rp-hero .big { font-size: 32px !important; line-height: 1.2; }
+.card-h h3, .rp-h h3 { font-size: 19px !important; }
+.kv b, .rp-kv b { font-size: 19px !important; }
+.modal-box h3 { font-size: 21px !important; }
+
+/* 주 색 : 버튼 · + · 진행 막대 · 선택된 탭 */
+.btn.pri, .it-btn, .hdr-add, .mb-add, .modal-box button.bg-accent, .modal-box button[type=submit], .modal-box button.bg-slate-800, .modal-box button.bg-slate-900,
+button.bg-slate-900.text-white, button.bg-slate-800.text-white { background: var(--pri) !important; border-color: var(--pri) !important; color: #fff !important; }
+.btn.pri:hover, .it-btn:hover, .hdr-add:hover { background: var(--pri-d) !important; }
+.mb-add { box-shadow: 0 8px 18px rgba(255, 126, 103, .38) !important; border-radius: 20px !important; }
+.mb-tab.on { color: var(--pri) !important; }
+.mb-tab.on span::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--pri); margin: 3px auto 0; }
+.fill[style*="#0B7A57"], .it-bar i[style*="#0B7A57"], .fill[style*="#191F28"] { background: var(--pri) !important; }
+.fill[style*="#E0464B"], .it-bar i[style*="#E0464B"] { background: var(--red) !important; }
+.track, .it-bar { background: #FFEDE8 !important; }
+.track { height: 8px !important; }
+.card[style*="order:1"] .track { height: 12px !important; }
+.track > .mark { background: #FF9F8C; width: 3px; border-radius: 2px; }
+.text-accent { color: var(--green) !important; }
+.nav-item.on { background: var(--pri-l) !important; color: var(--pri-d) !important; }
+.nav-item.on i { color: var(--pri) !important; }
+.brand-mark { background: var(--pri) !important; border-radius: 10px; }
+.seg > button.on { color: var(--pri-d) !important; }
+
+/* 할 일 개수 · 상태 뱃지 : 동글동글 */
+.card-h h3 .text-accent { background: var(--pri) !important; font-family: 'Pretendard', sans-serif; font-weight: 700; }
+.pill { border-radius: 999px !important; padding: 5px 10px !important; }
+.pill.ok { background: #E7F7EF !important; color: #1F9D60 !important; }
+.pill.warn { background: #FFF4DC !important; color: #B7791F !important; }
+.pill.bad { background: #FFECEE !important; color: var(--red) !important; }
+
+/* 파스텔 아이콘 */
+.ic { border-radius: 14px !important; }
+.ic.sm { border-radius: 12px !important; }
+.ic.t-peach { background: #FFEFE9; color: #F2654D; } .ic.t-sky { background: #EAF3FF; color: #4A86E0; } .ic.t-butter { background: #FFF5D9; color: #D39A00; }
+.ic.t-pink { background: #FFEEF4; color: #E0577F; } .ic.t-lilac { background: #F2EEFF; color: #8064D9; } .ic.t-mint { background: #E6F7EF; color: #23A86A; } .ic.t-gray { background: #F2F4F6; color: #6B7684; }
+.ic.in { background: #E6F7EF !important; color: #23A86A !important; }
+.add-opt:nth-child(1) .add-ic { background: #FFEFE9; color: #F2654D; } .add-opt:nth-child(2) .add-ic { background: #EAF3FF; color: #4A86E0; }
+.add-ic { border-radius: 16px !important; }
+.card-h h3 > i.fa-solid:first-child { color: var(--pri) !important; }
+.kv small i { color: #FFB3A5 !important; }
+
+/* 모서리 더 둥글게 */
+.btn { border-radius: 16px !important; }
+.card-h .btn, .btn[style*="height:38px"], .btn[style*="height:36px"] { border-radius: 12px !important; }
+.it-btn { border-radius: 10px !important; }
+.mon-sw, .hdr-chip, .hdr-icon { border-radius: 14px !important; background: #FFF4F0 !important; }
+.mon-sw > button, .hdr-icon, .hdr-chip { color: #E0715C !important; }
+.mon-lb { color: var(--ink) !important; }
+.fc-in, .modal-box input:not([type=checkbox]):not([type=radio]):not([type=hidden]), .modal-box select, .modal-box textarea, #content .view select:not(.flt-in), .flt-in, .flt-btn { border-radius: 14px !important; }
+.seg { border-radius: 14px !important; } .seg > button { border-radius: 11px !important; }
+body.fc-m .app-modal > div { border-top-left-radius: 28px !important; border-top-right-radius: 28px !important; }
+.modal-box { border-radius: 24px !important; }
+.todo-x:hover { color: var(--pri) !important; }
+.rp-no { background: #FFEFE9 !important; color: var(--pri-d) !important; }
+.rp-todo li.key .rp-no { background: var(--pri) !important; color: #fff !important; }
+.rp-stack i { background: var(--pri) !important; }
+.rp-stack i:nth-child(2) { opacity: .75; } .rp-stack i:nth-child(3) { opacity: .55; } .rp-stack i:nth-child(4) { opacity: .4; } .rp-stack i:nth-child(n+5) { opacity: .25; }
+.card { border-bottom-style: dashed !important; border-bottom-color: #F3E6E1 !important; }
+.kv, .kv > div + div { border-color: #F7EDE9 !important; }

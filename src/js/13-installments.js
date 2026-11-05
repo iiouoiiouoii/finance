@@ -22,7 +22,7 @@
     var h = '<div class="seg mb-3"><button onclick="App.inst.setView(\'ACTIVE\')" class="' + (v === 'ACTIVE' ? 'on' : '') + '">진행 중 ' + s.act.length + '</button>'
       + '<button onclick="App.inst.setView(\'SETTLED\')" class="' + (v === 'SETTLED' ? 'on' : '') + '">다 갚음 ' + s.set.length + '</button></div>';
     if (v === 'ACTIVE') {
-      if (!s.act.length) return h + '<div class="empty">진행 중인 할부가 없어요.</div>';
+      if (!s.act.length) return h + '<div class="empty">진행 중인 할부가 없어요. 홀가분해요 🎈</div>';
       var charge = 0, unapplied = 0;
       s.act.forEach(function (x) { if (x.c.status === 'ACTIVE') { charge += x.c.thisCharge; if (!applied(x.i.id, s.cm)) unapplied += x.c.thisCharge; } });
       var remaining = u.sum(s.act, function (x) { return x.c.remaining; }), next = u.sum(s.act, function (x) { return x.c.nextMonthCharge; });

@@ -191,5 +191,13 @@ window.App = window.App || {};
     return 'fa-receipt';
   };
   /* 회색 동그라미 아이콘 html. cls: 'in'(들어온 돈 · 초록) / 'bad'(빨강) */
-  u.ic = function (icon, cls) { return '<span class="ic' + (cls ? ' ' + cls : '') + '"><i class="fa-solid ' + icon + '"></i></span>'; };
+  /* 아이콘마다 파스텔 색 하나 (같은 종류는 늘 같은 색) */
+  var TINT = { 'fa-utensils': 'peach', 'fa-mug-hot': 'peach', 'fa-basket-shopping': 'peach', 'fa-car': 'sky', 'fa-taxi': 'sky', 'fa-bus': 'sky', 'fa-plane': 'sky',
+    'fa-house': 'butter', 'fa-wifi': 'butter', 'fa-key': 'butter', 'fa-bag-shopping': 'pink', 'fa-shirt': 'pink', 'fa-gift': 'pink',
+    'fa-film': 'lilac', 'fa-tv': 'lilac', 'fa-masks-theater': 'lilac', 'fa-person-running': 'mint', 'fa-heart-pulse': 'mint', 'fa-book': 'lilac', 'fa-graduation-cap': 'lilac',
+    'fa-piggy-bank': 'mint', 'fa-chart-line': 'sky', 'fa-umbrella': 'lilac', 'fa-briefcase': 'mint', 'fa-arrow-down': 'mint', 'fa-credit-card': 'sky', 'fa-calendar-days': 'butter',
+    'fa-hand-holding-dollar': 'peach', 'fa-building-columns': 'sky', 'fa-shield-halved': 'mint', 'fa-landmark': 'butter', 'fa-baby': 'pink', 'fa-paw': 'butter', 'fa-flag': 'pink',
+    'fa-rotate': 'mint', 'fa-triangle-exclamation': 'peach', 'fa-cart-shopping': 'pink', 'fa-cloud-arrow-up': 'sky', 'fa-pen': 'peach', 'fa-paste': 'sky', 'fa-coins': 'butter', 'fa-gem': 'lilac',
+    'fa-scale-balanced': 'sky', 'fa-receipt': 'butter', 'fa-umbrella-beach': 'mint', 'fa-arrow-right-arrow-left': 'gray' };
+  u.ic = function (icon, cls) { var t = TINT[icon] || 'gray'; return '<span class="ic t-' + t + (cls ? ' ' + cls : '') + '"><i class="fa-solid ' + icon + '"></i></span>'; };
 })(window.App);

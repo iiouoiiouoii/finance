@@ -153,7 +153,7 @@
           bar: rate, barColor: rate >= 100 ? '#0B7A57' : '#B0B8C1',
           note: card.benefits ? '혜택: ' + u.esc(card.benefits) : ''
         });
-      }).join('') : '<div class="empty">등록된 카드가 없어요.</div>';
+      }).join('') : '<div class="empty">아직 카드가 없어요 💳</div>';
       el.innerHTML = billsHtml()
         + '<div class="card"><div class="card-h"><h3>내 카드</h3><button onclick="App.cards.open()" class="btn sec" style="height:38px">+ 카드 등록</button></div>'
         + '<div class="list-wrap">' + grid + '</div></div>'

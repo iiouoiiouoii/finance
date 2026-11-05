@@ -121,7 +121,7 @@
     var row = function (fn, icon, t, d, tag) {
       return '<button onclick="App.u.close(\'add-modal\');' + fn + '" class="add-opt"><span class="add-ic"><i class="fa-solid ' + icon + '"></i></span><span class="flex-1 min-w-0"><b>' + t + (tag ? ' <em>' + tag + '</em>' : '') + '</b><small>' + d + '</small></span><i class="fa-solid fa-chevron-right text-slate-300"></i></button>';
     };
-    u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 기록할까요?</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
+    u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 적어 볼까요? ✏️</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div class="space-y-1.5">'
       + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 없는 지출 · 수입')
       + row('App.paste.open()', 'fa-paste', '여러 건 붙여넣기', '카드 앱 내역 복사 · 엑셀 파일')

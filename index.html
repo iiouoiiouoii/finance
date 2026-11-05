@@ -12,12 +12,13 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-05 15:06 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-05 15:15 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
   <script>
     /* 디자인 기준 : 푸른 기가 없는 회색 + 초록 한 가지 강조색, 그림자 대신 여백과 얇은 선 */
     tailwind.config = { theme: { extend: {
@@ -688,6 +689,79 @@ body.fc-m .modal-box input.text-2xl:not([type=checkbox]):not([type=radio]) { fon
 body.fc-m .app-modal > div { max-height: calc(100dvh - 56px) !important; }
 @media (display-mode: browser) { body.fc-m .app-modal > div { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important; } }
 
+/* =====================================================================
+   아기자기 테마 — 산호색 하나를 주인공으로, 아이콘만 파스텔, 모서리는 더 둥글게, 제목은 둥근 글씨(Jua)
+   ===================================================================== */
+:root { --pri: #FF7E67; --pri-d: #F2654D; --pri-l: #FFF1EC; --green: #2BB673; --red: #F04452; }
+body { background: #FFFDFB; }
+#app-header, main, #content { background: #FFFDFB; }
+#sidebar { background: #FFFDFB; }
+
+/* 둥근 글씨 : 화면 제목 · 구역 제목 · 큰 숫자 */
+#page-title, .card-h h3, .rp-h h3, .rp-top h2, .modal-box h3, .big, .kv b, details.fold > summary { font-family: 'Jua', 'Pretendard', sans-serif !important; font-weight: 400 !important; letter-spacing: 0 !important; }
+#page-title { font-size: 24px !important; }
+body.fc-m #page-title { font-size: 22px !important; }
+.big, body.fc-m .big, .rp-hero .big, body.fc-m .rp-hero .big { font-size: 32px !important; line-height: 1.2; }
+.card-h h3, .rp-h h3 { font-size: 19px !important; }
+.kv b, .rp-kv b { font-size: 19px !important; }
+.modal-box h3 { font-size: 21px !important; }
+
+/* 주 색 : 버튼 · + · 진행 막대 · 선택된 탭 */
+.btn.pri, .it-btn, .hdr-add, .mb-add, .modal-box button.bg-accent, .modal-box button[type=submit], .modal-box button.bg-slate-800, .modal-box button.bg-slate-900,
+button.bg-slate-900.text-white, button.bg-slate-800.text-white { background: var(--pri) !important; border-color: var(--pri) !important; color: #fff !important; }
+.btn.pri:hover, .it-btn:hover, .hdr-add:hover { background: var(--pri-d) !important; }
+.mb-add { box-shadow: 0 8px 18px rgba(255, 126, 103, .38) !important; border-radius: 20px !important; }
+.mb-tab.on { color: var(--pri) !important; }
+.mb-tab.on span::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--pri); margin: 3px auto 0; }
+.fill[style*="#0B7A57"], .it-bar i[style*="#0B7A57"], .fill[style*="#191F28"] { background: var(--pri) !important; }
+.fill[style*="#E0464B"], .it-bar i[style*="#E0464B"] { background: var(--red) !important; }
+.track, .it-bar { background: #FFEDE8 !important; }
+.track { height: 8px !important; }
+.card[style*="order:1"] .track { height: 12px !important; }
+.track > .mark { background: #FF9F8C; width: 3px; border-radius: 2px; }
+.text-accent { color: var(--green) !important; }
+.nav-item.on { background: var(--pri-l) !important; color: var(--pri-d) !important; }
+.nav-item.on i { color: var(--pri) !important; }
+.brand-mark { background: var(--pri) !important; border-radius: 10px; }
+.seg > button.on { color: var(--pri-d) !important; }
+
+/* 할 일 개수 · 상태 뱃지 : 동글동글 */
+.card-h h3 .text-accent { background: var(--pri) !important; font-family: 'Pretendard', sans-serif; font-weight: 700; }
+.pill { border-radius: 999px !important; padding: 5px 10px !important; }
+.pill.ok { background: #E7F7EF !important; color: #1F9D60 !important; }
+.pill.warn { background: #FFF4DC !important; color: #B7791F !important; }
+.pill.bad { background: #FFECEE !important; color: var(--red) !important; }
+
+/* 파스텔 아이콘 */
+.ic { border-radius: 14px !important; }
+.ic.sm { border-radius: 12px !important; }
+.ic.t-peach { background: #FFEFE9; color: #F2654D; } .ic.t-sky { background: #EAF3FF; color: #4A86E0; } .ic.t-butter { background: #FFF5D9; color: #D39A00; }
+.ic.t-pink { background: #FFEEF4; color: #E0577F; } .ic.t-lilac { background: #F2EEFF; color: #8064D9; } .ic.t-mint { background: #E6F7EF; color: #23A86A; } .ic.t-gray { background: #F2F4F6; color: #6B7684; }
+.ic.in { background: #E6F7EF !important; color: #23A86A !important; }
+.add-opt:nth-child(1) .add-ic { background: #FFEFE9; color: #F2654D; } .add-opt:nth-child(2) .add-ic { background: #EAF3FF; color: #4A86E0; }
+.add-ic { border-radius: 16px !important; }
+.card-h h3 > i.fa-solid:first-child { color: var(--pri) !important; }
+.kv small i { color: #FFB3A5 !important; }
+
+/* 모서리 더 둥글게 */
+.btn { border-radius: 16px !important; }
+.card-h .btn, .btn[style*="height:38px"], .btn[style*="height:36px"] { border-radius: 12px !important; }
+.it-btn { border-radius: 10px !important; }
+.mon-sw, .hdr-chip, .hdr-icon { border-radius: 14px !important; background: #FFF4F0 !important; }
+.mon-sw > button, .hdr-icon, .hdr-chip { color: #E0715C !important; }
+.mon-lb { color: var(--ink) !important; }
+.fc-in, .modal-box input:not([type=checkbox]):not([type=radio]):not([type=hidden]), .modal-box select, .modal-box textarea, #content .view select:not(.flt-in), .flt-in, .flt-btn { border-radius: 14px !important; }
+.seg { border-radius: 14px !important; } .seg > button { border-radius: 11px !important; }
+body.fc-m .app-modal > div { border-top-left-radius: 28px !important; border-top-right-radius: 28px !important; }
+.modal-box { border-radius: 24px !important; }
+.todo-x:hover { color: var(--pri) !important; }
+.rp-no { background: #FFEFE9 !important; color: var(--pri-d) !important; }
+.rp-todo li.key .rp-no { background: var(--pri) !important; color: #fff !important; }
+.rp-stack i { background: var(--pri) !important; }
+.rp-stack i:nth-child(2) { opacity: .75; } .rp-stack i:nth-child(3) { opacity: .55; } .rp-stack i:nth-child(4) { opacity: .4; } .rp-stack i:nth-child(n+5) { opacity: .25; }
+.card { border-bottom-style: dashed !important; border-bottom-color: #F3E6E1 !important; }
+.kv, .kv > div + div { border-color: #F7EDE9 !important; }
+
   </style>
 </head>
 <body class="flex h-screen overflow-hidden text-sm">
@@ -913,7 +987,15 @@ window.App = window.App || {};
     return 'fa-receipt';
   };
   /* 회색 동그라미 아이콘 html. cls: 'in'(들어온 돈 · 초록) / 'bad'(빨강) */
-  u.ic = function (icon, cls) { return '<span class="ic' + (cls ? ' ' + cls : '') + '"><i class="fa-solid ' + icon + '"></i></span>'; };
+  /* 아이콘마다 파스텔 색 하나 (같은 종류는 늘 같은 색) */
+  var TINT = { 'fa-utensils': 'peach', 'fa-mug-hot': 'peach', 'fa-basket-shopping': 'peach', 'fa-car': 'sky', 'fa-taxi': 'sky', 'fa-bus': 'sky', 'fa-plane': 'sky',
+    'fa-house': 'butter', 'fa-wifi': 'butter', 'fa-key': 'butter', 'fa-bag-shopping': 'pink', 'fa-shirt': 'pink', 'fa-gift': 'pink',
+    'fa-film': 'lilac', 'fa-tv': 'lilac', 'fa-masks-theater': 'lilac', 'fa-person-running': 'mint', 'fa-heart-pulse': 'mint', 'fa-book': 'lilac', 'fa-graduation-cap': 'lilac',
+    'fa-piggy-bank': 'mint', 'fa-chart-line': 'sky', 'fa-umbrella': 'lilac', 'fa-briefcase': 'mint', 'fa-arrow-down': 'mint', 'fa-credit-card': 'sky', 'fa-calendar-days': 'butter',
+    'fa-hand-holding-dollar': 'peach', 'fa-building-columns': 'sky', 'fa-shield-halved': 'mint', 'fa-landmark': 'butter', 'fa-baby': 'pink', 'fa-paw': 'butter', 'fa-flag': 'pink',
+    'fa-rotate': 'mint', 'fa-triangle-exclamation': 'peach', 'fa-cart-shopping': 'pink', 'fa-cloud-arrow-up': 'sky', 'fa-pen': 'peach', 'fa-paste': 'sky', 'fa-coins': 'butter', 'fa-gem': 'lilac',
+    'fa-scale-balanced': 'sky', 'fa-receipt': 'butter', 'fa-umbrella-beach': 'mint', 'fa-arrow-right-arrow-left': 'gray' };
+  u.ic = function (icon, cls) { var t = TINT[icon] || 'gray'; return '<span class="ic t-' + t + (cls ? ' ' + cls : '') + '"><i class="fa-solid ' + icon + '"></i></span>'; };
 })(window.App);
 
 /* ===== 01-store.js ===== */
@@ -1753,7 +1835,7 @@ window.App = window.App || {};
     var row = function (fn, icon, t, d, tag) {
       return '<button onclick="App.u.close(\'add-modal\');' + fn + '" class="add-opt"><span class="add-ic"><i class="fa-solid ' + icon + '"></i></span><span class="flex-1 min-w-0"><b>' + t + (tag ? ' <em>' + tag + '</em>' : '') + '</b><small>' + d + '</small></span><i class="fa-solid fa-chevron-right text-slate-300"></i></button>';
     };
-    u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 기록할까요?</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
+    u.modal('add-modal', '<div class="flex items-center justify-between"><h3 class="text-lg font-bold text-slate-900">무엇을 적어 볼까요? ✏️</h3><button onclick="App.u.close(\'add-modal\')" class="w-9 h-9 -mr-2 text-slate-400 hover:text-slate-700" aria-label="닫기"><i class="fa-solid fa-xmark"></i></button></div>'
       + '<div class="space-y-1.5">'
       + row('App.txn.openNew()', 'fa-pen', '한 건 직접 입력', '현금처럼 알림이 없는 지출 · 수입')
       + row('App.paste.open()', 'fa-paste', '여러 건 붙여넣기', '카드 앱 내역 복사 · 엑셀 파일')
@@ -2276,7 +2358,7 @@ window.App = window.App || {};
     });
     var allOn = list.length > 0 && list.every(function (t) { return SEL[t.id]; });
     box.innerHTML = list.length ? (PICK ? '<div class="flex items-center justify-between pr-4"><label class="txn-all"><input type="checkbox" id="txn-all" ' + (allOn ? 'checked' : '') + ' onchange="App.txn.selAll(this.checked)"> 보이는 내역 모두 선택</label><button onclick="App.txn.pick(false)" class="text-[14px] font-semibold text-accent">완료</button></div>' : '') + html
-      : '<div class="empty py-12">' + (F.q || nFilters() ? '조건에 맞는 내역이 없어요.' : '이 달에는 내역이 없어요.<br><button onclick="App.ui.addMenu()" class="btn pri mt-4">기록하기</button>') + '</div>';
+      : '<div class="empty py-12">' + (F.q || nFilters() ? '찾는 내역이 없어요 🔍' : '이 달은 아직 비어 있어요 🐣<br><button onclick="App.ui.addMenu()" class="btn pri mt-4">기록하기</button>') + '</div>';
     var inc = C.sumType(list, 'INCOME'), exp = C.sumType(list, 'EXPENSE');
     u.$('txn-sum').innerHTML = '<div class="flex items-start justify-between gap-3"><div class="leading-relaxed"><b class="text-slate-900">' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + ' · 나간 돈 <b class="text-slate-900 whitespace-nowrap">' + u.n0(exp) + '원</b>' + (inc ? ' · 들어온 돈 <b class="text-accent whitespace-nowrap">' + u.n0(inc) + '원</b>' : '') + '</div>'
       + (list.length && !PICK ? '<button onclick="App.txn.pick(true)" class="shrink-0 text-[13.5px] font-semibold text-slate-500 hover:text-slate-900">여러 건 고치기</button>' : '') + '</div>';
@@ -2971,7 +3053,7 @@ window.App = window.App || {};
     var h = '<div class="seg mb-3"><button onclick="App.inst.setView(\'ACTIVE\')" class="' + (v === 'ACTIVE' ? 'on' : '') + '">진행 중 ' + s.act.length + '</button>'
       + '<button onclick="App.inst.setView(\'SETTLED\')" class="' + (v === 'SETTLED' ? 'on' : '') + '">다 갚음 ' + s.set.length + '</button></div>';
     if (v === 'ACTIVE') {
-      if (!s.act.length) return h + '<div class="empty">진행 중인 할부가 없어요.</div>';
+      if (!s.act.length) return h + '<div class="empty">진행 중인 할부가 없어요. 홀가분해요 🎈</div>';
       var charge = 0, unapplied = 0;
       s.act.forEach(function (x) { if (x.c.status === 'ACTIVE') { charge += x.c.thisCharge; if (!applied(x.i.id, s.cm)) unapplied += x.c.thisCharge; } });
       var remaining = u.sum(s.act, function (x) { return x.c.remaining; }), next = u.sum(s.act, function (x) { return x.c.nextMonthCharge; });
@@ -3568,7 +3650,7 @@ window.App = window.App || {};
           bar: rate, barColor: rate >= 100 ? '#0B7A57' : '#B0B8C1',
           note: card.benefits ? '혜택: ' + u.esc(card.benefits) : ''
         });
-      }).join('') : '<div class="empty">등록된 카드가 없어요.</div>';
+      }).join('') : '<div class="empty">아직 카드가 없어요 💳</div>';
       el.innerHTML = billsHtml()
         + '<div class="card"><div class="card-h"><h3>내 카드</h3><button onclick="App.cards.open()" class="btn sec" style="height:38px">+ 카드 등록</button></div>'
         + '<div class="list-wrap">' + grid + '</div></div>'
@@ -4549,13 +4631,13 @@ window.App = window.App || {};
       + '<div class="flex flex-wrap gap-2 mt-5"><button onclick="App.ui.go(\'budget\')" class="btn pri">예산 정하기</button></div></div>';
     var over = left < 0, p = Math.min(100, r.est / V * 100), m = Math.min(100, r.allowed / V * 100);
     var fast = r.est > r.allowed * 1.1, warn = !fast && r.est > r.allowed;
-    var pill = !r.hasData ? '<span class="pill mute">기록 없음</span>' : fast ? '<span class="pill bad">빨라요</span>' : warn ? '<span class="pill warn">조금 빨라요</span>' : '<span class="pill ok">적당해요</span>';
+    var pill = !r.hasData ? '<span class="pill mute">아직 비어 있어요</span>' : fast ? '<span class="pill bad">너무 빨라요 🔥</span>' : warn ? '<span class="pill warn">살짝 빨라요 👀</span>' : '<span class="pill ok">잘하고 있어요 🌱</span>';
     var note = '';
     if (r.cur && r.hasData) {
-      note = r.diff >= 0 ? '오늘까지 기준보다 <b>' + won(r.diff) + '</b> 덜 썼어요.' : '오늘까지 기준보다 <b class="text-red-600">' + won(-r.diff) + '</b> 더 썼어요.';
-      if (r.perDay != null) note += r.perDay > 0 ? ' 남은 기간엔 하루 <b>' + won(r.perDay) + '</b>씩 쓰면 돼요.' : ' 남은 기간엔 지출을 멈춰야 예산을 지킬 수 있어요.';
+      note = r.diff >= 0 ? '오늘까지 기준보다 <b>' + won(r.diff) + '</b> 덜 썼어요. 멋져요 ✨' : '오늘까지 기준보다 <b class="text-red-600">' + won(-r.diff) + '</b> 더 썼어요. 조금만 아껴 볼까요?';
+      if (r.perDay != null) note += r.perDay > 0 ? ' 남은 기간엔 하루 <b>' + won(r.perDay) + '</b>씩 쓰면 딱 좋아요.' : ' 남은 기간엔 지출을 멈춰야 예산을 지킬 수 있어요.';
     }
-    else if (!r.hasData) note = '아직 이번 달 지출 기록이 없어요. 카드 · 통장 알림이 오면 자동으로 들어와요.';
+    else if (!r.hasData) note = '아직 이번 달 지출이 없어요 🍃 카드 · 통장 알림이 오면 알아서 쏙 들어와요.';
     return '<div class="card" style="order:1"><div class="flex items-center justify-between gap-2"><div class="sub">' + label + ' 생활비' + (r.past ? '' : ' · 고정비 빼고') + '</div>' + pill + '</div>'
       + '<div class="big mt-1">' + (over ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div>'
       + '<div class="sub mt-1">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요 (' + Math.round(r.est / V * 100) + '%)' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
@@ -4593,7 +4675,7 @@ window.App = window.App || {};
   D.done = function (key) {
     var m = doneMap(), cut = Date.now() - 90 * 864e5; m[key] = Date.now();
     Object.keys(m).forEach(function (k) { if (m[k] < cut) delete m[k]; });
-    App.store.save(); u.toast('할 일을 끝냈어요.');
+    App.store.save(); u.toast('끝! 잘했어요 👏');
   };
   D.restore = function () {
     var m = doneMap(), keys = todos(App.state.month).map(function (t) { return t[5]; });
@@ -4606,7 +4688,7 @@ window.App = window.App || {};
       + (L.length ? L.map(function (t) {
         return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main">' + u.ic(t[0], 'sm') + '<span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
           + '<button onclick="App.dash.done(\'' + u.esc(t[5]).replace(/'/g, '') + '\')" class="todo-x" title="끝냈어요 (숨기기)" aria-label="끝냈어요"><i class="fa-regular fa-circle-check"></i></button></div>';
-      }).join('') : '<div class="empty">' + (hid ? '할 일을 모두 끝냈어요.' : '지금은 할 일이 없어요.') + '</div>') + '</div>';
+      }).join('') : '<div class="empty">' + (hid ? '할 일을 다 끝냈어요 🎉' : '지금은 할 일이 없어요. 푹 쉬어요 ☕') + '</div>') + '</div>';
   }
 
   /* ---------- 3. 이번 달 수입 · 지출 · 남은 돈 ---------- */
@@ -4630,7 +4712,7 @@ window.App = window.App || {};
         + '<div class="t"><b>' + u.esc(k) + '</b><small>' + (bud ? '예산 ' + won(bud) + ' 중 <span class="' + (pc > 100 ? 'text-red-600 font-semibold' : '') + '">' + Math.round(pc) + '%</span>' : '지출의 ' + Math.round(sp[k] / tot * 100) + '%') + '</small>'
         + (bud ? '<div class="track mt-2" style="height:3px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:' + (pc > 100 ? '#E0464B' : '#191F28') + '"></div></div>' : '') + '</div>'
         + '<div class="v">' + won(sp[k]) + '</div></div>';
-    }).join('') : (bs.inst ? '' : '<div class="empty">이번 달 지출 기록이 없어요.</div>');
+    }).join('') : (bs.inst ? '' : '<div class="empty">아직 쓴 돈이 없어요 🍃</div>');
     if (bs.inst) body += '<div class="row">' + u.ic('fa-calendar-days', 'sm') + '<div class="t"><b>카드 할부</b><small>이미 정해진 돈이라 예산과 남은 생활비에서는 뺐어요</small></div><div class="v text-slate-500">' + won(bs.inst) + '</div></div>';
     return '<div class="card" style="order:4"><div class="card-h"><h3><i class="fa-solid fa-chart-pie"></i>어디에 썼나</h3><button onclick="App.ui.go(\'budget\')" class="more">예산</button></div>' + body + '</div>';
   }
@@ -4642,7 +4724,7 @@ window.App = window.App || {};
       var inc = t.type === 'INCOME', tr = t.type === 'TRANSFER';
       return '<div class="row">' + u.ic(tr ? 'fa-arrow-right-arrow-left' : u.iconFor(t.category, t.subcategory, inc ? '수입' : ''), inc ? 'in sm' : 'sm') + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + md(t.date) + ' · ' + u.esc(tr ? (t.subcategory || '이체') : (t.category || '')) + (t.payment ? ' · ' + u.esc(t.payment) : '') + '</small></div>'
         + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : '') + '">' + (inc ? '+' : tr ? '' : '-') + won(t.amount) + '</div></div>';
-    }).join('') : '<div class="empty">이번 달 내역이 없어요.</div>';
+    }).join('') : '<div class="empty">이번 달은 아직 조용해요 🐣</div>';
     return '<div class="card" style="order:4"><div class="card-h"><h3><i class="fa-solid fa-clock-rotate-left"></i>최근 내역</h3><button onclick="App.ui.go(\'transactions\')" class="more">전체 보기</button></div>' + body + '</div>';
   }
 

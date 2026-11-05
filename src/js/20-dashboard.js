@@ -34,13 +34,13 @@
       + '<div class="flex flex-wrap gap-2 mt-5"><button onclick="App.ui.go(\'budget\')" class="btn pri">예산 정하기</button></div></div>';
     var over = left < 0, p = Math.min(100, r.est / V * 100), m = Math.min(100, r.allowed / V * 100);
     var fast = r.est > r.allowed * 1.1, warn = !fast && r.est > r.allowed;
-    var pill = !r.hasData ? '<span class="pill mute">기록 없음</span>' : fast ? '<span class="pill bad">빨라요</span>' : warn ? '<span class="pill warn">조금 빨라요</span>' : '<span class="pill ok">적당해요</span>';
+    var pill = !r.hasData ? '<span class="pill mute">아직 비어 있어요</span>' : fast ? '<span class="pill bad">너무 빨라요 🔥</span>' : warn ? '<span class="pill warn">살짝 빨라요 👀</span>' : '<span class="pill ok">잘하고 있어요 🌱</span>';
     var note = '';
     if (r.cur && r.hasData) {
-      note = r.diff >= 0 ? '오늘까지 기준보다 <b>' + won(r.diff) + '</b> 덜 썼어요.' : '오늘까지 기준보다 <b class="text-red-600">' + won(-r.diff) + '</b> 더 썼어요.';
-      if (r.perDay != null) note += r.perDay > 0 ? ' 남은 기간엔 하루 <b>' + won(r.perDay) + '</b>씩 쓰면 돼요.' : ' 남은 기간엔 지출을 멈춰야 예산을 지킬 수 있어요.';
+      note = r.diff >= 0 ? '오늘까지 기준보다 <b>' + won(r.diff) + '</b> 덜 썼어요. 멋져요 ✨' : '오늘까지 기준보다 <b class="text-red-600">' + won(-r.diff) + '</b> 더 썼어요. 조금만 아껴 볼까요?';
+      if (r.perDay != null) note += r.perDay > 0 ? ' 남은 기간엔 하루 <b>' + won(r.perDay) + '</b>씩 쓰면 딱 좋아요.' : ' 남은 기간엔 지출을 멈춰야 예산을 지킬 수 있어요.';
     }
-    else if (!r.hasData) note = '아직 이번 달 지출 기록이 없어요. 카드 · 통장 알림이 오면 자동으로 들어와요.';
+    else if (!r.hasData) note = '아직 이번 달 지출이 없어요 🍃 카드 · 통장 알림이 오면 알아서 쏙 들어와요.';
     return '<div class="card" style="order:1"><div class="flex items-center justify-between gap-2"><div class="sub">' + label + ' 생활비' + (r.past ? '' : ' · 고정비 빼고') + '</div>' + pill + '</div>'
       + '<div class="big mt-1">' + (over ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div>'
       + '<div class="sub mt-1">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요 (' + Math.round(r.est / V * 100) + '%)' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
@@ -78,7 +78,7 @@
   D.done = function (key) {
     var m = doneMap(), cut = Date.now() - 90 * 864e5; m[key] = Date.now();
     Object.keys(m).forEach(function (k) { if (m[k] < cut) delete m[k]; });
-    App.store.save(); u.toast('할 일을 끝냈어요.');
+    App.store.save(); u.toast('끝! 잘했어요 👏');
   };
   D.restore = function () {
     var m = doneMap(), keys = todos(App.state.month).map(function (t) { return t[5]; });
@@ -91,7 +91,7 @@
       + (L.length ? L.map(function (t) {
         return '<div class="todo"><button onclick="' + t[3] + '" class="todo-main">' + u.ic(t[0], 'sm') + '<span class="min-w-0"><b>' + u.esc(t[1]) + '</b><small>' + u.esc(t[2]) + '</small></span><i class="fa-solid fa-chevron-right text-[12px] text-slate-300 ml-auto pl-1"></i></button>'
           + '<button onclick="App.dash.done(\'' + u.esc(t[5]).replace(/'/g, '') + '\')" class="todo-x" title="끝냈어요 (숨기기)" aria-label="끝냈어요"><i class="fa-regular fa-circle-check"></i></button></div>';
-      }).join('') : '<div class="empty">' + (hid ? '할 일을 모두 끝냈어요.' : '지금은 할 일이 없어요.') + '</div>') + '</div>';
+      }).join('') : '<div class="empty">' + (hid ? '할 일을 다 끝냈어요 🎉' : '지금은 할 일이 없어요. 푹 쉬어요 ☕') + '</div>') + '</div>';
   }
 
   /* ---------- 3. 이번 달 수입 · 지출 · 남은 돈 ---------- */
@@ -115,7 +115,7 @@
         + '<div class="t"><b>' + u.esc(k) + '</b><small>' + (bud ? '예산 ' + won(bud) + ' 중 <span class="' + (pc > 100 ? 'text-red-600 font-semibold' : '') + '">' + Math.round(pc) + '%</span>' : '지출의 ' + Math.round(sp[k] / tot * 100) + '%') + '</small>'
         + (bud ? '<div class="track mt-2" style="height:3px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:' + (pc > 100 ? '#E0464B' : '#191F28') + '"></div></div>' : '') + '</div>'
         + '<div class="v">' + won(sp[k]) + '</div></div>';
-    }).join('') : (bs.inst ? '' : '<div class="empty">이번 달 지출 기록이 없어요.</div>');
+    }).join('') : (bs.inst ? '' : '<div class="empty">아직 쓴 돈이 없어요 🍃</div>');
     if (bs.inst) body += '<div class="row">' + u.ic('fa-calendar-days', 'sm') + '<div class="t"><b>카드 할부</b><small>이미 정해진 돈이라 예산과 남은 생활비에서는 뺐어요</small></div><div class="v text-slate-500">' + won(bs.inst) + '</div></div>';
     return '<div class="card" style="order:4"><div class="card-h"><h3><i class="fa-solid fa-chart-pie"></i>어디에 썼나</h3><button onclick="App.ui.go(\'budget\')" class="more">예산</button></div>' + body + '</div>';
   }
@@ -127,7 +127,7 @@
       var inc = t.type === 'INCOME', tr = t.type === 'TRANSFER';
       return '<div class="row">' + u.ic(tr ? 'fa-arrow-right-arrow-left' : u.iconFor(t.category, t.subcategory, inc ? '수입' : ''), inc ? 'in sm' : 'sm') + '<div class="t"><b>' + u.esc(t.memo || t.subcategory || t.category || '-') + '</b><small>' + md(t.date) + ' · ' + u.esc(tr ? (t.subcategory || '이체') : (t.category || '')) + (t.payment ? ' · ' + u.esc(t.payment) : '') + '</small></div>'
         + '<div class="v ' + (inc ? 'text-accent' : tr ? 'text-slate-500' : '') + '">' + (inc ? '+' : tr ? '' : '-') + won(t.amount) + '</div></div>';
-    }).join('') : '<div class="empty">이번 달 내역이 없어요.</div>';
+    }).join('') : '<div class="empty">이번 달은 아직 조용해요 🐣</div>';
     return '<div class="card" style="order:4"><div class="card-h"><h3><i class="fa-solid fa-clock-rotate-left"></i>최근 내역</h3><button onclick="App.ui.go(\'transactions\')" class="more">전체 보기</button></div>' + body + '</div>';
   }
 
