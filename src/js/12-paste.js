@@ -333,7 +333,8 @@
           apr: 0, prepayments: [], prepayMode: 'SHORTEN', closedMonth: null, payment: t.payment, category: t.category, subcategory: t.subcategory,
           billingDay: parseInt(String(t.date).slice(8, 10), 10) || 15, source: 'PASTE'
         };
-        var dup = db().installments.filter(function (x) { return x.title === rec.title && x.total === rec.total && x.months === rec.months && x.startMonth === rec.startMonth; })[0];
+        /* 같은 할부 : 이름이 같거나, 알림으로 먼저 등록된 것(가맹점 이름이 다를 수 있음)과 금액 · 개월 · 시작 달이 같으면 */
+        var dup = db().installments.filter(function (x) { return x.total === rec.total && x.months === rec.months && x.startMonth === rec.startMonth && (x.title === rec.title || x.source === 'PUSH'); })[0];
         if (!dup) { db().installments.push(rec); created++; } else rec = dup;
         db().transactions.push({ id: u.uid(), date: t.date, type: 'EXPENSE', category: t.category, subcategory: t.subcategory, payment: t.payment, amount: t.amount, memo: '[할부] ' + t.memo + ' (' + t.inst.round + '/' + t.inst.months + '회)', installmentId: rec.id, lockCategory: true });
       } else {

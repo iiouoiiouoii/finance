@@ -100,8 +100,20 @@
     var L = queue(); if (!L.length || !App.db) return;
     var added = [], removed = [], skipped = 0, inst = [], tx = db().transactions;
     L.forEach(function (it) {
-      /* 할부 결제 : 전액을 지출로 넣으면 예산이 틀어진다 → 명세서 붙여넣기 때 할부로 들어가도록 넘긴다 */
-      if (it.months > 1 && !it.cancel) { inst.push(it); return; }
+      /* 할부 결제 : 바로 할부로 등록하고, 이번 달 1회차를 내역에 넣는다 (전액을 지출로 넣으면 예산이 틀어지므로) */
+      if (it.months > 1 && !it.cancel) {
+        var ipay = payFor(it.card, it.raw), ip = App.cat.predict(it.memo), im = it.date.slice(0, 7);
+        if ((db().installments || []).some(function (x) { return x.total === it.amount && x.months === it.months && x.startMonth === im && String(x.payment || '').replace(/s+/g, '') === ipay.replace(/s+/g, ''); })) { skipped++; return; }
+        var rec = { id: u.uid(), title: it.memo || '카드 할부', total: it.amount, months: it.months, startMonth: im, apr: 0, prepayments: [], prepayMode: 'SHORTEN', closedMonth: null,
+          payment: ipay, category: ip.category, subcategory: ip.subcategory, billingDay: parseInt(it.date.slice(8, 10), 10) || 15, source: 'PUSH' };
+        db().installments.push(rec);
+        var ch = C.calcInst(rec, im).thisCharge || Math.round(it.amount / it.months);
+        var itx = { id: u.uid(), date: it.date, type: 'EXPENSE', category: ip.category, subcategory: ip.subcategory, payment: ipay, amount: ch, memo: '[할부] ' + rec.title + ' (1/' + it.months + '회)', installmentId: rec.id, lockCategory: true, src: 'push' };
+        tx.push(itx); inst.push(it);
+        /* 다음 달부터 회차가 저절로 들어가도록 할부 자동 반영을 켠다 (한 번도 정한 적 없을 때만) */
+        if (!db().ui.instAuto) db().ui.instAuto = { on: true, from: u.addM(im, 1) };
+        return;
+      }
       /* 통장 입출금 : 명세서 붙여넣기와 같은 규칙으로 수입 · 지출 · 이체(카드대금 · 내 계좌 · 저축) 구분 */
       if (it.dir) {
         var bt = { date: it.date, amount: it.amount, memo: it.memo || (it.dir === 'IN' ? '입금' : '출금') }, text = it.memo + ' ' + it.raw;
@@ -114,6 +126,9 @@
       var pay = payFor(it.card, it.raw), same = function (t) { return t.type === 'EXPENSE' && Number(t.amount) === it.amount && String(t.payment || '').replace(/\s+/g, '') === pay.replace(/\s+/g, ''); };
       if (it.cancel) {
         var lim = u.addM(it.date.slice(0, 7), -1) + '-01', hit = tx.filter(function (t) { return same(t) && t.src === 'push' && t.date >= lim && t.date <= it.date; }).pop();
+        /* 할부 결제 취소 : 알림으로 만든 할부와 그 회차 내역을 함께 지운다 */
+        var ins = !hit && (db().installments || []).filter(function (x) { return x.source === 'PUSH' && x.total === it.amount && x.startMonth >= lim.slice(0, 7) && String(x.payment || '').replace(/s+/g, '') === pay.replace(/s+/g, ''); }).pop();
+        if (ins) { db().installments = db().installments.filter(function (x) { return x !== ins; }); db().transactions = tx = tx.filter(function (t) { return t.installmentId !== ins.id; }); removed.push(ins.title + ' 할부'); return; }
         if (hit) { db().transactions = tx = tx.filter(function (t) { return t !== hit; }); removed.push(hit.memo); } else skipped++;
         return;
       }
@@ -123,13 +138,13 @@
       tx.push(t); added.push(t);
     });
     setQueue([]);
-    if (inst.length) setTimeout(function () { u.toast(inst.map(function (x) { return u.esc(x.memo) + ' ' + u.n0(x.amount) + '원 ' + x.months + '개월 할부'; }).join(', ') + '는 월말 명세서를 붙여넣을 때 할부로 들어가요.', 'warning'); }, 400);
-    if (!added.length && !removed.length) { if (skipped) u.toast('이미 기록된 알림이라 넘어갔어요.'); return; }
+    if (inst.length) setTimeout(function () { u.toast('할부로 바로 등록했어요 🧾 ' + inst.map(function (x) { return u.esc(x.memo) + ' ' + u.n0(x.amount) + '원 · ' + x.months + '개월'; }).join(', ') + ' (이번 달 1회차가 내역에 들어갔어요)'); }, 400);
+    if (!added.length && !removed.length && !inst.length) { if (skipped) u.toast('이미 기록된 알림이라 넘어갔어요.'); return; }
     App.store.save();
     var a0 = added[0], sign = a0 ? (a0.type === 'INCOME' ? '+' : a0.type === 'TRANSFER' ? '' : '') : '';
     var msg = added.length === 1 ? '알림으로 기록했어요: ' + u.esc(a0.memo) + ' ' + sign + u.n0(a0.amount) + '원 (' + (a0.type === 'TRANSFER' ? '이체 · ' : a0.type === 'INCOME' ? '수입 · ' : '') + u.esc(a0.category) + ')' : added.length ? '알림으로 ' + added.length + '건 기록했어요.' : '';
     if (removed.length) msg += (msg ? ' · ' : '') + '결제 취소 ' + removed.length + '건을 지웠어요.';
-    u.toast(msg);
+    if (msg) u.toast(msg);
   };
   /* =========================================================
      화면 없이 쌓아 두기 : GitHub 비공개 저장소(수신함)의 이슈

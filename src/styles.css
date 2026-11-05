@@ -727,3 +727,51 @@ body.fc-m .app-modal > div { border-top-left-radius: 28px !important; border-top
 .rp-stack i:nth-child(2) { opacity: .75; } .rp-stack i:nth-child(3) { opacity: .55; } .rp-stack i:nth-child(4) { opacity: .4; } .rp-stack i:nth-child(n+5) { opacity: .25; }
 .card { border-bottom-style: dashed !important; border-bottom-color: #F3E6E1 !important; }
 .kv, .kv > div + div { border-color: #F7EDE9 !important; }
+
+/* =====================================================================
+   다이어리 테마 — 크림색 종이 + 점 모눈, 손글씨 제목(Gaegu) + 형광펜 밑줄, 날짜는 일기장처럼
+   숫자는 읽기 쉽게 Pretendard 그대로
+   ===================================================================== */
+:root { --paper: #FFFBF3; --dot: #EADFCB; --hl: #FFD6CB; --ink: #3A3532; }
+body, #app-header, main, #content, #sidebar, #mobile-bar, .modal-box { background-color: var(--paper) !important; }
+#content, #sidebar { background-image: radial-gradient(var(--dot) 1px, transparent 1.2px) !important; background-size: 20px 20px !important; background-position: 10px 6px; }
+body.fc-m #mobile-bar { background: rgba(255, 251, 243, .96) !important; border-top: 1px dashed #E8DCC8 !important; }
+#app-header { border-bottom: 1px dashed transparent; }
+#sidebar { border-right: 1px dashed #E8DCC8 !important; }
+
+/* 손글씨 제목 */
+#page-title, .card-h h3, .rp-h h3, .rp-top h2, .modal-box h3, details.fold > summary, .txn-day > span:first-child { font-family: 'Gaegu', 'Jua', 'Pretendard', sans-serif !important; font-weight: 700 !important; letter-spacing: 0 !important; color: var(--ink) !important; }
+#page-title { font-size: 30px !important; } body.fc-m #page-title { font-size: 28px !important; }
+.card-h h3, .rp-h h3 { font-size: 23px !important; }
+.modal-box h3 { font-size: 26px !important; }
+.rp-top h2 { font-size: 28px !important; }
+details.fold > summary { font-size: 21px !important; }
+/* 형광펜 밑줄 */
+.card-h h3, .rp-h h3 { display: inline; background: linear-gradient(transparent 60%, var(--hl) 60%, var(--hl) 92%, transparent 92%); padding: 0 3px; }
+.card-h h3 > i.fa-solid:first-child { display: none !important; }
+.card-h h3 .text-accent { font-family: 'Pretendard', sans-serif !important; }
+
+/* 숫자는 또렷하게 (손글씨 숫자는 읽기 어렵다) */
+.big, .kv b, .rp-kv b { font-family: 'Pretendard', sans-serif !important; font-weight: 800 !important; letter-spacing: -.03em !important; color: var(--ink) !important; }
+.big { font-size: 30px !important; }
+
+/* 날짜 머리 : 일기장 날짜처럼 */
+.txn-day { align-items: center !important; padding-top: 22px !important; border-bottom: 1px dashed #EADFCB; margin-bottom: 4px; }
+.txn-day > span:first-child { font-size: 19px !important; }
+.txn-day > span:first-child::before { content: "✎ "; color: #E8A598; font-size: 15px; }
+
+/* 구역 나눔 : 점선 */
+.card { border-bottom: 1.5px dashed #EADFCB !important; }
+.kv, .kv > div + div { border-color: #EFE4D2 !important; border-style: dashed !important; }
+.row + .row, .it, .rp-cat, .rp-goal, .todo { border-top-color: #F3EADB !important; border-top-style: dashed !important; }
+
+/* 진행 막대 : 연필로 칠한 느낌 (빗금) */
+.track, .it-bar { background: #F5EADB !important; }
+.fill[style*="#0B7A57"], .it-bar i[style*="#0B7A57"], .fill[style*="#191F28"] { background: repeating-linear-gradient(-45deg, #FF7E67 0 6px, #FF9481 6px 12px) !important; }
+
+/* 입력칸 · 버튼 : 종이 위 네모 */
+.modal-box input:not([type=checkbox]):not([type=radio]):not([type=hidden]), .modal-box select, .modal-box textarea, .fc-in, .flt-in { background: #fff !important; border-color: #EADFCB !important; }
+.ic.t-gray { background: #F3EBDD; color: #8A7F72; }
+.mon-sw, .hdr-chip, .hdr-icon { background: #FBEFE6 !important; }
+.empty { font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 19px !important; color: #A89C8E !important; }
+.pill { font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 15px !important; font-weight: 700 !important; }

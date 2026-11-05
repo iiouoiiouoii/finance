@@ -12,13 +12,13 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-05 15:15 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 07:47 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap">
   <script>
     /* 디자인 기준 : 푸른 기가 없는 회색 + 초록 한 가지 강조색, 그림자 대신 여백과 얇은 선 */
     tailwind.config = { theme: { extend: {
@@ -761,6 +761,54 @@ body.fc-m .app-modal > div { border-top-left-radius: 28px !important; border-top
 .rp-stack i:nth-child(2) { opacity: .75; } .rp-stack i:nth-child(3) { opacity: .55; } .rp-stack i:nth-child(4) { opacity: .4; } .rp-stack i:nth-child(n+5) { opacity: .25; }
 .card { border-bottom-style: dashed !important; border-bottom-color: #F3E6E1 !important; }
 .kv, .kv > div + div { border-color: #F7EDE9 !important; }
+
+/* =====================================================================
+   다이어리 테마 — 크림색 종이 + 점 모눈, 손글씨 제목(Gaegu) + 형광펜 밑줄, 날짜는 일기장처럼
+   숫자는 읽기 쉽게 Pretendard 그대로
+   ===================================================================== */
+:root { --paper: #FFFBF3; --dot: #EADFCB; --hl: #FFD6CB; --ink: #3A3532; }
+body, #app-header, main, #content, #sidebar, #mobile-bar, .modal-box { background-color: var(--paper) !important; }
+#content, #sidebar { background-image: radial-gradient(var(--dot) 1px, transparent 1.2px) !important; background-size: 20px 20px !important; background-position: 10px 6px; }
+body.fc-m #mobile-bar { background: rgba(255, 251, 243, .96) !important; border-top: 1px dashed #E8DCC8 !important; }
+#app-header { border-bottom: 1px dashed transparent; }
+#sidebar { border-right: 1px dashed #E8DCC8 !important; }
+
+/* 손글씨 제목 */
+#page-title, .card-h h3, .rp-h h3, .rp-top h2, .modal-box h3, details.fold > summary, .txn-day > span:first-child { font-family: 'Gaegu', 'Jua', 'Pretendard', sans-serif !important; font-weight: 700 !important; letter-spacing: 0 !important; color: var(--ink) !important; }
+#page-title { font-size: 30px !important; } body.fc-m #page-title { font-size: 28px !important; }
+.card-h h3, .rp-h h3 { font-size: 23px !important; }
+.modal-box h3 { font-size: 26px !important; }
+.rp-top h2 { font-size: 28px !important; }
+details.fold > summary { font-size: 21px !important; }
+/* 형광펜 밑줄 */
+.card-h h3, .rp-h h3 { display: inline; background: linear-gradient(transparent 60%, var(--hl) 60%, var(--hl) 92%, transparent 92%); padding: 0 3px; }
+.card-h h3 > i.fa-solid:first-child { display: none !important; }
+.card-h h3 .text-accent { font-family: 'Pretendard', sans-serif !important; }
+
+/* 숫자는 또렷하게 (손글씨 숫자는 읽기 어렵다) */
+.big, .kv b, .rp-kv b { font-family: 'Pretendard', sans-serif !important; font-weight: 800 !important; letter-spacing: -.03em !important; color: var(--ink) !important; }
+.big { font-size: 30px !important; }
+
+/* 날짜 머리 : 일기장 날짜처럼 */
+.txn-day { align-items: center !important; padding-top: 22px !important; border-bottom: 1px dashed #EADFCB; margin-bottom: 4px; }
+.txn-day > span:first-child { font-size: 19px !important; }
+.txn-day > span:first-child::before { content: "✎ "; color: #E8A598; font-size: 15px; }
+
+/* 구역 나눔 : 점선 */
+.card { border-bottom: 1.5px dashed #EADFCB !important; }
+.kv, .kv > div + div { border-color: #EFE4D2 !important; border-style: dashed !important; }
+.row + .row, .it, .rp-cat, .rp-goal, .todo { border-top-color: #F3EADB !important; border-top-style: dashed !important; }
+
+/* 진행 막대 : 연필로 칠한 느낌 (빗금) */
+.track, .it-bar { background: #F5EADB !important; }
+.fill[style*="#0B7A57"], .it-bar i[style*="#0B7A57"], .fill[style*="#191F28"] { background: repeating-linear-gradient(-45deg, #FF7E67 0 6px, #FF9481 6px 12px) !important; }
+
+/* 입력칸 · 버튼 : 종이 위 네모 */
+.modal-box input:not([type=checkbox]):not([type=radio]):not([type=hidden]), .modal-box select, .modal-box textarea, .fc-in, .flt-in { background: #fff !important; border-color: #EADFCB !important; }
+.ic.t-gray { background: #F3EBDD; color: #8A7F72; }
+.mon-sw, .hdr-chip, .hdr-icon { background: #FBEFE6 !important; }
+.empty { font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 19px !important; color: #A89C8E !important; }
+.pill { font-family: 'Gaegu', 'Pretendard', sans-serif; font-size: 15px !important; font-weight: 700 !important; }
 
   </style>
 </head>
@@ -2813,7 +2861,8 @@ window.App = window.App || {};
           apr: 0, prepayments: [], prepayMode: 'SHORTEN', closedMonth: null, payment: t.payment, category: t.category, subcategory: t.subcategory,
           billingDay: parseInt(String(t.date).slice(8, 10), 10) || 15, source: 'PASTE'
         };
-        var dup = db().installments.filter(function (x) { return x.title === rec.title && x.total === rec.total && x.months === rec.months && x.startMonth === rec.startMonth; })[0];
+        /* 같은 할부 : 이름이 같거나, 알림으로 먼저 등록된 것(가맹점 이름이 다를 수 있음)과 금액 · 개월 · 시작 달이 같으면 */
+        var dup = db().installments.filter(function (x) { return x.total === rec.total && x.months === rec.months && x.startMonth === rec.startMonth && (x.title === rec.title || x.source === 'PUSH'); })[0];
         if (!dup) { db().installments.push(rec); created++; } else rec = dup;
         db().transactions.push({ id: u.uid(), date: t.date, type: 'EXPENSE', category: t.category, subcategory: t.subcategory, payment: t.payment, amount: t.amount, memo: '[할부] ' + t.memo + ' (' + t.inst.round + '/' + t.inst.months + '회)', installmentId: rec.id, lockCategory: true });
       } else {
@@ -5752,8 +5801,20 @@ window.App = window.App || {};
     var L = queue(); if (!L.length || !App.db) return;
     var added = [], removed = [], skipped = 0, inst = [], tx = db().transactions;
     L.forEach(function (it) {
-      /* 할부 결제 : 전액을 지출로 넣으면 예산이 틀어진다 → 명세서 붙여넣기 때 할부로 들어가도록 넘긴다 */
-      if (it.months > 1 && !it.cancel) { inst.push(it); return; }
+      /* 할부 결제 : 바로 할부로 등록하고, 이번 달 1회차를 내역에 넣는다 (전액을 지출로 넣으면 예산이 틀어지므로) */
+      if (it.months > 1 && !it.cancel) {
+        var ipay = payFor(it.card, it.raw), ip = App.cat.predict(it.memo), im = it.date.slice(0, 7);
+        if ((db().installments || []).some(function (x) { return x.total === it.amount && x.months === it.months && x.startMonth === im && String(x.payment || '').replace(/s+/g, '') === ipay.replace(/s+/g, ''); })) { skipped++; return; }
+        var rec = { id: u.uid(), title: it.memo || '카드 할부', total: it.amount, months: it.months, startMonth: im, apr: 0, prepayments: [], prepayMode: 'SHORTEN', closedMonth: null,
+          payment: ipay, category: ip.category, subcategory: ip.subcategory, billingDay: parseInt(it.date.slice(8, 10), 10) || 15, source: 'PUSH' };
+        db().installments.push(rec);
+        var ch = C.calcInst(rec, im).thisCharge || Math.round(it.amount / it.months);
+        var itx = { id: u.uid(), date: it.date, type: 'EXPENSE', category: ip.category, subcategory: ip.subcategory, payment: ipay, amount: ch, memo: '[할부] ' + rec.title + ' (1/' + it.months + '회)', installmentId: rec.id, lockCategory: true, src: 'push' };
+        tx.push(itx); inst.push(it);
+        /* 다음 달부터 회차가 저절로 들어가도록 할부 자동 반영을 켠다 (한 번도 정한 적 없을 때만) */
+        if (!db().ui.instAuto) db().ui.instAuto = { on: true, from: u.addM(im, 1) };
+        return;
+      }
       /* 통장 입출금 : 명세서 붙여넣기와 같은 규칙으로 수입 · 지출 · 이체(카드대금 · 내 계좌 · 저축) 구분 */
       if (it.dir) {
         var bt = { date: it.date, amount: it.amount, memo: it.memo || (it.dir === 'IN' ? '입금' : '출금') }, text = it.memo + ' ' + it.raw;
@@ -5766,6 +5827,9 @@ window.App = window.App || {};
       var pay = payFor(it.card, it.raw), same = function (t) { return t.type === 'EXPENSE' && Number(t.amount) === it.amount && String(t.payment || '').replace(/\s+/g, '') === pay.replace(/\s+/g, ''); };
       if (it.cancel) {
         var lim = u.addM(it.date.slice(0, 7), -1) + '-01', hit = tx.filter(function (t) { return same(t) && t.src === 'push' && t.date >= lim && t.date <= it.date; }).pop();
+        /* 할부 결제 취소 : 알림으로 만든 할부와 그 회차 내역을 함께 지운다 */
+        var ins = !hit && (db().installments || []).filter(function (x) { return x.source === 'PUSH' && x.total === it.amount && x.startMonth >= lim.slice(0, 7) && String(x.payment || '').replace(/s+/g, '') === pay.replace(/s+/g, ''); }).pop();
+        if (ins) { db().installments = db().installments.filter(function (x) { return x !== ins; }); db().transactions = tx = tx.filter(function (t) { return t.installmentId !== ins.id; }); removed.push(ins.title + ' 할부'); return; }
         if (hit) { db().transactions = tx = tx.filter(function (t) { return t !== hit; }); removed.push(hit.memo); } else skipped++;
         return;
       }
@@ -5775,13 +5839,13 @@ window.App = window.App || {};
       tx.push(t); added.push(t);
     });
     setQueue([]);
-    if (inst.length) setTimeout(function () { u.toast(inst.map(function (x) { return u.esc(x.memo) + ' ' + u.n0(x.amount) + '원 ' + x.months + '개월 할부'; }).join(', ') + '는 월말 명세서를 붙여넣을 때 할부로 들어가요.', 'warning'); }, 400);
-    if (!added.length && !removed.length) { if (skipped) u.toast('이미 기록된 알림이라 넘어갔어요.'); return; }
+    if (inst.length) setTimeout(function () { u.toast('할부로 바로 등록했어요 🧾 ' + inst.map(function (x) { return u.esc(x.memo) + ' ' + u.n0(x.amount) + '원 · ' + x.months + '개월'; }).join(', ') + ' (이번 달 1회차가 내역에 들어갔어요)'); }, 400);
+    if (!added.length && !removed.length && !inst.length) { if (skipped) u.toast('이미 기록된 알림이라 넘어갔어요.'); return; }
     App.store.save();
     var a0 = added[0], sign = a0 ? (a0.type === 'INCOME' ? '+' : a0.type === 'TRANSFER' ? '' : '') : '';
     var msg = added.length === 1 ? '알림으로 기록했어요: ' + u.esc(a0.memo) + ' ' + sign + u.n0(a0.amount) + '원 (' + (a0.type === 'TRANSFER' ? '이체 · ' : a0.type === 'INCOME' ? '수입 · ' : '') + u.esc(a0.category) + ')' : added.length ? '알림으로 ' + added.length + '건 기록했어요.' : '';
     if (removed.length) msg += (msg ? ' · ' : '') + '결제 취소 ' + removed.length + '건을 지웠어요.';
-    u.toast(msg);
+    if (msg) u.toast(msg);
   };
   /* =========================================================
      화면 없이 쌓아 두기 : GitHub 비공개 저장소(수신함)의 이슈
