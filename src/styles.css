@@ -1142,3 +1142,24 @@ body:not(.fc-m) #content { scrollbar-gutter: stable both-edges; padding-left: 32
   body.fc-m #content { padding-left: 20px !important; padding-right: 20px !important; }
   body.fc-m .kv small { white-space: normal !important; }
 }
+
+/* =====================================================================
+   단풍샘물체(픽셀) = 작은 꾸밈 글씨 : 카운터 · 탭 이름 · 뱃지 · 날짜 머리 · 더보기
+   글꼴 역할 : 히피체=제목 / 뚝딱감자체=큰 숫자 / 단풍샘물체=꾸밈 / 고딕=본문 · 금액
+   ===================================================================== */
+@font-face { font-family: 'DanpungSaemmul'; src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2609272011@maplesaemmul/maplesaemmul/MapleSaemmul.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+.cy-count, .cy-count b, .mb-tab span, .pill, .txn-day > span:first-child, .card-h .more, .cy-brand small {
+  font-family: 'DanpungSaemmul', 'Pretendard', sans-serif !important; font-weight: 400 !important; letter-spacing: 0 !important; font-synthesis: none; -webkit-font-smoothing: none; }
+.cy-count { font-size: 12px !important; }
+.cy-count b { font-size: 12px !important; }
+.mb-tab span { font-size: 13px !important; }
+.pill { font-size: 13px !important; padding: 4px 10px !important; }
+.card-h .more { font-size: 13px !important; }
+.txn-day > span:first-child { font-size: 16px !important; }
+@media (max-width: 400px) { body.fc-m .cy-count { font-size: 12px !important; } }
+/* 단풍샘물체는 글자가 작게 그려져서 한 단계 크게 (14) · 픽셀 테두리가 흐려지지 않게 */
+.cy-count, .cy-count b, body.fc-m .cy-count { font-size: 14px !important; -webkit-font-smoothing: auto; }
+.cy-count i { margin: 0 5px !important; }
+.mb-tab span, .pill, .card-h .more { font-size: 14px !important; -webkit-font-smoothing: auto; }
+.txn-day > span:first-child { font-size: 17px !important; -webkit-font-smoothing: auto; }
+@media (max-width: 360px) { body.fc-m .cy-count, body.fc-m .cy-count b { font-size: 13px !important; } }
