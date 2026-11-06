@@ -1251,3 +1251,40 @@ body.fc-m .stat-t:last-child:nth-child(odd) { grid-column: 1 / -1; }
 #view-retire .text-xs.font-bold.text-slate-700 { font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 12px !important; }
 #view-retire .text-xs.font-bold.text-slate-700 span { font-size: 13px !important; color: var(--ink3) !important; }
 :is(#view-loan, #view-tax, #view-retire) td:first-child, :is(#view-loan, #view-tax, #view-retire) th { white-space: nowrap; }
+
+/* =====================================================================
+   실사용 정리
+   ===================================================================== */
+/* 내역 요약 : 덩어리 단위로만 줄바꿈, 오른쪽 '여러 건 고치기'는 같은 높이 */
+.txn-sum { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ts-l { font-size: 13px; color: var(--ink2); line-height: 1.5; min-width: 0; }
+.ts-l .nw { white-space: nowrap !important; margin-right: 8px; }
+.ts-l b { color: var(--ink); font-weight: 700; }
+.ts-l b.text-accent { color: var(--green) !important; }
+.ts-pick { flex-shrink: 0; height: 32px; padding: 0 12px; border-radius: 10px; border: 1px solid #D5E2EB; background: #fff; font-size: 13px !important; font-weight: 600; color: var(--cy-d) !important; }
+/* 예산 머리 */
+.hero-track { margin-top: 16px !important; height: 10px !important; }
+.bud-verdict { margin-top: 10px; font-size: 14px; line-height: 1.6; color: var(--ink2); }
+.bud-verdict b { color: var(--green); }
+.bud-verdict.bad, .bud-verdict.bad b { color: var(--red); }
+.card-desc { margin-top: -4px !important; margin-bottom: 4px; }
+.warn-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--ink2); }
+.warn-in { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.warn-in input { width: 76px; height: 44px; border: 1px solid #D5E2EB; border-radius: 12px; text-align: right; padding: 0 12px; font-size: 16px; font-weight: 600; color: var(--ink); background: #fff; }
+.warn-in span { font-size: 14px; color: var(--ink3); }
+/* 구역 제목은 어디서나 ♥ + 히피체 (예전 화면의 h3도) */
+#content h3.font-bold::before { content: "♥"; font-family: 'Pretendard', sans-serif; font-size: 12px; color: var(--cy-o); margin-right: 6px; vertical-align: 3px; }
+/* 설정 입력칸도 계산기와 같은 모양 · 숫자는 오른쪽 */
+#view-settings .grid { column-gap: 12px !important; row-gap: 16px !important; }
+#view-settings .grid > div:has(> label) { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+#view-settings label:not(:has(input[type=checkbox])):not(:has(input[type=radio])) { font-size: 13px !important; font-weight: 600 !important; color: var(--ink2) !important; margin-bottom: 6px !important; }
+#view-settings :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select) { height: 48px !important; font-size: 16px !important; font-weight: 600 !important; color: var(--ink) !important; border: 1px solid #D5E2EB !important; background: #fff !important; border-radius: 12px !important; padding: 0 14px !important; }
+#view-settings :is(input[data-money], input[type=number], input[inputmode=numeric]) { text-align: right !important; }
+#view-settings textarea { border: 1px solid #D5E2EB !important; border-radius: 12px !important; font-size: 15px !important; }
+/* 자산 탭 : 폰에서는 칸을 고르게 나눠 한 줄에 */
+body.fc-m #view-assets .seg { width: 100%; display: flex; }
+body.fc-m #view-assets .seg > button { flex: 1 1 0; padding-left: 4px !important; padding-right: 4px !important; }
+body.fc-m #view-assets .seg + * { width: 100%; }
+#content h3.font-bold { gap: 0 !important; column-gap: 0 !important; }
+#content h3.font-bold > i.fa-solid:first-child { display: none !important; }
+.calc-help, .bud-verdict, .card-desc { text-wrap-style: balance; }

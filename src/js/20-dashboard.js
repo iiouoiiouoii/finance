@@ -98,7 +98,7 @@
   function monthHtml(mo) {
     var inc = C.income(mo), exp = C.expense(mo), rest = inc - exp, T = C.savingTarget(mo), S = C.savedIn(mo);
     return '<div class="card" style="order:3"><div class="card-h"><h3><i class="fa-solid fa-money-bill-transfer"></i>' + parseInt(mo.slice(5), 10) + '월 돈 흐름</h3><button onclick="App.ui.go(\'report\')" class="more">월말 리포트</button></div>'
-      + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small><i class="fa-solid fa-arrow-up"></i>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>남은 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
+      + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small><i class="fa-solid fa-arrow-up"></i>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>남긴 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
       + (T > 0 ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">저축 · 투자</span><span><b>' + won(S) + '</b> <span class="text-slate-500">/ 목표 ' + won(T) + '</span></span></div>'
         + '<div class="track mt-2" style="height:8px"><div class="fill" style="width:' + Math.min(100, S / T * 100) + '%;background:#0B7A57"></div></div></div>' : '') + '</div>';
   }

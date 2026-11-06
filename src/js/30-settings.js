@@ -42,7 +42,7 @@
         + '<button onclick="App.settings.saveProfile()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">부부 정보 저장</button></div>'
         + '<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">' + person('h', '본인 (근로자 A)', 'fa-user text-accent', s) + person('w', '배우자 (근로자 B)', 'fa-user-tie text-amber-600', s) + '</div></div>'
         + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-3 flex-wrap"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-handshake text-accent"></i> 부부 재무 규칙</h3>'
-        + '<p class="text-xs text-slate-500 mt-0.5">생활비는 부부 공동으로 관리해요. 각자 용돈 한도를 정해 두면 대시보드에서 사용 현황을 보여줘요. 출생연도는 은퇴 시뮬레이터에 쓰여요.</p></div>'
+        + '<p class="text-xs text-slate-500 mt-0.5">생활비는 부부 공동으로 관리해요. 각자 용돈 한도를 정해 두면 홈에서 사용 현황을 보여줘요. 출생연도는 은퇴 시뮬레이터에 쓰여요.</p></div>'
         + '<button onclick="App.settings.saveRules()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">규칙 저장</button></div>'
         + '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">' + u.field('set-by-h', u.esc(C.short('H')) + ' 출생연도', { type: 'number', ph: '예: 1988' }) + u.field('set-by-w', u.esc(C.short('W')) + ' 출생연도', { type: 'number', ph: '예: 1990' })
         + u.field('set-allow-h', u.esc(C.short('H')) + ' 월 용돈 한도 (원)', { money: true }) + u.field('set-allow-w', u.esc(C.short('W')) + ' 월 용돈 한도 (원)', { money: true })

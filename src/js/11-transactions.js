@@ -149,7 +149,7 @@
       if (t.date !== day) {
         day = t.date;
         var same = list.filter(function (x) { return x.date === day; }), dOut = C.sumType(same, 'EXPENSE'), dIn = C.sumType(same, 'INCOME'), dt = new Date(day + 'T00:00:00');
-        html += '<div class="txn-day"><span>' + (+day.slice(8)) + '일 ' + WD[dt.getDay()] + '요일' + (day === u.today() ? ' · 오늘' : '') + '</span><span>' + (dIn ? '<b class="text-accent">+' + u.n0(dIn) + '</b> ' : '') + (dOut ? '-' + u.n0(dOut) : '') + '</span></div>';
+        html += '<div class="txn-day"><span>' + (+day.slice(8)) + '일 ' + WD[dt.getDay()] + '요일' + (day === u.today() ? ' · 오늘' : '') + '</span><span>' + (same.length > 1 ? (dIn ? '<b class="text-accent">+' + u.n0(dIn) + '</b> ' : '') + (dOut ? '-' + u.n0(dOut) : '') : '') + '</span></div>';
       }
       html += rowHtml(t);
     });
@@ -157,8 +157,8 @@
     box.innerHTML = list.length ? (PICK ? '<div class="flex items-center justify-between pr-4"><label class="txn-all"><input type="checkbox" id="txn-all" ' + (allOn ? 'checked' : '') + ' onchange="App.txn.selAll(this.checked)"> 보이는 내역 모두 선택</label><button onclick="App.txn.pick(false)" class="text-[14px] font-semibold text-accent">완료</button></div>' : '') + html
       : '<div class="empty py-12">' + (F.q || nFilters() ? '찾는 내역이 없어요 🔍' : '이 달은 아직 비어 있어요 🐣<br><button onclick="App.ui.addMenu()" class="btn pri mt-4">기록하기</button>') + '</div>';
     var inc = C.sumType(list, 'INCOME'), exp = C.sumType(list, 'EXPENSE');
-    u.$('txn-sum').innerHTML = '<div class="flex items-start justify-between gap-3"><div class="leading-relaxed"><b class="text-slate-900">' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + ' · 나간 돈 <b class="text-slate-900 whitespace-nowrap">' + u.n0(exp) + '원</b>' + (inc ? ' · 들어온 돈 <b class="text-accent whitespace-nowrap">' + u.n0(inc) + '원</b>' : '') + '</div>'
-      + (list.length && !PICK ? '<button onclick="App.txn.pick(true)" class="shrink-0 text-[13.5px] font-semibold text-slate-500 hover:text-slate-900">여러 건 고치기</button>' : '') + '</div>';
+    u.$('txn-sum').innerHTML = '<div class="txn-sum"><div class="ts-l"><span class="nw"><b>' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + '</span> <span class="nw">나간 <b>' + u.n0(exp) + '원</b></span>' + (inc ? ' <span class="nw">들어온 <b class="text-accent">' + u.n0(inc) + '원</b></span>' : '') + '</div>'
+      + (list.length && !PICK ? '<button onclick="App.txn.pick(true)" class="ts-pick">여러 건 고치기</button>' : '') + '</div>';
     renderBulk();
   }
   function nFilters() { return (F.type !== 'ALL') + (F.pay !== 'ALL') + (F.owner !== 'ALL'); }

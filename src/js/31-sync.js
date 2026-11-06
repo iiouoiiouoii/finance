@@ -393,7 +393,7 @@
     u.$('login-msg').innerText = '';
   };
   S.showLogin = function () { gate(true); };
-  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장돼요. 상단 [로그인]으로 언제든 연결할 수 있어요.'); };
+  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장돼요. 나중에 [전체 → 설정]에서 언제든 로그인할 수 있어요.'); };
   function gateUi() {
     var msg = u.$('login-msg'), btn = u.$('login-go'), label = btn.innerText;
     return {

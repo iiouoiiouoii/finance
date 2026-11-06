@@ -56,7 +56,7 @@
     var spend = u.sum(top, function (c) { return c.s; });
     var head = '<div class="rp-top"><div><div class="rp-eyebrow">' + u.esc(C.nm('H')) + ' · ' + u.esc(C.nm('W')) + '</div><h2>' + u.monthLabel(mo) + ' 우리 집 리포트</h2></div>'
       + '<div class="rp-tools no-print"><button onclick="App.report.copy()"><i class="fa-regular fa-copy"></i> 요약 복사</button><button onclick="App.report.print()"><i class="fa-solid fa-print"></i> 인쇄</button></div></div>';
-    var hero = '<div class="rp-hero"><div class="sub">이번 달 남은 돈</div><div class="big' + (r.surplus < 0 ? ' text-red-600' : '') + '">' + won(r.surplus) + '</div>'
+    var hero = '<div class="rp-hero"><div class="sub">이번 달 남긴 돈</div><div class="big' + (r.surplus < 0 ? ' text-red-600' : '') + '">' + won(r.surplus) + '</div>'
       + (r.rate == null ? '' : '<div class="rp-rate"><span style="color:' + (r.rate >= 0 ? '#191F28' : '#E0464B') + '">저축률 ' + r.rate.toFixed(0) + '%</span> · 수입에서 지출을 뺀 돈</div>') + '</div>'
       + '<div class="kv rp-kv"><div><small>들어온 돈</small><b>' + u.KS(r.inc) + '</b></div>'
       + '<div><small>나간 돈</small><b>' + u.KS(r.exp) + '</b><small>예산 ' + u.KS(r.budgetTotal) + '</small></div>'
@@ -66,7 +66,7 @@
     var cats = top.length ? stack + top.slice(0, 6).map(function (c) {
       var over = c.b > 0 && c.s > c.b, d = c.s - c.prev;
       return '<div class="rp-cat has-ic">' + u.ic(u.iconFor(c.name), 'sm') + '<span class="n">' + u.esc(c.name) + '</span>'
-        + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · 지난달 ' + (d > 0 ? '+' : '') + u.KS(d) : '') + '</span>'
+        + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · ' + (d === 0 ? '지난달과 같아요' : '지난달보다 ' + u.KS(Math.abs(d)) + (d > 0 ? ' 더' : ' 덜')) : '') + '</span>'
         + '<b>' + won(c.s) + '</b></div>';
     }).join('') + (top.length > 6 ? '<div class="text-[13px] text-slate-400 pt-2">그 밖에 ' + (top.length - 6) + '개 항목 ' + won(u.sum(top.slice(6), function (c) { return c.s; })) + '</div>' : '')
       : '<div class="empty">이 달 지출 기록이 없어요.</div>';
@@ -95,7 +95,7 @@
   RP.text = function (mo) {
     var r = RP.build(mo), adv = RP.advice(r), L = [];
     L.push('[' + u.monthLabel(mo) + ' 우리 집 재무 리포트]');
-    L.push('수입 ' + u.K(r.inc) + ' / 지출 ' + u.K(r.exp) + ' / 남은 돈 ' + u.K(r.surplus) + (r.rate == null ? '' : ' (저축률 ' + r.rate.toFixed(0) + '%)'));
+    L.push('수입 ' + u.K(r.inc) + ' / 지출 ' + u.K(r.exp) + ' / 남긴 돈 ' + u.K(r.surplus) + (r.rate == null ? '' : ' (저축률 ' + r.rate.toFixed(0) + '%)'));
     L.push('실제 저축·투자 ' + u.K(r.S) + (r.T ? ' (목표 ' + u.K(r.T) + ')' : ''));
     L.push('순자산 ' + u.K(r.nwNow) + (r.nwChange == null ? '' : ' (전월 대비 ' + (r.nwChange >= 0 ? '+' : '') + u.K(r.nwChange) + ')'));
     var over = r.cats.filter(function (c) { return c.b > 0 && c.s > c.b; });

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-06 11:35 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 12:29 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -1285,6 +1285,43 @@ body.fc-m .stat-t:last-child:nth-child(odd) { grid-column: 1 / -1; }
 #view-retire .text-xs.font-bold.text-slate-700 { font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 12px !important; }
 #view-retire .text-xs.font-bold.text-slate-700 span { font-size: 13px !important; color: var(--ink3) !important; }
 :is(#view-loan, #view-tax, #view-retire) td:first-child, :is(#view-loan, #view-tax, #view-retire) th { white-space: nowrap; }
+
+/* =====================================================================
+   실사용 정리
+   ===================================================================== */
+/* 내역 요약 : 덩어리 단위로만 줄바꿈, 오른쪽 '여러 건 고치기'는 같은 높이 */
+.txn-sum { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ts-l { font-size: 13px; color: var(--ink2); line-height: 1.5; min-width: 0; }
+.ts-l .nw { white-space: nowrap !important; margin-right: 8px; }
+.ts-l b { color: var(--ink); font-weight: 700; }
+.ts-l b.text-accent { color: var(--green) !important; }
+.ts-pick { flex-shrink: 0; height: 32px; padding: 0 12px; border-radius: 10px; border: 1px solid #D5E2EB; background: #fff; font-size: 13px !important; font-weight: 600; color: var(--cy-d) !important; }
+/* 예산 머리 */
+.hero-track { margin-top: 16px !important; height: 10px !important; }
+.bud-verdict { margin-top: 10px; font-size: 14px; line-height: 1.6; color: var(--ink2); }
+.bud-verdict b { color: var(--green); }
+.bud-verdict.bad, .bud-verdict.bad b { color: var(--red); }
+.card-desc { margin-top: -4px !important; margin-bottom: 4px; }
+.warn-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--ink2); }
+.warn-in { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.warn-in input { width: 76px; height: 44px; border: 1px solid #D5E2EB; border-radius: 12px; text-align: right; padding: 0 12px; font-size: 16px; font-weight: 600; color: var(--ink); background: #fff; }
+.warn-in span { font-size: 14px; color: var(--ink3); }
+/* 구역 제목은 어디서나 ♥ + 히피체 (예전 화면의 h3도) */
+#content h3.font-bold::before { content: "♥"; font-family: 'Pretendard', sans-serif; font-size: 12px; color: var(--cy-o); margin-right: 6px; vertical-align: 3px; }
+/* 설정 입력칸도 계산기와 같은 모양 · 숫자는 오른쪽 */
+#view-settings .grid { column-gap: 12px !important; row-gap: 16px !important; }
+#view-settings .grid > div:has(> label) { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+#view-settings label:not(:has(input[type=checkbox])):not(:has(input[type=radio])) { font-size: 13px !important; font-weight: 600 !important; color: var(--ink2) !important; margin-bottom: 6px !important; }
+#view-settings :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]), select) { height: 48px !important; font-size: 16px !important; font-weight: 600 !important; color: var(--ink) !important; border: 1px solid #D5E2EB !important; background: #fff !important; border-radius: 12px !important; padding: 0 14px !important; }
+#view-settings :is(input[data-money], input[type=number], input[inputmode=numeric]) { text-align: right !important; }
+#view-settings textarea { border: 1px solid #D5E2EB !important; border-radius: 12px !important; font-size: 15px !important; }
+/* 자산 탭 : 폰에서는 칸을 고르게 나눠 한 줄에 */
+body.fc-m #view-assets .seg { width: 100%; display: flex; }
+body.fc-m #view-assets .seg > button { flex: 1 1 0; padding-left: 4px !important; padding-right: 4px !important; }
+body.fc-m #view-assets .seg + * { width: 100%; }
+#content h3.font-bold { gap: 0 !important; column-gap: 0 !important; }
+#content h3.font-bold > i.fa-solid:first-child { display: none !important; }
+.calc-help, .bud-verdict, .card-desc { text-wrap-style: balance; }
 
   </style>
 </head>
@@ -2879,7 +2916,7 @@ window.App = window.App || {};
       if (t.date !== day) {
         day = t.date;
         var same = list.filter(function (x) { return x.date === day; }), dOut = C.sumType(same, 'EXPENSE'), dIn = C.sumType(same, 'INCOME'), dt = new Date(day + 'T00:00:00');
-        html += '<div class="txn-day"><span>' + (+day.slice(8)) + '일 ' + WD[dt.getDay()] + '요일' + (day === u.today() ? ' · 오늘' : '') + '</span><span>' + (dIn ? '<b class="text-accent">+' + u.n0(dIn) + '</b> ' : '') + (dOut ? '-' + u.n0(dOut) : '') + '</span></div>';
+        html += '<div class="txn-day"><span>' + (+day.slice(8)) + '일 ' + WD[dt.getDay()] + '요일' + (day === u.today() ? ' · 오늘' : '') + '</span><span>' + (same.length > 1 ? (dIn ? '<b class="text-accent">+' + u.n0(dIn) + '</b> ' : '') + (dOut ? '-' + u.n0(dOut) : '') : '') + '</span></div>';
       }
       html += rowHtml(t);
     });
@@ -2887,8 +2924,8 @@ window.App = window.App || {};
     box.innerHTML = list.length ? (PICK ? '<div class="flex items-center justify-between pr-4"><label class="txn-all"><input type="checkbox" id="txn-all" ' + (allOn ? 'checked' : '') + ' onchange="App.txn.selAll(this.checked)"> 보이는 내역 모두 선택</label><button onclick="App.txn.pick(false)" class="text-[14px] font-semibold text-accent">완료</button></div>' : '') + html
       : '<div class="empty py-12">' + (F.q || nFilters() ? '찾는 내역이 없어요 🔍' : '이 달은 아직 비어 있어요 🐣<br><button onclick="App.ui.addMenu()" class="btn pri mt-4">기록하기</button>') + '</div>';
     var inc = C.sumType(list, 'INCOME'), exp = C.sumType(list, 'EXPENSE');
-    u.$('txn-sum').innerHTML = '<div class="flex items-start justify-between gap-3"><div class="leading-relaxed"><b class="text-slate-900">' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + ' · 나간 돈 <b class="text-slate-900 whitespace-nowrap">' + u.n0(exp) + '원</b>' + (inc ? ' · 들어온 돈 <b class="text-accent whitespace-nowrap">' + u.n0(inc) + '원</b>' : '') + '</div>'
-      + (list.length && !PICK ? '<button onclick="App.txn.pick(true)" class="shrink-0 text-[13.5px] font-semibold text-slate-500 hover:text-slate-900">여러 건 고치기</button>' : '') + '</div>';
+    u.$('txn-sum').innerHTML = '<div class="txn-sum"><div class="ts-l"><span class="nw"><b>' + list.length + '건</b>' + (F.owner !== 'ALL' ? ' · ' + u.esc(C.short(F.owner)) : '') + '</span> <span class="nw">나간 <b>' + u.n0(exp) + '원</b></span>' + (inc ? ' <span class="nw">들어온 <b class="text-accent">' + u.n0(inc) + '원</b></span>' : '') + '</div>'
+      + (list.length && !PICK ? '<button onclick="App.txn.pick(true)" class="ts-pick">여러 건 고치기</button>' : '') + '</div>';
     renderBulk();
   }
   function nFilters() { return (F.type !== 'ALL') + (F.pay !== 'ALL') + (F.owner !== 'ALL'); }
@@ -4319,7 +4356,7 @@ window.App = window.App || {};
   };
 
   /* ---------- 화면 ---------- */
-  var TABS = [['deposit', '예금 · 연금', 'fa-piggy-bank', 'assets'], ['re', '집', 'fa-house-chimney', 'realEstates'], ['invest', '투자', 'fa-chart-line', 'investments'], ['debt', '대출', 'fa-file-invoice-dollar', 'liabilities']];
+  var TABS = [['deposit', '예금', 'fa-piggy-bank', 'assets'], ['re', '집', 'fa-house-chimney', 'realEstates'], ['invest', '투자', 'fa-chart-line', 'investments'], ['debt', '대출', 'fa-file-invoice-dollar', 'liabilities']];
   function curTab() { var c = null; try { c = localStorage.getItem('FC19_ASSET_TAB'); } catch (e) {} return c == null ? '0' : c; }
   A.tab = function (k) { try { localStorage.setItem('FC19_ASSET_TAB', String(k)); } catch (e) {} App.ui.render(); };
   function panel(i, title, icon, btn, body) {
@@ -5098,8 +5135,8 @@ window.App = window.App || {};
       var left = tot - spentAll, pc = tot ? Math.min(100, spentAll / tot * 100) : 0, m = parseInt(mo.slice(5), 10);
       var won = function (v) { return u.n0(v) + '원'; };
       var plan = !T ? '<p class="text-[14px] text-slate-600 mt-4 leading-relaxed">저축 목표를 먼저 정해 두면, 예산이 <b>쓸 수 있는 돈</b> 안에 들어오는지 알려 드려요. <button onclick="App.ui.go(\'goals\')" class="more">저축 목표 정하기</button></p>'
-        : '<div class="mt-4 p-3.5 rounded-xl text-[14px] leading-relaxed ' + (over > 0 ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-700') + '">수입 ' + won(base) + ' − 저축 목표 ' + won(T) + ' = 쓸 수 있는 돈 <b>' + won(avail) + '</b><br>'
-          + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + won(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요 (여유 ' + won(-over) + ').') + '</div>';
+        : '<div class="kv mt-4"><div><small>수입</small><b>' + u.KS(base) + '</b></div><div><small>저축 목표</small><b>' + u.KS(T) + '</b></div><div><small>쓸 수 있는 돈</small><b>' + u.KS(avail) + '</b></div></div>'
+          + '<p class="bud-verdict' + (over > 0 ? ' bad' : '') + '">' + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + u.KS(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요. 여유 <b>' + u.KS(-over) + '</b>') + '</p>';
       var rows = db().categories.map(function (c, i) {
         var bv = bud[c.name] || 0, sv = spent[c.name] || 0, rem = bv - sv, rate = bv > 0 ? sv / bv * 100 : 0;
         return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0">' + u.ic(u.iconFor(c.name), 'sm') + '<b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
@@ -5108,16 +5145,16 @@ window.App = window.App || {};
           + '<div class="flex justify-between text-[13px] mt-1.5"><span class="text-slate-500">쓴 돈 ' + won(sv) + '</span>' + (bv ? '<span class="' + (rem < 0 ? 'text-red-600 font-semibold' : 'text-slate-600') + '">' + (rem < 0 ? won(-rem) + ' 넘음' : won(rem) + ' 남음') + '</span>' : '') + '</div></div></div>';
       }).join('');
       el.innerHTML = '<div class="card"><div class="sub">' + m + '월 예산 · 고정비까지 모든 항목</div>'
-        + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub mt-1">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
-          + '<div class="track mt-4"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
+        + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub hero-sub">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
+          + '<div class="track hero-track"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
           : '<div class="big mt-1">아직 예산이 없어요</div><p class="sub mt-2">아래 항목에 금액을 넣거나, 지난달 쓴 만큼으로 한 번에 채울 수 있어요.</p>')
-        + (tot ? '<p class="text-[13px] text-slate-500 mt-3">홈의 “남은 생활비”는 여기서 월세 · 관리비 같은 고정비를 뺀 금액이라 숫자가 달라요.</p>' : '')
-        + (bs.inst ? '<p class="text-[13px] text-slate-500 mt-3">카드 할부 ' + won(bs.inst) + '은 이미 정해진 돈이라 고정비처럼 따로 묶고, 예산에는 넣지 않았어요.</p>' : '')
+        + (tot ? '<p class="calc-help">홈의 생활비는 여기서 월세 · 관리비 같은 고정비를 뺀 금액이라 숫자가 달라요.</p>' : '')
+        + (bs.inst ? '<p class="calc-help">카드 할부 ' + won(bs.inst) + '은 이미 정해진 돈이라 고정비처럼 따로 묶고, 예산에는 넣지 않았어요.</p>' : '')
         + plan + '</div>'
         + '<div class="card"><div class="card-h"><h3>항목별 예산</h3><button onclick="App.budget.recommend()" class="btn sec" style="height:38px"><i class="fa-solid fa-wand-magic-sparkles"></i>지난달 쓴 만큼 채우기</button></div>'
-        + '<p class="text-[13px] text-slate-500 -mt-2 mb-2">금액을 고치면 이 달만 바꿀지, 이 달부터 계속 쓸지 물어봐요.' + (n ? ' 지금 이 달만 다르게 정한 항목이 ' + n + '개 있어요. <button onclick="App.budget.resetMonth()" class="more">기본 예산으로 되돌리기</button>' : '') + '</p>'
+        + '<p class="calc-help card-desc">금액을 고치면 이 달만 바꿀지, 이 달부터 계속 쓸지 물어봐요.' + (n ? ' 지금 이 달만 다르게 정한 항목이 ' + n + '개 있어요. <button onclick="App.budget.resetMonth()" class="more">기본 예산으로 되돌리기</button>' : '') + '</p>'
         + '<div id="budget-inline-container" class="bud-grid">' + rows + '</div></div>'
-        + '<div class="card flex flex-wrap items-center gap-2 text-[14px] text-slate-700"><b class="text-slate-900 mr-1">알림</b>예산의 <input type="number" min="50" max="100" value="' + ((db().settings.budgetWarn) || 80) + '" onchange="App.budget.setWarn(this.value)" class="w-20 border border-slate-300 rounded-lg px-2 py-2 text-right" aria-label="알림 기준 %">% 를 쓰면 알려 드려요.</div>';
+        + '<div class="card"><div class="card-h"><h3>알림</h3></div><div class="warn-row"><span>예산을 이만큼 쓰면 알려 드려요</span><label class="warn-in"><input type="number" inputmode="numeric" min="50" max="100" value="' + ((db().settings.budgetWarn) || 80) + '" onchange="App.budget.setWarn(this.value)" aria-label="알림 기준 %"><span>%</span></label></div></div>';
     }
   });
 })(window.App);
@@ -5223,7 +5260,7 @@ window.App = window.App || {};
   function monthHtml(mo) {
     var inc = C.income(mo), exp = C.expense(mo), rest = inc - exp, T = C.savingTarget(mo), S = C.savedIn(mo);
     return '<div class="card" style="order:3"><div class="card-h"><h3><i class="fa-solid fa-money-bill-transfer"></i>' + parseInt(mo.slice(5), 10) + '월 돈 흐름</h3><button onclick="App.ui.go(\'report\')" class="more">월말 리포트</button></div>'
-      + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small><i class="fa-solid fa-arrow-up"></i>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>남은 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
+      + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>들어온 돈</small><b class="text-accent" title="' + won(inc) + '">' + u.KS(inc) + '</b></div><div><small><i class="fa-solid fa-arrow-up"></i>나간 돈</small><b title="' + won(exp) + '">' + u.KS(exp) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>남긴 돈</small><b class="' + (rest < 0 ? 'text-red-600' : '') + '" title="' + won(rest) + '">' + u.KS(rest) + '</b></div></div>'
       + (T > 0 ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">저축 · 투자</span><span><b>' + won(S) + '</b> <span class="text-slate-500">/ 목표 ' + won(T) + '</span></span></div>'
         + '<div class="track mt-2" style="height:8px"><div class="fill" style="width:' + Math.min(100, S / T * 100) + '%;background:#0B7A57"></div></div></div>' : '') + '</div>';
   }
@@ -5994,7 +6031,7 @@ window.App = window.App || {};
     var spend = u.sum(top, function (c) { return c.s; });
     var head = '<div class="rp-top"><div><div class="rp-eyebrow">' + u.esc(C.nm('H')) + ' · ' + u.esc(C.nm('W')) + '</div><h2>' + u.monthLabel(mo) + ' 우리 집 리포트</h2></div>'
       + '<div class="rp-tools no-print"><button onclick="App.report.copy()"><i class="fa-regular fa-copy"></i> 요약 복사</button><button onclick="App.report.print()"><i class="fa-solid fa-print"></i> 인쇄</button></div></div>';
-    var hero = '<div class="rp-hero"><div class="sub">이번 달 남은 돈</div><div class="big' + (r.surplus < 0 ? ' text-red-600' : '') + '">' + won(r.surplus) + '</div>'
+    var hero = '<div class="rp-hero"><div class="sub">이번 달 남긴 돈</div><div class="big' + (r.surplus < 0 ? ' text-red-600' : '') + '">' + won(r.surplus) + '</div>'
       + (r.rate == null ? '' : '<div class="rp-rate"><span style="color:' + (r.rate >= 0 ? '#191F28' : '#E0464B') + '">저축률 ' + r.rate.toFixed(0) + '%</span> · 수입에서 지출을 뺀 돈</div>') + '</div>'
       + '<div class="kv rp-kv"><div><small>들어온 돈</small><b>' + u.KS(r.inc) + '</b></div>'
       + '<div><small>나간 돈</small><b>' + u.KS(r.exp) + '</b><small>예산 ' + u.KS(r.budgetTotal) + '</small></div>'
@@ -6004,7 +6041,7 @@ window.App = window.App || {};
     var cats = top.length ? stack + top.slice(0, 6).map(function (c) {
       var over = c.b > 0 && c.s > c.b, d = c.s - c.prev;
       return '<div class="rp-cat has-ic">' + u.ic(u.iconFor(c.name), 'sm') + '<span class="n">' + u.esc(c.name) + '</span>'
-        + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · 지난달 ' + (d > 0 ? '+' : '') + u.KS(d) : '') + '</span>'
+        + '<span class="m">' + (c.b ? (over ? '<em class="bad">예산보다 ' + u.KS(c.s - c.b) + ' 더</em>' : '예산 ' + Math.round(c.s / c.b * 100) + '%') : '') + (c.prev ? ' · ' + (d === 0 ? '지난달과 같아요' : '지난달보다 ' + u.KS(Math.abs(d)) + (d > 0 ? ' 더' : ' 덜')) : '') + '</span>'
         + '<b>' + won(c.s) + '</b></div>';
     }).join('') + (top.length > 6 ? '<div class="text-[13px] text-slate-400 pt-2">그 밖에 ' + (top.length - 6) + '개 항목 ' + won(u.sum(top.slice(6), function (c) { return c.s; })) + '</div>' : '')
       : '<div class="empty">이 달 지출 기록이 없어요.</div>';
@@ -6033,7 +6070,7 @@ window.App = window.App || {};
   RP.text = function (mo) {
     var r = RP.build(mo), adv = RP.advice(r), L = [];
     L.push('[' + u.monthLabel(mo) + ' 우리 집 재무 리포트]');
-    L.push('수입 ' + u.K(r.inc) + ' / 지출 ' + u.K(r.exp) + ' / 남은 돈 ' + u.K(r.surplus) + (r.rate == null ? '' : ' (저축률 ' + r.rate.toFixed(0) + '%)'));
+    L.push('수입 ' + u.K(r.inc) + ' / 지출 ' + u.K(r.exp) + ' / 남긴 돈 ' + u.K(r.surplus) + (r.rate == null ? '' : ' (저축률 ' + r.rate.toFixed(0) + '%)'));
     L.push('실제 저축·투자 ' + u.K(r.S) + (r.T ? ' (목표 ' + u.K(r.T) + ')' : ''));
     L.push('순자산 ' + u.K(r.nwNow) + (r.nwChange == null ? '' : ' (전월 대비 ' + (r.nwChange >= 0 ? '+' : '') + u.K(r.nwChange) + ')'));
     var over = r.cats.filter(function (c) { return c.b > 0 && c.s > c.b; });
@@ -6549,7 +6586,7 @@ window.App = window.App || {};
         + '<button onclick="App.settings.saveProfile()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">부부 정보 저장</button></div>'
         + '<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">' + person('h', '본인 (근로자 A)', 'fa-user text-accent', s) + person('w', '배우자 (근로자 B)', 'fa-user-tie text-amber-600', s) + '</div></div>'
         + '<div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"><div class="border-b border-slate-100 pb-3 flex justify-between items-center gap-3 flex-wrap"><div><h3 class="font-bold text-slate-800 text-base flex items-center gap-2"><i class="fa-solid fa-handshake text-accent"></i> 부부 재무 규칙</h3>'
-        + '<p class="text-xs text-slate-500 mt-0.5">생활비는 부부 공동으로 관리해요. 각자 용돈 한도를 정해 두면 대시보드에서 사용 현황을 보여줘요. 출생연도는 은퇴 시뮬레이터에 쓰여요.</p></div>'
+        + '<p class="text-xs text-slate-500 mt-0.5">생활비는 부부 공동으로 관리해요. 각자 용돈 한도를 정해 두면 홈에서 사용 현황을 보여줘요. 출생연도는 은퇴 시뮬레이터에 쓰여요.</p></div>'
         + '<button onclick="App.settings.saveRules()" class="bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 py-2 rounded-lg font-semibold">규칙 저장</button></div>'
         + '<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">' + u.field('set-by-h', u.esc(C.short('H')) + ' 출생연도', { type: 'number', ph: '예: 1988' }) + u.field('set-by-w', u.esc(C.short('W')) + ' 출생연도', { type: 'number', ph: '예: 1990' })
         + u.field('set-allow-h', u.esc(C.short('H')) + ' 월 용돈 한도 (원)', { money: true }) + u.field('set-allow-w', u.esc(C.short('W')) + ' 월 용돈 한도 (원)', { money: true })
@@ -6968,7 +7005,7 @@ window.App = window.App || {};
     u.$('login-msg').innerText = '';
   };
   S.showLogin = function () { gate(true); };
-  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장돼요. 상단 [로그인]으로 언제든 연결할 수 있어요.'); };
+  S.skipLogin = function () { localStorage.setItem(SKIP, '1'); gate(false); if (App.inbox) App.inbox.drain(); u.toast('이 기기에서만 저장돼요. 나중에 [전체 → 설정]에서 언제든 로그인할 수 있어요.'); };
   function gateUi() {
     var msg = u.$('login-msg'), btn = u.$('login-go'), label = btn.innerText;
     return {

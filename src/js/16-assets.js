@@ -129,7 +129,7 @@
   };
 
   /* ---------- 화면 ---------- */
-  var TABS = [['deposit', '예금 · 연금', 'fa-piggy-bank', 'assets'], ['re', '집', 'fa-house-chimney', 'realEstates'], ['invest', '투자', 'fa-chart-line', 'investments'], ['debt', '대출', 'fa-file-invoice-dollar', 'liabilities']];
+  var TABS = [['deposit', '예금', 'fa-piggy-bank', 'assets'], ['re', '집', 'fa-house-chimney', 'realEstates'], ['invest', '투자', 'fa-chart-line', 'investments'], ['debt', '대출', 'fa-file-invoice-dollar', 'liabilities']];
   function curTab() { var c = null; try { c = localStorage.getItem('FC19_ASSET_TAB'); } catch (e) {} return c == null ? '0' : c; }
   A.tab = function (k) { try { localStorage.setItem('FC19_ASSET_TAB', String(k)); } catch (e) {} App.ui.render(); };
   function panel(i, title, icon, btn, body) {

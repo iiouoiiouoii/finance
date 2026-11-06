@@ -109,8 +109,8 @@
       var left = tot - spentAll, pc = tot ? Math.min(100, spentAll / tot * 100) : 0, m = parseInt(mo.slice(5), 10);
       var won = function (v) { return u.n0(v) + '원'; };
       var plan = !T ? '<p class="text-[14px] text-slate-600 mt-4 leading-relaxed">저축 목표를 먼저 정해 두면, 예산이 <b>쓸 수 있는 돈</b> 안에 들어오는지 알려 드려요. <button onclick="App.ui.go(\'goals\')" class="more">저축 목표 정하기</button></p>'
-        : '<div class="mt-4 p-3.5 rounded-xl text-[14px] leading-relaxed ' + (over > 0 ? 'bg-red-50 text-red-800' : 'bg-slate-50 text-slate-700') + '">수입 ' + won(base) + ' − 저축 목표 ' + won(T) + ' = 쓸 수 있는 돈 <b>' + won(avail) + '</b><br>'
-          + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + won(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요 (여유 ' + won(-over) + ').') + '</div>';
+        : '<div class="kv mt-4"><div><small>수입</small><b>' + u.KS(base) + '</b></div><div><small>저축 목표</small><b>' + u.KS(T) + '</b></div><div><small>쓸 수 있는 돈</small><b>' + u.KS(avail) + '</b></div></div>'
+          + '<p class="bud-verdict' + (over > 0 ? ' bad' : '') + '">' + (over > 0 ? '예산 합계가 쓸 수 있는 돈보다 <b>' + u.KS(over) + '</b> 많아요. 예산을 줄이거나 저축 목표를 다시 보세요.' : '예산 합계가 쓸 수 있는 돈 안에 있어요. 여유 <b>' + u.KS(-over) + '</b>') + '</p>';
       var rows = db().categories.map(function (c, i) {
         var bv = bud[c.name] || 0, sv = spent[c.name] || 0, rem = bv - sv, rate = bv > 0 ? sv / bv * 100 : 0;
         return '<div class="bud-row"><div class="flex items-center gap-2.5 min-w-0">' + u.ic(u.iconFor(c.name), 'sm') + '<b class="truncate">' + u.esc(c.name) + '</b>' + (own(ov, c.name) ? '<span class="pill mute">이 달만</span>' : '') + '</div>'
@@ -119,16 +119,16 @@
           + '<div class="flex justify-between text-[13px] mt-1.5"><span class="text-slate-500">쓴 돈 ' + won(sv) + '</span>' + (bv ? '<span class="' + (rem < 0 ? 'text-red-600 font-semibold' : 'text-slate-600') + '">' + (rem < 0 ? won(-rem) + ' 넘음' : won(rem) + ' 남음') + '</span>' : '') + '</div></div></div>';
       }).join('');
       el.innerHTML = '<div class="card"><div class="sub">' + m + '월 예산 · 고정비까지 모든 항목</div>'
-        + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub mt-1">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
-          + '<div class="track mt-4"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
+        + (tot ? '<div class="big mt-1">' + (left < 0 ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div><div class="sub hero-sub">예산 ' + won(tot) + ' 중 ' + won(spentAll) + ' 썼어요</div>'
+          + '<div class="track hero-track"><div class="fill" style="width:' + pc + '%;background:' + (left < 0 ? '#E5484D' : '#0B7A57') + '"></div></div>'
           : '<div class="big mt-1">아직 예산이 없어요</div><p class="sub mt-2">아래 항목에 금액을 넣거나, 지난달 쓴 만큼으로 한 번에 채울 수 있어요.</p>')
-        + (tot ? '<p class="text-[13px] text-slate-500 mt-3">홈의 “남은 생활비”는 여기서 월세 · 관리비 같은 고정비를 뺀 금액이라 숫자가 달라요.</p>' : '')
-        + (bs.inst ? '<p class="text-[13px] text-slate-500 mt-3">카드 할부 ' + won(bs.inst) + '은 이미 정해진 돈이라 고정비처럼 따로 묶고, 예산에는 넣지 않았어요.</p>' : '')
+        + (tot ? '<p class="calc-help">홈의 생활비는 여기서 월세 · 관리비 같은 고정비를 뺀 금액이라 숫자가 달라요.</p>' : '')
+        + (bs.inst ? '<p class="calc-help">카드 할부 ' + won(bs.inst) + '은 이미 정해진 돈이라 고정비처럼 따로 묶고, 예산에는 넣지 않았어요.</p>' : '')
         + plan + '</div>'
         + '<div class="card"><div class="card-h"><h3>항목별 예산</h3><button onclick="App.budget.recommend()" class="btn sec" style="height:38px"><i class="fa-solid fa-wand-magic-sparkles"></i>지난달 쓴 만큼 채우기</button></div>'
-        + '<p class="text-[13px] text-slate-500 -mt-2 mb-2">금액을 고치면 이 달만 바꿀지, 이 달부터 계속 쓸지 물어봐요.' + (n ? ' 지금 이 달만 다르게 정한 항목이 ' + n + '개 있어요. <button onclick="App.budget.resetMonth()" class="more">기본 예산으로 되돌리기</button>' : '') + '</p>'
+        + '<p class="calc-help card-desc">금액을 고치면 이 달만 바꿀지, 이 달부터 계속 쓸지 물어봐요.' + (n ? ' 지금 이 달만 다르게 정한 항목이 ' + n + '개 있어요. <button onclick="App.budget.resetMonth()" class="more">기본 예산으로 되돌리기</button>' : '') + '</p>'
         + '<div id="budget-inline-container" class="bud-grid">' + rows + '</div></div>'
-        + '<div class="card flex flex-wrap items-center gap-2 text-[14px] text-slate-700"><b class="text-slate-900 mr-1">알림</b>예산의 <input type="number" min="50" max="100" value="' + ((db().settings.budgetWarn) || 80) + '" onchange="App.budget.setWarn(this.value)" class="w-20 border border-slate-300 rounded-lg px-2 py-2 text-right" aria-label="알림 기준 %">% 를 쓰면 알려 드려요.</div>';
+        + '<div class="card"><div class="card-h"><h3>알림</h3></div><div class="warn-row"><span>예산을 이만큼 쓰면 알려 드려요</span><label class="warn-in"><input type="number" inputmode="numeric" min="50" max="100" value="' + ((db().settings.budgetWarn) || 80) + '" onchange="App.budget.setWarn(this.value)" aria-label="알림 기준 %"><span>%</span></label></div></div>';
     }
   });
 })(window.App);
