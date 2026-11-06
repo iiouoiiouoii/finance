@@ -47,7 +47,7 @@
     var parts = t.split(' · '), frag = document.createDocumentFragment();
     parts.forEach(function (p, i) {
       var s = document.createElement('span'); if (p.length <= 14) s.className = 'nw';
-      s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
+      s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
       frag.appendChild(s); if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
     });
     el.textContent = ''; el.appendChild(frag);

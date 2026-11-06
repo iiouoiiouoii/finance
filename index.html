@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-06 10:22 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 10:32 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -1166,6 +1166,16 @@ body:not(.fc-m) #content { padding-top: 20px !important; }
 #view-transactions .leading-relaxed { font-size: 13px !important; line-height: 1.5 !important; }
 /* 구역 마지막 줄은 아래 여백을 줄여, 구역 사이 간격이 어디서나 같아 보이게 */
 .card > .it:last-child, .card .list-wrap > .it:last-child, .card .todo:last-child .todo-main, .card > .row:last-child, .card .txn-row:last-child, .card > .bud-row:last-child, .card .rp-cat:last-child, .card .rp-goal:last-child { padding-bottom: 4px !important; }
+/* 점선 테두리와 글자 사이 : 좌우도 위아래와 같은 약 15px (안쪽 여백 24 = 점선 위치 9 + 15) */
+body.fc-m #content { padding-left: 24px !important; padding-right: 24px !important; scrollbar-width: none; }
+body.fc-m #content::-webkit-scrollbar { display: none; }
+/* PC : 스크롤바 자리를 양쪽에 같게 둬서 좌우가 어긋나지 않게 */
+body:not(.fc-m) #content { scrollbar-gutter: stable both-edges; padding-left: 32px !important; padding-right: 32px !important; }
+/* 아주 좁은 폰(374px 이하) : 좌우 20으로 조금 줄이고, 칸 이름표는 줄바꿈 허용 */
+@media (max-width: 374px) {
+  body.fc-m #content { padding-left: 20px !important; padding-right: 20px !important; }
+  body.fc-m .kv small { white-space: normal !important; }
+}
 
   </style>
 </head>
@@ -6353,7 +6363,7 @@ window.App = window.App || {};
     var parts = t.split(' · '), frag = document.createDocumentFragment();
     parts.forEach(function (p, i) {
       var s = document.createElement('span'); if (p.length <= 14) s.className = 'nw';
-      s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
+      s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
       frag.appendChild(s); if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
     });
     el.textContent = ''; el.appendChild(frag);
