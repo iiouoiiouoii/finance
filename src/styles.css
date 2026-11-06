@@ -1085,3 +1085,50 @@ details.fold > summary { font-size: 20px !important; }
 /* 구분점 덩어리는 한 줄로 (너무 길면 그 안에서만 꺾임) */
 .nw { white-space: nowrap; }
 @media (max-width: 360px) { .nw { white-space: normal; } }
+
+/* =====================================================================
+   정돈 — 글꼴 크기 · 여백을 4의 배수로 (4 · 8 · 12 · 16 · 20 · 32)
+   구역과 구역 사이 32 · 제목 아래 12 · 줄 위아래 12 · 아이콘과 글 사이 12
+   선은 옅은 실선 하나 (점선 겹침 없애기)
+   ===================================================================== */
+/* 페이지 */
+body.fc-m #content { padding-top: 16px !important; padding-left: 20px !important; padding-right: 20px !important; }
+body:not(.fc-m) #content { padding-top: 20px !important; }
+/* 구역 */
+.card, body.fc-m .card { padding: 16px 0 !important; }
+.card + .card, .home-col > .card + .card { margin-top: 0 !important; }
+#view-dashboard .card[style*="order:1"], .view > .card:first-child { padding-top: 4px !important; }
+.card-h { border-bottom: 0 !important; padding-bottom: 0 !important; margin-bottom: 8px !important; min-height: 32px !important; align-items: center; }
+.card-h h3, .rp-h h3 { line-height: 1.25 !important; }
+/* 줄 */
+.row, .it, .txn-row, .rp-cat, .rp-goal, .bud-row, .todo-main { padding-top: 12px !important; padding-bottom: 12px !important; }
+.row:first-child, .list-wrap > .it:first-child, .rp-cat:first-of-type { padding-top: 4px !important; }
+.row + .row, .it, .rp-cat, .rp-goal, .todo, .bud-row, .txn-row { border-top: 1px solid #EDF2F6 !important; border-top-style: solid !important; }
+.card-h + .it, .card-h + .todo, .card-h + .list-wrap > .it:first-child, .card-h + div > .todo:first-child, .txn-day + .txn-row, .txn-day + div > .txn-row:first-child { border-top: 0 !important; }
+.txn-row, .todo-main, .it.has-ic { column-gap: 12px !important; gap: 12px; }
+.ic { width: 38px !important; height: 38px !important; font-size: 15px !important; border-radius: 12px !important; }
+.ic.sm { width: 34px !important; height: 34px !important; font-size: 14px !important; border-radius: 11px !important; }
+/* 글자 : 줄 높이 정리 */
+.row .t b, .it-t b, .txn-row .t b, .todo b { line-height: 1.4 !important; }
+.row .t small, .it-t small, .txn-row .t small, .todo small, .it-note { line-height: 1.45 !important; margin-top: 2px !important; }
+.it-note { margin-top: 0 !important; }
+/* 날짜 머리 : 선 없이 글자만, 위 20 · 아래 4 */
+.txn-day { border-bottom: 0 !important; padding: 20px 0 4px !important; margin: 0 !important; align-items: baseline !important; }
+.txn-day:first-child { padding-top: 8px !important; }
+.txn-day > span:first-child::before { font-size: 12px; }
+/* 큰 숫자 영역 (홈 · 예산 머리) */
+.big { margin-top: 4px !important; }
+.hero-sub { font-family: 'Pretendard', sans-serif !important; font-size: 14px !important; color: var(--ink2) !important; margin-top: 6px !important; }
+.hero-note { font-size: 14px !important; line-height: 1.6 !important; color: var(--ink2) !important; margin-top: 12px !important; }
+.card[style*="order:1"] .track { height: 10px !important; margin-top: 16px !important; }
+.card[style*="order:1"] .track + div { margin-top: 6px !important; font-size: 12px !important; color: var(--ink3) !important; }
+/* 칸 숫자 */
+.kv > div, body.fc-m .kv > div { padding: 12px !important; }
+.kv b { margin-top: 4px !important; line-height: 1.25; }
+.kv + *, * + .kv { margin-top: 12px; }
+/* 내역 머리 : 검색 · 필터 같은 높이, 요약 13 */
+.flt-in, .flt-search input { height: 44px !important; }
+.flt-btn { height: 44px !important; }
+#view-transactions .leading-relaxed { font-size: 13px !important; line-height: 1.5 !important; }
+/* 구역 마지막 줄은 아래 여백을 줄여, 구역 사이 간격이 어디서나 같아 보이게 */
+.card > .it:last-child, .card .list-wrap > .it:last-child, .card .todo:last-child .todo-main, .card > .row:last-child, .card .txn-row:last-child, .card > .bud-row:last-child, .card .rp-cat:last-child, .card .rp-goal:last-child { padding-bottom: 4px !important; }

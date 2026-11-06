@@ -43,10 +43,10 @@
     else if (!r.hasData) note = '아직 이번 달 지출이 없어요 🍃 카드 · 통장 알림이 오면 알아서 쏙 들어와요.';
     return '<div class="card" style="order:1"><div class="flex items-center justify-between gap-2"><div class="sub">' + label + ' 생활비' + (r.past ? '' : ' · 고정비 빼고') + '</div>' + pill + '</div>'
       + '<div class="big mt-1">' + (over ? '<span class="text-red-600">' + won(-left) + ' 넘었어요</span>' : won(left) + ' 남았어요') + '</div>'
-      + '<div class="sub mt-1">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요 (' + Math.round(r.est / V * 100) + '%)' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
+      + '<div class="sub hero-sub">예산 ' + won(V) + ' 중 ' + won(r.est) + ' 썼어요 (' + Math.round(r.est / V * 100) + '%)' + (r.hasActual || !r.list.length ? '' : ' (주간 점검 기준 추정)') + '</div>'
       + '<div class="track mt-5"><div class="fill" style="width:' + p + '%;background:' + (fast || over ? '#E5484D' : warn ? '#E8A10A' : '#0B7A57') + '"></div>' + (r.cur ? '<div class="mark" style="left:calc(' + m + '% - 1px)" title="오늘까지 써도 되는 선"></div>' : '') + '</div>'
-      + (r.cur ? '<div class="relative h-5 text-[12px] text-slate-500 mt-1.5"><span class="absolute left-0">1일</span><span class="absolute whitespace-nowrap" style="left:' + Math.max(14, Math.min(86, m)) + '%;transform:translateX(-50%)">오늘 기준선</span><span class="absolute right-0">' + r.D + '일</span></div>' : '')
-      + (note ? '<p class="text-[14.5px] text-slate-700 mt-3 leading-relaxed">' + note + '</p>' : '') + btns + '</div>';
+      + (r.cur ? '<div class="relative h-5 text-[12px] text-slate-500 mt-1.5"><span class="absolute left-0">1일</span>' + (m >= 20 && m <= 80 ? '<span class="absolute whitespace-nowrap" style="left:' + m + '%;transform:translateX(-50%)">오늘</span>' : '') + '<span class="absolute right-0">' + r.D + '일</span></div>' : '')
+      + (note ? '<p class="hero-note">' + note + '</p>' : '') + btns + '</div>';
   }
 
   /* ---------- 2. 지금 할 일 : 눌러서 바로 처리할 수 있는 것만 ---------- */
