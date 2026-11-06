@@ -168,6 +168,8 @@
     return '<div><h4>최근 6개월 수입 · 지출</h4><div class="h-60"><canvas id="chart-income-expense"></canvas></div></div>'
       + (Object.keys(db().snapshots).length ? '<div><h4>순자산 변화</h4><div class="h-48"><canvas id="dash-trend"></canvas></div></div>' : '');
   }
+  /* 달력 칸은 좁아서 폰에서는 짧게 : 8,500 · 12.5만 · 450만 · 1.2억 */
+  function calShort(v) { if (v >= 1e8) return (Math.round(v / 1e7) / 10) + '억'; if (v >= 1e6) return Math.round(v / 1e4) + '만'; if (v >= 1e4) return (Math.round(v / 1e3) / 10) + '만'; return u.n0(v); }
   function calendarHtml(mo) {
     var p = mo.split('-').map(Number), first = new Date(p[0], p[1] - 1, 1).getDay(), dim = u.dim(mo), by = {}, today = u.today();
     C.monthTx(mo).forEach(function (t) { var d = String(t.date); var x = by[d] || (by[d] = { i: 0, e: 0 }); if (t.type === 'INCOME') x.i += t.amount; else if (t.type === 'EXPENSE') x.e += t.amount; });
@@ -176,9 +178,9 @@
     for (var d = 1; d <= dim; d++) {
       var key = mo + '-' + u.pad(d), x = by[key] || { i: 0, e: 0 }, future = key > today, none = !x.i && !x.e && !future;
       if (none) zero++;
-      cells += '<div class="min-h-[64px] p-1.5 border-t border-slate-100 ' + (future ? 'text-slate-300' : '') + '"><div class="text-[12px] font-semibold ' + (key === today ? 'text-accent' : '') + '">' + d + '</div>'
-        + (x.i ? '<div class="text-[11.5px] text-accent font-semibold">+' + u.n0(x.i) + '</div>' : '') + (x.e ? '<div class="text-[11.5px] text-slate-700 font-semibold">-' + u.n0(x.e) + '</div>' : '')
-        + (none ? '<div class="text-[11px] text-slate-400">무지출</div>' : '') + '</div>';
+      cells += '<div class="cal-cell min-h-[64px] p-1.5 border-t border-slate-100 ' + (future ? 'text-slate-300' : '') + '"><div class="text-[12px] font-semibold ' + (key === today ? 'text-accent' : '') + '">' + d + '</div>'
+        + (x.i ? '<div class="cal-amt in" title="+' + u.n0(x.i) + '원"><span class="full">+' + u.n0(x.i) + '</span><span class="short">+' + calShort(x.i) + '</span></div>' : '') + (x.e ? '<div class="cal-amt" title="-' + u.n0(x.e) + '원"><span class="full">-' + u.n0(x.e) + '</span><span class="short">-' + calShort(x.e) + '</span></div>' : '')
+        + (none ? '<div class="cal-zero">무지출</div>' : '') + '</div>';
     }
     return '<div><h4>달력 <span class="text-[13px] font-normal text-slate-500">· 무지출 ' + zero + '일</span></h4><div class="grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500 pb-1"><div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div></div>'
       + '<div class="grid grid-cols-7">' + cells + '</div></div>';

@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-06 09:10 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 09:55 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -1024,6 +1024,101 @@ body.fc-m .bud-row b, body.fc-m #content .truncate, body.fc-m .modal-box .trunca
 }
 /* 아주 좁은 폰(≤360) : '이번 달' 칩은 숨긴다 (가운데 달 글씨를 눌러도 고를 수 있어요) */
 @media (max-width: 360px) { body.fc-m .hdr-chip { display: none !important; } }
+
+/* =====================================================================
+   글꼴 위계 (다시 정리)
+   히피체      = 제목만      : 화면 제목 24 · 구역 제목 20 · 창 제목 21
+   뚝딱감자체  = 큰 숫자 · 손글씨 꾸밈 : 큰 타이틀 34 · 리포트 제목 30 · 날짜 17 · 뱃지 · 더보기 14 · 탭 13
+   Pretendard  = 내용 전부   : 줄 제목 15/600 · 금액 15/700 · 칸 숫자 17/700 · 문단 14/400 · 설명 13/400 · 이름표 12/600
+   굵기는 400 · 600 · 700 세 가지만
+   ===================================================================== */
+.card-h h3, .rp-h h3, #content h3.font-bold { font-family: 'Hippie', 'Pretendard', sans-serif !important; font-weight: 400 !important; font-size: 20px !important; color: var(--cy-d) !important; letter-spacing: 0 !important; }
+#page-title { font-size: 24px !important; }
+#page-title .pt-t { display: block; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+.modal-box h3 { font-size: 21px !important; }
+.big, .rp-top h2, .txn-day > span:first-child, .pill, .card-h .more, .mb-tab span, .sub, .rp-eyebrow, .rp-foot, .empty { font-weight: 400 !important; font-synthesis: none; }
+.txn-day > span:first-child { font-size: 17px !important; }
+.pill, .card-h .more { font-size: 14px !important; }
+.sub { font-size: 16px !important; color: var(--ink2) !important; }
+/* 설명 · 메모는 손글씨 대신 고딕 13 (읽기 쉽게) */
+.it-note, .todo small { font-family: 'Pretendard', sans-serif !important; font-size: 13px !important; font-weight: 400 !important; color: var(--ink3) !important; }
+.it-note.warn { color: var(--red) !important; }
+/* 숫자 */
+.kv b, .rp-kv b { font-weight: 700 !important; font-size: 17px !important; }
+body.fc-m .kv b, body.fc-m .rp-kv b { font-size: 16px !important; }
+.row .v, .it-v b, .txn-row .v, .rp-cat b, .kv b, .big { font-variant-numeric: tabular-nums; }
+#content .text-2xl { font-size: 22px !important; font-weight: 700 !important; }
+/* 굵기 정리 : 500 → 400(설명) · 800 → 700 */
+#content .font-medium { font-weight: 400 !important; }
+#content .font-extrabold, #content .font-black, .kv b { font-weight: 700 !important; }
+/* 들쭉날쭉한 크기 */
+#content .text-\[13\.5px\] { font-size: 14px !important; } #content .text-\[14\.5px\] { font-size: 15px !important; }
+#content .text-xs { font-size: 13px !important; }
+/* 버튼 글씨 : 굵기 600 하나 · 크기는 버튼 크기에 맞춰 15 / 14 / 13 */
+.btn, .card-h .btn, .rp-tools button, .flt-btn, .it-btn, .hdr-chip { font-weight: 600 !important; }
+.card-h .btn, .rp-tools button, .flt-btn { font-size: 14px !important; }
+
+/* =====================================================================
+   줄바꿈 다듬기
+   · 한국어는 낱말 가운데서 끊지 않는다 (keep-all)
+   · 제목 · 이름표 · 짧은 설명은 두 줄 길이를 고르게 (balance) → 마지막 줄에 한두 글자만 남지 않게
+   · 긴 문단은 마지막 줄이 너무 짧지 않게 (pretty)
+   · 버튼 · 뱃지 · 칸 이름표는 한 줄로
+   ===================================================================== */
+body { word-break: keep-all; overflow-wrap: break-word; }
+h1, h2, h3, h4, label, small, .it-note, .it-t b, .row .t b, .txn-row .t b, .todo b, .sub, .empty, th, .big, #content .text-\[11px\], #content .text-\[10px\], #content .text-xs, .add-opt b, .add-opt small { text-wrap-style: balance; }
+.btn, .it-btn, .pill, .it-ok, .flt-btn, .hdr-chip, #content button.text-xs, #content button.rounded-lg, .back-btn, .kv small, .mb-tab span, .card-h .more, .seg > button, .rp-tools button { white-space: nowrap !important; }
+.card-h h3 { white-space: nowrap; }
+.card-h { gap: 8px; }
+/* 금액 · 날짜 덩어리는 한가운데서 끊지 않는다 */
+.v, .it-v, .kv b, .rp-cat b, .txn-day > span { white-space: nowrap; }
+/* 달력 칸 */
+.cal-amt { font-size: 11.5px !important; font-weight: 600; white-space: nowrap; color: var(--ink2); letter-spacing: -.02em; }
+.cal-amt.in { color: var(--green); }
+.cal-amt .short { display: none; }
+body.fc-m .cal-amt .full { display: none; } body.fc-m .cal-amt .short { display: inline; }
+.cal-zero { font-size: 11px; color: var(--ink3); white-space: nowrap; }
+body.fc-m .cal-cell { padding: 4px 1px !important; min-height: 52px !important; }
+body.fc-m .cal-amt { font-size: 11px !important; }
+body.fc-m .cal-zero { font-size: 10px; }
+
+/* 줄바꿈 : 고르게 나누기는 우선순위를 낮춰서 위의 balance가 이기도록 */
+:where(#content, .modal-box) :where(p, .leading-relaxed) { text-wrap-style: pretty; }
+body.fc-m :where(#content, .modal-box) :where(div, span, small, b, label, td) { text-wrap-style: balance; }
+/* 표 : 칸 이름 · 숫자 · 짧은 이름은 한 줄로 (표는 옆으로 밀어서 봐요) */
+body.fc-m th, body.fc-m td.text-right, body.fc-m td.text-center, body.fc-m td.font-semibold, body.fc-m td.font-bold, body.fc-m td > span { white-space: nowrap; }
+body.fc-m td { min-width: 64px; }
+/* 표 칸은 폰에서 모두 한 줄 (표는 옆으로 밀어서 봐요) */
+body.fc-m #content td, body.fc-m #content td span, body.fc-m .modal-box td { white-space: nowrap; }
+/* 좁은 폰 : 예산 입력칸을 줄여서 항목 이름 자리를 넓힌다 */
+@media (max-width: 360px) { body.fc-m .bud-in input { width: 6.6rem; } }
+/* 나눔 탭(seg) : 폰에서 칸 안쪽을 줄여 한 줄에, 그래도 넘치면 옆으로 밀기 */
+body.fc-m .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+body.fc-m .seg::-webkit-scrollbar { display: none; }
+body.fc-m .seg > button { padding-left: 8px !important; padding-right: 8px !important; flex: 1 0 auto; }
+/* 홈 저축 막대 이름표 */
+#view-dashboard .card span.text-slate-600 { white-space: nowrap; }
+/* 위계 마무리 : 남은 들쭉날쭉 정리 */
+#page-title, body.fc-m #page-title { font-size: 24px !important; }
+details.fold > summary { font-size: 20px !important; }
+.card-h h3 span:not(.text-accent), #content h3.font-bold span:not(.text-accent) { font-family: 'Pretendard', sans-serif !important; font-size: 13px !important; font-weight: 400 !important; color: var(--ink3) !important; }
+.sub b, .rp-foot b, .empty b { font-family: inherit; font-weight: 400 !important; color: var(--ink) !important; font-synthesis: none; }
+.seg > button { font-size: 14px !important; }
+/* 버튼 글씨 굵기는 600 하나 (700은 금액에만) */
+.it-btn, #content button, .modal-box button { font-weight: 600 !important; }
+#content .it-btn b, #content button b { font-weight: 700 !important; }
+/* 날짜 머리의 하루 합계 = 이름표 12/600 */
+.txn-day > span:not(:first-child) { font-size: 12px !important; font-weight: 600 !important; }
+.font-medium { font-weight: 400 !important; }
+.cy-count b { font-weight: 700 !important; }
+/* 칸 숫자 아래 보조 설명(지난달보다 …)은 줄바꿈 허용 */
+.kv b + small, body.fc-m .kv b + small { white-space: normal !important; }
+/* 구역 머리 : 제목과 버튼이 한 줄에 안 들어가면 버튼이 아래로 */
+.card-h { flex-wrap: wrap; row-gap: 8px; }
+.card-h h3 { min-width: 0; }
+/* 구분점 덩어리는 한 줄로 (너무 길면 그 안에서만 꺾임) */
+.nw { white-space: nowrap; }
+@media (max-width: 360px) { .nw { white-space: normal; } }
 
   </style>
 </head>
@@ -2039,7 +2134,7 @@ window.App = window.App || {};
     /* 미니홈피 방문자 수처럼 : TODAY = 오늘 적은 내역, TOTAL = 지금까지 모든 내역 */
     var txs = (App.db && App.db.transactions) || [], td = u.today(), nT = txs.filter(function (t) { return t.date === td; }).length;
     var cnt = '<span class="cy-count">TODAY <b>' + nT + '</b><i>|</i>TOTAL <b>' + u.n0(txs.length) + '</b></span>';
-    u.$('page-title').innerHTML = cnt + (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + u.esc(ui.label(v.id));
+    u.$('page-title').innerHTML = cnt + (par ? '<button onclick="App.ui.go(\'' + par + '\')" class="back-btn" aria-label="뒤로"><i class="fa-solid fa-chevron-left"></i></button>' : '') + '<span class="pt-t">' + u.esc(ui.label(v.id)) + '</span>';
     document.title = ui.label(v.id) + ' · 우리집 가계부';
     renderNav(v.id);
     renderHeader(v.id);
@@ -5032,6 +5127,8 @@ window.App = window.App || {};
     return '<div><h4>최근 6개월 수입 · 지출</h4><div class="h-60"><canvas id="chart-income-expense"></canvas></div></div>'
       + (Object.keys(db().snapshots).length ? '<div><h4>순자산 변화</h4><div class="h-48"><canvas id="dash-trend"></canvas></div></div>' : '');
   }
+  /* 달력 칸은 좁아서 폰에서는 짧게 : 8,500 · 12.5만 · 450만 · 1.2억 */
+  function calShort(v) { if (v >= 1e8) return (Math.round(v / 1e7) / 10) + '억'; if (v >= 1e6) return Math.round(v / 1e4) + '만'; if (v >= 1e4) return (Math.round(v / 1e3) / 10) + '만'; return u.n0(v); }
   function calendarHtml(mo) {
     var p = mo.split('-').map(Number), first = new Date(p[0], p[1] - 1, 1).getDay(), dim = u.dim(mo), by = {}, today = u.today();
     C.monthTx(mo).forEach(function (t) { var d = String(t.date); var x = by[d] || (by[d] = { i: 0, e: 0 }); if (t.type === 'INCOME') x.i += t.amount; else if (t.type === 'EXPENSE') x.e += t.amount; });
@@ -5040,9 +5137,9 @@ window.App = window.App || {};
     for (var d = 1; d <= dim; d++) {
       var key = mo + '-' + u.pad(d), x = by[key] || { i: 0, e: 0 }, future = key > today, none = !x.i && !x.e && !future;
       if (none) zero++;
-      cells += '<div class="min-h-[64px] p-1.5 border-t border-slate-100 ' + (future ? 'text-slate-300' : '') + '"><div class="text-[12px] font-semibold ' + (key === today ? 'text-accent' : '') + '">' + d + '</div>'
-        + (x.i ? '<div class="text-[11.5px] text-accent font-semibold">+' + u.n0(x.i) + '</div>' : '') + (x.e ? '<div class="text-[11.5px] text-slate-700 font-semibold">-' + u.n0(x.e) + '</div>' : '')
-        + (none ? '<div class="text-[11px] text-slate-400">무지출</div>' : '') + '</div>';
+      cells += '<div class="cal-cell min-h-[64px] p-1.5 border-t border-slate-100 ' + (future ? 'text-slate-300' : '') + '"><div class="text-[12px] font-semibold ' + (key === today ? 'text-accent' : '') + '">' + d + '</div>'
+        + (x.i ? '<div class="cal-amt in" title="+' + u.n0(x.i) + '원"><span class="full">+' + u.n0(x.i) + '</span><span class="short">+' + calShort(x.i) + '</span></div>' : '') + (x.e ? '<div class="cal-amt" title="-' + u.n0(x.e) + '원"><span class="full">-' + u.n0(x.e) + '</span><span class="short">-' + calShort(x.e) + '</span></div>' : '')
+        + (none ? '<div class="cal-zero">무지출</div>' : '') + '</div>';
     }
     return '<div><h4>달력 <span class="text-[13px] font-normal text-slate-500">· 무지출 ' + zero + '일</span></h4><div class="grid grid-cols-7 text-center text-[12px] font-semibold text-slate-500 pb-1"><div class="text-red-500">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-500">토</div></div>'
       + '<div class="grid grid-cols-7">' + cells + '</div></div>';
@@ -5750,7 +5847,7 @@ window.App = window.App || {};
     }).join('') + '</ol>' + (adv.length > 5 ? '<details class="rp-more"><summary>' + (adv.length - 5) + '개 더 보기</summary><ol class="rp-todo">' + adv.slice(5).map(function (x) { return '<li' + (TONE[x[0]] ? ' class="key"' : '') + '><span class="rp-no"></span><p>' + x[1] + '</p></li>'; }).join('') + '</ol></details>' : '')
       : '<p class="text-[15px] text-slate-700">특별히 고칠 점이 없어요. 이번 달처럼만 하면 돼요.</p>';
     var assets = '<div class="kv"><div><small>순자산</small><b>' + u.KS(r.nwNow) + '</b><small>' + (r.nwChange == null ? '지난달 기록 없음' : '지난달보다 ' + (r.nwChange >= 0 ? '+' : '') + u.KS(r.nwChange)) + '</small></div>'
-      + '<div><small>비상금</small><b' + (r.h.efMonths != null && r.h.efMonths < 3 ? ' class="text-red-600"' : '') + '>' + (r.h.efMonths == null ? '-' : r.h.efMonths.toFixed(1) + '개월') + '</b><small>3~6개월이면 든든</small></div>'
+      + '<div><small>비상금</small><b' + (r.h.efMonths != null && r.h.efMonths < 3 ? ' class="text-red-600"' : '') + '>' + (r.h.efMonths == null ? '-' : r.h.efMonths.toFixed(1) + '개월') + '</b><small>3~6개월 든든</small></div>'
       + '<div><small>매달 정해진 돈</small><b>' + u.KS(C.fixedTotal() + r.inst.thisCharge + C.loansMonthly(mo)) + '</b><small>고정비 · 할부 · 대출</small></div></div>'
       + (r.ending.length ? '<p class="text-[14px] mt-3 text-slate-600">이번 달로 끝나는 할부 ' + r.ending.length + '건 · 다음 달부터 월 ' + won(u.sum(r.ending, function (x) { return x.c.thisCharge; })) + '이 가벼워져요.</p>' : '');
     var goals = r.goals.length ? r.goals.map(function (x) {
@@ -6180,9 +6277,9 @@ window.App = window.App || {};
     var cs = getComputedStyle(el);
     if (!clipping(el, cs)) return;
     var txt = (el.textContent || '').trim();
-    var shrink = el.id === 'page-title' || el.classList.contains('fit-shrink');
-    if (txt && (shrink || (txt.length <= 24 && NUM.test(txt)))) {
-      var size = parseFloat(cs.fontSize), min = shrink ? 16 : 11;
+    var shrink = el.classList.contains('pt-t') || el.classList.contains('fit-shrink');
+    if (txt && (shrink || (txt.length <= 32 && NUM.test(txt)))) {
+      var size = parseFloat(cs.fontSize), min = Math.min(size, shrink ? 16 : 11);
       var s = Math.max(min, Math.floor(size * el.clientWidth / el.scrollWidth * 10) / 10);
       el.style.setProperty('font-size', s + 'px', 'important');
       while (s > min && el.scrollWidth > el.clientWidth + 1) { s -= .5; el.style.setProperty('font-size', s + 'px', 'important'); }
@@ -6193,8 +6290,30 @@ window.App = window.App || {};
       el.style.setProperty('word-break', 'keep-all');
     }
   }
+  /* 숫자가 두 줄로 꺾였는지 (1,627,302,661원 → 1,627,302,66 / 1원 같은 경우) */
+  function multiNum(el) {
+    var t = (el.textContent || '').trim(); if (!t || t.length > 24 || t.indexOf(' / ') >= 0 || !NUM.test(t) || !/\d/.test(t)) return false;
+    var r = document.createRange(); r.selectNodeContents(el); var tops = {};
+    [].forEach.call(r.getClientRects(), function (x) { if (x.width > 1) tops[Math.round(x.top)] = 1; });
+    return Object.keys(tops).length > 1;
+  }
+  /* 설명 줄(10월 13일 · 취미/여가/문화 · 카드)은 ' · ' 자리에서만 줄을 바꾼다 */
+  var DOTS = '.it-t small, .txn-row .t small, .row .t small, .todo small, .it-note, .rp-cat .m, .rp-goal small, .add-opt small';
+  function splitDots(el) {
+    if (el.dataset.dots || el.childElementCount) return;
+    el.dataset.dots = '1';
+    var t = el.textContent; if (t.indexOf(' · ') < 0 || /[요다]\.?\s*$/.test(t)) return;
+    var parts = t.split(' · '), frag = document.createDocumentFragment();
+    parts.forEach(function (p, i) {
+      var s = document.createElement('span'); if (p.length <= 14) s.className = 'nw';
+      s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
+      frag.appendChild(s); if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
+    });
+    el.textContent = ''; el.appendChild(frag);
+  }
   function run() {
     queued = false; busy = true;
+    try { document.querySelectorAll(DOTS).forEach(splitDots); } catch (e) {}
     try {
       document.querySelectorAll(ROOTS).forEach(function (root) {
         root.querySelectorAll('*').forEach(function (el) {
@@ -6202,6 +6321,7 @@ window.App = window.App || {};
           if (tn === 'INPUT' || tn === 'SELECT' || tn === 'TEXTAREA' || tn === 'CANVAS' || tn === 'svg' || tn === 'I') return;
           if (el.style.fontSize && el.dataset.fit) el.style.fontSize = '';
           if (el.scrollWidth > el.clientWidth + 1 || el.dataset.fit) { el.dataset.fit = '1'; fit(el); }
+          else if (el.childElementCount === 0 && multiNum(el)) { el.dataset.fit = '1'; el.style.setProperty('white-space', 'nowrap', 'important'); el.style.setProperty('overflow', 'hidden'); fit(el); }
         });
       });
     } catch (e) { console.warn('[fit]', e); }

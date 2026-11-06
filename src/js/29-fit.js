@@ -18,9 +18,9 @@
     var cs = getComputedStyle(el);
     if (!clipping(el, cs)) return;
     var txt = (el.textContent || '').trim();
-    var shrink = el.id === 'page-title' || el.classList.contains('fit-shrink');
-    if (txt && (shrink || (txt.length <= 24 && NUM.test(txt)))) {
-      var size = parseFloat(cs.fontSize), min = shrink ? 16 : 11;
+    var shrink = el.classList.contains('pt-t') || el.classList.contains('fit-shrink');
+    if (txt && (shrink || (txt.length <= 32 && NUM.test(txt)))) {
+      var size = parseFloat(cs.fontSize), min = Math.min(size, shrink ? 16 : 11);
       var s = Math.max(min, Math.floor(size * el.clientWidth / el.scrollWidth * 10) / 10);
       el.style.setProperty('font-size', s + 'px', 'important');
       while (s > min && el.scrollWidth > el.clientWidth + 1) { s -= .5; el.style.setProperty('font-size', s + 'px', 'important'); }
@@ -31,8 +31,30 @@
       el.style.setProperty('word-break', 'keep-all');
     }
   }
+  /* 숫자가 두 줄로 꺾였는지 (1,627,302,661원 → 1,627,302,66 / 1원 같은 경우) */
+  function multiNum(el) {
+    var t = (el.textContent || '').trim(); if (!t || t.length > 24 || t.indexOf(' / ') >= 0 || !NUM.test(t) || !/\d/.test(t)) return false;
+    var r = document.createRange(); r.selectNodeContents(el); var tops = {};
+    [].forEach.call(r.getClientRects(), function (x) { if (x.width > 1) tops[Math.round(x.top)] = 1; });
+    return Object.keys(tops).length > 1;
+  }
+  /* 설명 줄(10월 13일 · 취미/여가/문화 · 카드)은 ' · ' 자리에서만 줄을 바꾼다 */
+  var DOTS = '.it-t small, .txn-row .t small, .row .t small, .todo small, .it-note, .rp-cat .m, .rp-goal small, .add-opt small';
+  function splitDots(el) {
+    if (el.dataset.dots || el.childElementCount) return;
+    el.dataset.dots = '1';
+    var t = el.textContent; if (t.indexOf(' · ') < 0 || /[요다]\.?\s*$/.test(t)) return;
+    var parts = t.split(' · '), frag = document.createDocumentFragment();
+    parts.forEach(function (p, i) {
+      var s = document.createElement('span'); if (p.length <= 14) s.className = 'nw';
+      s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
+      frag.appendChild(s); if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
+    });
+    el.textContent = ''; el.appendChild(frag);
+  }
   function run() {
     queued = false; busy = true;
+    try { document.querySelectorAll(DOTS).forEach(splitDots); } catch (e) {}
     try {
       document.querySelectorAll(ROOTS).forEach(function (root) {
         root.querySelectorAll('*').forEach(function (el) {
@@ -40,6 +62,7 @@
           if (tn === 'INPUT' || tn === 'SELECT' || tn === 'TEXTAREA' || tn === 'CANVAS' || tn === 'svg' || tn === 'I') return;
           if (el.style.fontSize && el.dataset.fit) el.style.fontSize = '';
           if (el.scrollWidth > el.clientWidth + 1 || el.dataset.fit) { el.dataset.fit = '1'; fit(el); }
+          else if (el.childElementCount === 0 && multiNum(el)) { el.dataset.fit = '1'; el.style.setProperty('white-space', 'nowrap', 'important'); el.style.setProperty('overflow', 'hidden'); fit(el); }
         });
       });
     } catch (e) { console.warn('[fit]', e); }
