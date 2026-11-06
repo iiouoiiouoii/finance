@@ -16,18 +16,18 @@
     if (i.ml != null && i.ml <= 0) return ['기한 경과', 'bg-red-100 text-red-700'];
     if (i.req == null) return ['기한 미정', 'bg-slate-100 text-slate-600'];
     if (pl >= i.req) return ['순항', 'bg-emerald-100 text-emerald-800'];
-    return [pl ? '월 ' + u.K(i.req - pl) + ' 부족' : '적립 계획 필요', 'bg-amber-100 text-amber-800'];
+    return [pl ? '매달 ' + u.KS(i.req - pl) + ' 부족' : '적립 계획 필요', 'bg-amber-100 text-amber-800'];
   }
   function goalCard(g) {
     var i = C.goalInfo(g), s = status(g, i), thisM = u.sum(db().transactions.filter(function (t) { return t.goalId === g.id && String(t.date).indexOf(u.nowM()) === 0; }), function (t) { return t.amount; });
     var warn = /부족|필요|경과/.test(s[0]);
     return u.item({
       tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name), icon: /집|주택/.test(g.name) ? 'fa-house' : /차/.test(g.name) ? 'fa-car' : /여행/.test(g.name) ? 'fa-plane' : /교육|아이/.test(g.name) ? 'fa-graduation-cap' : 'fa-flag',
-      meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월 남음)' : '') + '까지' : '기한 없음', i.req == null ? '' : '매달 ' + u.K(i.req) + ' 필요']),
+      meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due.replace('-', '.')) + '까지' + (i.ml > 0 ? '(' + i.ml + '개월)' : '') : '기한 없음', i.req == null ? '' : '매달 ' + u.KS(i.req) + ' 필요']),
       val: i.pc.toFixed(0) + '%', valSub: u.KS(i.saved) + ' / ' + u.KS(i.tgt),
       bar: i.pc, barColor: '#0B7A57',
-      note: s[0] + (g.plan ? ' · 계획 월 ' + u.K(g.plan) : '') + ' · 이번 달 ' + u.K(thisM) + ' 모음', noteCls: warn ? 'warn' : '',
-      act: '<input id="goal-c-' + g.id + '" type="text" data-money inputmode="numeric" placeholder="' + (g.plan ? u.n0(g.plan) : '모은 금액') + '" class="w-32 border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1.5 text-[14px] text-right">'
+      note: (warn ? '<span class="bad">' + s[0] + '</span> · ' : s[0] + ' · ') + '이번 달 ' + u.KS(thisM) + ' 모음' + (g.plan ? ' · 계획 ' + u.KS(g.plan) : ''), noteCls: 'goal-note',
+      act: '<input id="goal-c-' + g.id + '" type="text" data-money inputmode="numeric" placeholder="' + (g.plan ? u.n0(g.plan) : '모은 금액') + '" class="act-in">'
         + '<button onclick="App.goals.contrib(' + g.id + ')" class="it-btn">모았어요</button>'
     });
   }
@@ -39,10 +39,10 @@
   G.form = function (g) {
     var f = u.$('goal-form'); if (!f) return;
     f.classList.remove('hidden');
-    f.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-6 gap-3 text-xs">' + u.field('goal-name', '목표 이름', { ph: '예: 내 집 마련, 아이 교육비, 차 교체' })
+    f.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-3 gap-3">' + u.field('goal-name', '목표 이름', { ph: '예: 내 집 마련, 아이 교육비, 차 교체' })
       + '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">누구의 목표</label><select id="goal-owner" class="' + u.IN + '">' + C.OW.map(function (c) { return '<option value="' + c + '">' + u.esc(c === 'J' ? '부부 공동' : C.nm(c)) + '</option>'; }).join('') + '</select></div>'
       + u.field('goal-target', '목표 금액 (원)', { money: true }) + u.field('goal-due', '목표 시점', { type: 'month' }) + u.field('goal-initial', '이미 모아 둔 돈 (원)', { money: true }) + u.field('goal-plan', '월 적립 계획 (원)', { money: true })
-      + '</div><input type="hidden" id="goal-id"><div class="flex justify-end gap-2 mt-3"><button onclick="App.goals.cancel()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">취소</button><button onclick="App.goals.save()" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">목표 저장</button></div>';
+      + '</div><input type="hidden" id="goal-id"><div class="flex justify-end gap-2 mt-3"><button onclick="App.goals.cancel()" class="btn sec">취소</button><button onclick="App.goals.save()" class="btn pri">목표 저장</button></div>';
     u.$('goal-id').value = g ? g.id : ''; u.$('goal-name').value = g ? g.name : ''; u.$('goal-owner').value = g ? (g.owner || 'J') : 'J';
     u.setMoney('goal-target', g && g.target); u.$('goal-due').value = g && g.due ? g.due : ''; u.setMoney('goal-initial', g && g.initial); u.setMoney('goal-plan', g && g.plan);
     u.$('goal-name').focus();
@@ -97,14 +97,14 @@
     if (over > 0 && p.T) notes.push('<span class="text-red-600">예산을 다 쓰면 저축 목표를 못 지켜요. 예산을 ' + u.K(over) + ' 줄여야 해요.</span> <button onclick="App.goals.adjustBudgets()" class="more">예산 자동으로 줄이기</button>');
     if (reqSum) notes.push(reqSum > p.T ? '목표들을 기한에 맞추려면 매달 ' + u.K(reqSum) + '이 필요해요. 저축을 ' + u.K(reqSum - p.T) + ' 늘리거나 기한을 늦춰 보세요.' : '목표들에 필요한 돈(월 ' + u.K(reqSum) + ')이 저축 목표 안에 들어와요.');
     return '<div class="card"><div class="card-h"><h3><i class="fa-solid fa-piggy-bank"></i>먼저 저축하고 남은 돈으로 쓰기</h3></div>'
-      + '<div class="flex flex-wrap items-center gap-2 mb-4"><span class="text-[14px] text-slate-600 mr-1">매달 저축 · 투자</span><div class="seg"><button onclick="App.goals.setMode(\'amt\')" class="' + (mode === 'amt' ? 'on' : '') + '">금액</button><button onclick="App.goals.setMode(\'pct\')" class="' + (mode === 'pct' ? 'on' : '') + '">수입의 %</button></div>'
-      + '<input id="save-val" type="text" ' + (mode === 'amt' ? 'data-money ' : '') + 'inputmode="numeric" value="' + val + '" placeholder="' + (mode === 'pct' ? '예: 30' : '예: 2,000,000') + '" class="fc-in w-36 text-right">'
-      + '<button onclick="App.goals.setSave()" class="btn pri" style="height:44px">저장</button></div>'
+      + '<div class="save-row"><span class="save-lb">매달 저축 · 투자</span><div class="seg"><button onclick="App.goals.setMode(\'amt\')" class="' + (mode === 'amt' ? 'on' : '') + '">금액</button><button onclick="App.goals.setMode(\'pct\')" class="' + (mode === 'pct' ? 'on' : '') + '">수입의 %</button></div></div>'
+      + '<div class="save-in"><input id="save-val" type="text" ' + (mode === 'amt' ? 'data-money ' : '') + 'inputmode="numeric" value="' + val + '" placeholder="' + (mode === 'pct' ? '예: 30' : '예: 2,000,000') + '" class="fc-in">'
+      + '<button onclick="App.goals.setSave()" class="btn pri">저장</button></div>'
       + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>수입</small><b>' + u.KS(p.b.base) + '</b></div><div><small><i class="fa-solid fa-piggy-bank"></i>저축 목표</small><b>' + u.KS(p.T) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>쓸 수 있는 돈</small><b' + (p.avail < 0 ? ' class="text-red-600"' : '') + '>' + u.KS(p.avail) + '</b></div></div>'
-      + (p.T ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">이번 달 실제로 모은 돈</span><span><b>' + u.K(p.S) + '</b> <span class="text-slate-400">· ' + pc.toFixed(0) + '%</span></span></div>'
-        + '<div class="track mt-2" style="height:6px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:#0B7A57"></div></div></div>' : '')
-      + (notes.length ? '<div class="mt-4 space-y-1.5 text-[14px] text-slate-600 leading-relaxed">' + notes.map(function (n) { return '<p>' + n + '</p>'; }).join('') + '</div>' : '')
-      + '<p class="text-[13px] text-slate-400 mt-3">' + (p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입으로 계산했어요. ' : '') + '적금 · 투자 · 목표로 보낸 이체를 모은 돈으로 세요.</p></div>';
+      + (p.T ? '<div class="save-prog"><div class="flex justify-between items-baseline"><span class="text-slate-600">이번 달 실제로 모은 돈</span><span><b>' + u.K(p.S) + '</b> <span class="text-slate-400">· ' + pc.toFixed(0) + '%</span></span></div>'
+        + '<div class="track mt-2"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:#0B7A57"></div></div></div>' : '')
+      + (notes.length ? '<div class="save-notes">' + notes.map(function (n) { return '<p>' + n + '</p>'; }).join('') + '</div>' : '')
+      + '<p class="calc-help">' + (p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입으로 계산했어요. ' : '') + '적금 · 투자 · 목표로 보낸 이체를 모은 돈으로 세요.</p></div>';
   }
 
   App.views.add({
@@ -112,9 +112,9 @@
     render: function (el) {
       var list = (db().goals || []).slice().sort(function (a, b) { return (a.due || '9999') < (b.due || '9999') ? -1 : 1; });
       el.innerHTML = '<div class="card"><div class="card-h"><h3>목표별로 모으기</h3><button onclick="App.goals.form(null)" class="btn sec" style="height:38px">+ 목표 추가</button></div>'
-        + '<div id="goal-form" class="hidden p-4 bg-slate-50 rounded-xl mb-3"></div>'
+        + '<div id="goal-form" class="hidden calc-form"></div>'
         + '<div class="list-wrap">' + (list.length ? list.map(goalCard).join('') : '<div class="empty">아직 목표가 없어요. 집 마련, 아이 교육비, 차 바꾸기, 여행처럼 쓸 곳이 정해진 돈을 목표로 넣어 보세요.</div>') + '</div>'
-        + (list.length ? '<p class="text-[13px] text-slate-500 mt-3">금액을 적고 [모았어요]를 누르면 이체 내역에 기록되고 진행률이 올라가요. 목표를 누르면 고치거나 지울 수 있어요.</p>' : '') + '</div>'
+        + (list.length ? '<p class="calc-help">금액을 적고 [모았어요]를 누르면 이체 내역에 기록되고 진행률이 올라가요. 목표를 누르면 고치거나 지울 수 있어요.</p>' : '') + '</div>'
         + presaveHtml(App.state.month);
     }
   });

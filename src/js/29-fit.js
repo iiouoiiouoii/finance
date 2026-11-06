@@ -46,7 +46,7 @@
     var t = el.textContent; if (t.indexOf(' · ') < 0 || /[요다]\.?\s*$/.test(t)) return;
     var parts = t.split(' · '), frag = document.createDocumentFragment();
     parts.forEach(function (p, i) {
-      var s = document.createElement('span'); if (p.length <= 14) s.className = 'nw';
+      var s = document.createElement('span'); if (p.length <= 18) s.className = 'nw';
       s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
       frag.appendChild(s); if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
     });

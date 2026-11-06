@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-06 10:54 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 11:35 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -1197,6 +1197,94 @@ body:not(.fc-m) #content { scrollbar-gutter: stable both-edges; padding-left: 32
 .mb-tab span, .pill, .card-h .more { font-size: 14px !important; -webkit-font-smoothing: auto; }
 .txn-day > span:first-child { font-size: 17px !important; -webkit-font-smoothing: auto; }
 @media (max-width: 360px) { body.fc-m .cy-count, body.fc-m .cy-count b { font-size: 13px !important; } }
+
+/* =====================================================================
+   머리 : 하위 화면(계산기)의 뒤로 버튼과 제목을 한 줄에
+   ===================================================================== */
+#page-title { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 2px; }
+#page-title .cy-count { grid-column: 1 / -1; }
+#page-title .cy-count + .pt-t { grid-column: 1 / -1; }
+#page-title .back-btn { width: 30px; height: 30px; margin: 0 0 0 -8px !important; display: inline-flex; align-items: center; justify-content: center; color: var(--cy-d) !important; font-size: 16px; }
+
+/* =====================================================================
+   목표 화면
+   ===================================================================== */
+.goal-note { color: var(--ink3) !important; }
+.goal-note .bad { color: var(--red); font-weight: 600; }
+.it-act { margin-top: 4px; gap: 8px !important; }
+.act-in { height: 40px; width: 148px; min-width: 0; flex: 0 1 148px; border: 1px solid #D5E2EB; background: #fff; border-radius: 12px; padding: 0 12px; text-align: right; font-size: 16px; font-weight: 600; color: var(--ink); }
+.act-in::placeholder { color: #B5C2CC; font-weight: 500; }
+.it-act .it-btn { height: 40px !important; min-height: 40px; padding: 0 16px !important; border-radius: 12px !important; font-size: 14px !important; }
+.save-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.save-lb { font-size: 15px; font-weight: 600; color: var(--ink); }
+.save-in { display: flex; gap: 8px; margin-bottom: 16px; }
+.save-in .fc-in { flex: 1 1 auto; min-width: 0; height: 48px !important; text-align: right; font-size: 16px !important; font-weight: 600; border-radius: 12px !important; }
+.save-in .btn { height: 48px !important; flex: 0 0 auto; padding: 0 22px !important; }
+.save-prog { margin-top: 16px; font-size: 14px; }
+.save-notes { margin-top: 16px; font-size: 14px; line-height: 1.6; color: var(--ink2); }
+.save-notes p + p { margin-top: 6px; }
+.calc-help { font-size: 13px !important; line-height: 1.6 !important; color: var(--ink3) !important; margin-top: 12px; }
+.calc-form { margin: 4px 0 16px; padding: 16px; border: 1.5px dotted var(--cyline); border-radius: 14px; background: #F7FBFE; }
+.calc-form .flex.justify-end { margin-top: 16px !important; gap: 8px !important; }
+.calc-form .btn { height: 44px !important; }
+
+/* =====================================================================
+   계산기(대출 · 연말정산 · 은퇴) + 목표 입력 : 다른 화면과 같은 입력 · 글자 · 여백
+   이름표 13/600 · 입력칸 48 높이 16/600 · 칸 사이 12 · 줄 사이 16 · 숫자는 오른쪽 정렬
+   ===================================================================== */
+:is(#view-loan, #view-tax, #view-retire, #goal-form) .grid { column-gap: 12px !important; row-gap: 16px !important; }
+body.fc-m :is(#view-loan, #view-tax, #view-retire) .grid-cols-3,
+body.fc-m :is(#view-loan, #view-tax, #view-retire) .grid-cols-12 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+body.fc-m :is(#view-loan, #view-tax, #view-retire) .grid-cols-12 > * { grid-column: 1 / -1 !important; }
+/* 이름표가 두 줄이어도 입력칸은 아래 줄에 나란히 */
+:is(#view-loan, #view-tax, #view-retire, #goal-form) .grid > div:has(> label) { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+:is(#view-loan, #view-tax, #view-retire, #goal-form) label { font-size: 13px !important; font-weight: 600 !important; color: var(--ink2) !important; margin-bottom: 6px !important; line-height: 1.35 !important; }
+:is(#view-loan, #view-tax, #view-retire, #goal-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select) {
+  height: 48px !important; font-size: 16px !important; font-weight: 600 !important; color: var(--ink) !important; border: 1px solid #D5E2EB !important; background: #fff !important; border-radius: 12px !important; padding: 0 14px !important; }
+:is(#view-loan, #view-tax, #view-retire) input[type=text], :is(#view-loan, #view-tax, #view-retire, #goal-form) :is(input[data-money], input[type=number], input[inputmode=numeric], input[inputmode=decimal]) { text-align: right !important; }
+:is(#view-loan, #view-tax, #view-retire, #goal-form) input:focus, :is(#view-loan, #view-tax, #view-retire, #goal-form) select:focus { border-color: var(--cy) !important; outline: none; box-shadow: 0 0 0 3px rgba(58, 143, 208, .15) !important; }
+/* 소제목(1. 근로 소득 정보 등) */
+:is(#view-loan, #view-tax, #view-retire) h4 { font-family: 'Pretendard', sans-serif !important; font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; margin: 8px 0 12px !important; padding: 0 !important; border: 0 !important; }
+:is(#view-loan, #view-tax, #view-retire) h3.font-bold + p, :is(#view-loan, #view-tax, #view-retire) h3 + p { font-size: 14px !important; color: var(--ink2) !important; line-height: 1.6 !important; margin-top: 4px !important; }
+/* 초록 버튼 → 다른 화면의 보조 버튼과 같게 */
+:is(#view-loan, #view-tax, #view-retire) button[class*="bg-emerald-7"] { background: #fff !important; color: var(--cy-d) !important; border: 1px solid #C9D9E4 !important; box-shadow: 0 2px 0 #D9E5EE !important; height: 36px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; padding: 0 12px !important; display: inline-flex !important; align-items: center; gap: 6px; }
+/* 결과 상자 : 한 가지 모양 (옅은 하늘 바탕 + 점선) */
+:is(#view-loan, #view-tax, #view-retire) div:is(.rounded-lg, .rounded-xl):is(.p-3, .p-3\.5, .p-4) {
+  background: #F7FBFE !important; border: 1.5px dotted var(--cyline) !important; border-radius: 14px !important; padding: 14px 16px !important; }
+:is(#view-loan, #view-tax, #view-retire) div:is(.rounded-lg, .rounded-xl):is(.p-3, .p-3\.5, .p-4) div:is(.rounded-lg, .rounded-xl):is(.p-3, .p-3\.5, .p-4) { background: #fff !important; }
+/* 표 */
+:is(#view-loan, #view-tax, #view-retire, #view-cards) th { font-size: 12px !important; font-weight: 600 !important; color: var(--ink3) !important; padding: 10px 8px !important; background: transparent !important; }
+:is(#view-loan, #view-tax, #view-retire, #view-cards) td { font-size: 14px !important; padding: 10px 8px !important; }
+:is(#view-loan, #view-tax, #view-retire) .space-y-4 > * + *, :is(#view-loan, #view-tax, #view-retire) .space-y-3 > * + * { margin-top: 16px !important; }
+/* 계산 결과 상자 : 밝은 상자 + 큰 숫자 + 이름 왼쪽 / 금액 오른쪽 */
+.calc-result { background: #F7FBFE; border: 1.5px dotted var(--cyline); border-radius: 14px; padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; }
+.cr-lb { font-size: 13px; font-weight: 600; color: var(--ink3); }
+.cr-big { font-family: 'TtukttakGamja', 'Pretendard', sans-serif; font-size: 30px; line-height: 1.2; color: var(--green); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.cr-sub { font-size: 13px; color: var(--ink3); margin-top: 4px; line-height: 1.5; }
+.cr-list { border-top: 1px solid #E3ECF2; padding-top: 10px; }
+.cr-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 0; font-size: 14px; }
+.cr-row > span { color: var(--ink2); min-width: 0; }
+.cr-row > b { color: var(--ink); font-weight: 700; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.calc-h { font-family: 'Hippie', 'Pretendard', sans-serif !important; font-weight: 400 !important; font-size: 20px !important; color: var(--cy-d) !important; line-height: 1.25; }
+.calc-h::before { content: "♥"; font-family: 'Pretendard', sans-serif; font-size: 12px; color: var(--cy-o); margin-right: 6px; vertical-align: 3px; }
+.calc-h span { font-family: 'Pretendard', sans-serif; font-size: 13px; color: var(--ink3); }
+/* 표 줄 바탕은 비우고, 선택된 줄만 옅은 하늘색 */
+:is(#view-loan, #view-tax, #view-retire) :is(thead, tr, th, td) { background: transparent !important; }
+:is(#view-loan, #view-tax, #view-retire) tr[class*="bg-amber-50"] td { background: var(--cy-l) !important; }
+:is(#view-loan, #view-tax, #view-retire) tr { border-color: #EDF2F6 !important; }
+/* 은퇴 결과 숫자 칸 : 2칸씩, 같은 높이, 마지막 홀수 칸은 한 줄 전체 */
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1.5px dotted var(--cyline); border-radius: 14px; background: #F7FBFE; overflow: hidden; }
+body:not(.fc-m) .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.stat-t { padding: 14px; min-width: 0; border-top: 1px solid #E3ECF2; border-left: 1px solid #E3ECF2; margin: -1px 0 0 -1px; }
+.stat-t small { display: block; font-size: 12px; font-weight: 600; color: var(--ink3); }
+.stat-t b { display: block; font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stat-t span { display: block; font-size: 12px; color: var(--ink3); margin-top: 4px; line-height: 1.45; }
+body.fc-m .stat-t:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* 은퇴 화면 안 상자 · 소제목 */
+#view-retire .bg-white.rounded-xl { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+#view-retire .text-xs.font-bold.text-slate-700 { font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 12px !important; }
+#view-retire .text-xs.font-bold.text-slate-700 span { font-size: 13px !important; color: var(--ink3) !important; }
+:is(#view-loan, #view-tax, #view-retire) td:first-child, :is(#view-loan, #view-tax, #view-retire) th { white-space: nowrap; }
 
   </style>
 </head>
@@ -5274,18 +5362,18 @@ window.App = window.App || {};
     if (i.ml != null && i.ml <= 0) return ['기한 경과', 'bg-red-100 text-red-700'];
     if (i.req == null) return ['기한 미정', 'bg-slate-100 text-slate-600'];
     if (pl >= i.req) return ['순항', 'bg-emerald-100 text-emerald-800'];
-    return [pl ? '월 ' + u.K(i.req - pl) + ' 부족' : '적립 계획 필요', 'bg-amber-100 text-amber-800'];
+    return [pl ? '매달 ' + u.KS(i.req - pl) + ' 부족' : '적립 계획 필요', 'bg-amber-100 text-amber-800'];
   }
   function goalCard(g) {
     var i = C.goalInfo(g), s = status(g, i), thisM = u.sum(db().transactions.filter(function (t) { return t.goalId === g.id && String(t.date).indexOf(u.nowM()) === 0; }), function (t) { return t.amount; });
     var warn = /부족|필요|경과/.test(s[0]);
     return u.item({
       tap: 'App.goals.menu(' + g.id + ')', title: u.esc(g.name), icon: /집|주택/.test(g.name) ? 'fa-house' : /차/.test(g.name) ? 'fa-car' : /여행/.test(g.name) ? 'fa-plane' : /교육|아이/.test(g.name) ? 'fa-graduation-cap' : 'fa-flag',
-      meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due) + (i.ml > 0 ? ' (' + i.ml + '개월 남음)' : '') + '까지' : '기한 없음', i.req == null ? '' : '매달 ' + u.K(i.req) + ' 필요']),
+      meta: u.dots([u.esc(C.short(g.owner || 'J')), g.due ? u.esc(g.due.replace('-', '.')) + '까지' + (i.ml > 0 ? '(' + i.ml + '개월)' : '') : '기한 없음', i.req == null ? '' : '매달 ' + u.KS(i.req) + ' 필요']),
       val: i.pc.toFixed(0) + '%', valSub: u.KS(i.saved) + ' / ' + u.KS(i.tgt),
       bar: i.pc, barColor: '#0B7A57',
-      note: s[0] + (g.plan ? ' · 계획 월 ' + u.K(g.plan) : '') + ' · 이번 달 ' + u.K(thisM) + ' 모음', noteCls: warn ? 'warn' : '',
-      act: '<input id="goal-c-' + g.id + '" type="text" data-money inputmode="numeric" placeholder="' + (g.plan ? u.n0(g.plan) : '모은 금액') + '" class="w-32 border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1.5 text-[14px] text-right">'
+      note: (warn ? '<span class="bad">' + s[0] + '</span> · ' : s[0] + ' · ') + '이번 달 ' + u.KS(thisM) + ' 모음' + (g.plan ? ' · 계획 ' + u.KS(g.plan) : ''), noteCls: 'goal-note',
+      act: '<input id="goal-c-' + g.id + '" type="text" data-money inputmode="numeric" placeholder="' + (g.plan ? u.n0(g.plan) : '모은 금액') + '" class="act-in">'
         + '<button onclick="App.goals.contrib(' + g.id + ')" class="it-btn">모았어요</button>'
     });
   }
@@ -5297,10 +5385,10 @@ window.App = window.App || {};
   G.form = function (g) {
     var f = u.$('goal-form'); if (!f) return;
     f.classList.remove('hidden');
-    f.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-6 gap-3 text-xs">' + u.field('goal-name', '목표 이름', { ph: '예: 내 집 마련, 아이 교육비, 차 교체' })
+    f.innerHTML = '<div class="grid grid-cols-2 lg:grid-cols-3 gap-3">' + u.field('goal-name', '목표 이름', { ph: '예: 내 집 마련, 아이 교육비, 차 교체' })
       + '<div><label class="block font-semibold text-slate-600 mb-1 text-xs">누구의 목표</label><select id="goal-owner" class="' + u.IN + '">' + C.OW.map(function (c) { return '<option value="' + c + '">' + u.esc(c === 'J' ? '부부 공동' : C.nm(c)) + '</option>'; }).join('') + '</select></div>'
       + u.field('goal-target', '목표 금액 (원)', { money: true }) + u.field('goal-due', '목표 시점', { type: 'month' }) + u.field('goal-initial', '이미 모아 둔 돈 (원)', { money: true }) + u.field('goal-plan', '월 적립 계획 (원)', { money: true })
-      + '</div><input type="hidden" id="goal-id"><div class="flex justify-end gap-2 mt-3"><button onclick="App.goals.cancel()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs">취소</button><button onclick="App.goals.save()" class="px-4 py-2 bg-accent text-white rounded-lg text-xs font-semibold">목표 저장</button></div>';
+      + '</div><input type="hidden" id="goal-id"><div class="flex justify-end gap-2 mt-3"><button onclick="App.goals.cancel()" class="btn sec">취소</button><button onclick="App.goals.save()" class="btn pri">목표 저장</button></div>';
     u.$('goal-id').value = g ? g.id : ''; u.$('goal-name').value = g ? g.name : ''; u.$('goal-owner').value = g ? (g.owner || 'J') : 'J';
     u.setMoney('goal-target', g && g.target); u.$('goal-due').value = g && g.due ? g.due : ''; u.setMoney('goal-initial', g && g.initial); u.setMoney('goal-plan', g && g.plan);
     u.$('goal-name').focus();
@@ -5355,14 +5443,14 @@ window.App = window.App || {};
     if (over > 0 && p.T) notes.push('<span class="text-red-600">예산을 다 쓰면 저축 목표를 못 지켜요. 예산을 ' + u.K(over) + ' 줄여야 해요.</span> <button onclick="App.goals.adjustBudgets()" class="more">예산 자동으로 줄이기</button>');
     if (reqSum) notes.push(reqSum > p.T ? '목표들을 기한에 맞추려면 매달 ' + u.K(reqSum) + '이 필요해요. 저축을 ' + u.K(reqSum - p.T) + ' 늘리거나 기한을 늦춰 보세요.' : '목표들에 필요한 돈(월 ' + u.K(reqSum) + ')이 저축 목표 안에 들어와요.');
     return '<div class="card"><div class="card-h"><h3><i class="fa-solid fa-piggy-bank"></i>먼저 저축하고 남은 돈으로 쓰기</h3></div>'
-      + '<div class="flex flex-wrap items-center gap-2 mb-4"><span class="text-[14px] text-slate-600 mr-1">매달 저축 · 투자</span><div class="seg"><button onclick="App.goals.setMode(\'amt\')" class="' + (mode === 'amt' ? 'on' : '') + '">금액</button><button onclick="App.goals.setMode(\'pct\')" class="' + (mode === 'pct' ? 'on' : '') + '">수입의 %</button></div>'
-      + '<input id="save-val" type="text" ' + (mode === 'amt' ? 'data-money ' : '') + 'inputmode="numeric" value="' + val + '" placeholder="' + (mode === 'pct' ? '예: 30' : '예: 2,000,000') + '" class="fc-in w-36 text-right">'
-      + '<button onclick="App.goals.setSave()" class="btn pri" style="height:44px">저장</button></div>'
+      + '<div class="save-row"><span class="save-lb">매달 저축 · 투자</span><div class="seg"><button onclick="App.goals.setMode(\'amt\')" class="' + (mode === 'amt' ? 'on' : '') + '">금액</button><button onclick="App.goals.setMode(\'pct\')" class="' + (mode === 'pct' ? 'on' : '') + '">수입의 %</button></div></div>'
+      + '<div class="save-in"><input id="save-val" type="text" ' + (mode === 'amt' ? 'data-money ' : '') + 'inputmode="numeric" value="' + val + '" placeholder="' + (mode === 'pct' ? '예: 30' : '예: 2,000,000') + '" class="fc-in">'
+      + '<button onclick="App.goals.setSave()" class="btn pri">저장</button></div>'
       + '<div class="kv"><div><small><i class="fa-solid fa-arrow-down"></i>수입</small><b>' + u.KS(p.b.base) + '</b></div><div><small><i class="fa-solid fa-piggy-bank"></i>저축 목표</small><b>' + u.KS(p.T) + '</b></div><div><small><i class="fa-solid fa-wallet"></i>쓸 수 있는 돈</small><b' + (p.avail < 0 ? ' class="text-red-600"' : '') + '>' + u.KS(p.avail) + '</b></div></div>'
-      + (p.T ? '<div class="mt-4"><div class="flex justify-between text-[14px]"><span class="text-slate-600">이번 달 실제로 모은 돈</span><span><b>' + u.K(p.S) + '</b> <span class="text-slate-400">· ' + pc.toFixed(0) + '%</span></span></div>'
-        + '<div class="track mt-2" style="height:6px"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:#0B7A57"></div></div></div>' : '')
-      + (notes.length ? '<div class="mt-4 space-y-1.5 text-[14px] text-slate-600 leading-relaxed">' + notes.map(function (n) { return '<p>' + n + '</p>'; }).join('') + '</div>' : '')
-      + '<p class="text-[13px] text-slate-400 mt-3">' + (p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입으로 계산했어요. ' : '') + '적금 · 투자 · 목표로 보낸 이체를 모은 돈으로 세요.</p></div>';
+      + (p.T ? '<div class="save-prog"><div class="flex justify-between items-baseline"><span class="text-slate-600">이번 달 실제로 모은 돈</span><span><b>' + u.K(p.S) + '</b> <span class="text-slate-400">· ' + pc.toFixed(0) + '%</span></span></div>'
+        + '<div class="track mt-2"><div class="fill" style="width:' + Math.min(100, pc) + '%;background:#0B7A57"></div></div></div>' : '')
+      + (notes.length ? '<div class="save-notes">' + notes.map(function (n) { return '<p>' + n + '</p>'; }).join('') + '</div>' : '')
+      + '<p class="calc-help">' + (p.b.fromReg ? '이번 달 수입 기록이 없어 정기 수입으로 계산했어요. ' : '') + '적금 · 투자 · 목표로 보낸 이체를 모은 돈으로 세요.</p></div>';
   }
 
   App.views.add({
@@ -5370,9 +5458,9 @@ window.App = window.App || {};
     render: function (el) {
       var list = (db().goals || []).slice().sort(function (a, b) { return (a.due || '9999') < (b.due || '9999') ? -1 : 1; });
       el.innerHTML = '<div class="card"><div class="card-h"><h3>목표별로 모으기</h3><button onclick="App.goals.form(null)" class="btn sec" style="height:38px">+ 목표 추가</button></div>'
-        + '<div id="goal-form" class="hidden p-4 bg-slate-50 rounded-xl mb-3"></div>'
+        + '<div id="goal-form" class="hidden calc-form"></div>'
         + '<div class="list-wrap">' + (list.length ? list.map(goalCard).join('') : '<div class="empty">아직 목표가 없어요. 집 마련, 아이 교육비, 차 바꾸기, 여행처럼 쓸 곳이 정해진 돈을 목표로 넣어 보세요.</div>') + '</div>'
-        + (list.length ? '<p class="text-[13px] text-slate-500 mt-3">금액을 적고 [모았어요]를 누르면 이체 내역에 기록되고 진행률이 올라가요. 목표를 누르면 고치거나 지울 수 있어요.</p>' : '') + '</div>'
+        + (list.length ? '<p class="calc-help">금액을 적고 [모았어요]를 누르면 이체 내역에 기록되고 진행률이 올라가요. 목표를 누르면 고치거나 지울 수 있어요.</p>' : '') + '</div>'
         + presaveHtml(App.state.month);
     }
   });
@@ -5449,7 +5537,7 @@ window.App = window.App || {};
     var s = R.sim(p, p.save), nd = need(p), rY = retY(p), inf = Math.pow(1 + p.infl / 100, rY), ratio = nd > 0 ? s.atR / nd * 100 : 100, req = 0;
     if (s.depl) { if (R.sim(p, 5e7).depl) req = null; else { var lo = 0, hi = 5e7; for (var i = 0; i < 40; i++) { var m = (lo + hi) / 2; if (R.sim(p, m).depl) lo = m; else hi = m; } req = Math.ceil(hi / 1e4) * 1e4; } }
     var A = u.esc(C.short('H')), B = u.esc(C.short('W')), ok = !s.depl, Y = new Date().getFullYear();
-    var card = function (t, v, sub, c) { return '<div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm"><div class="text-[11px] font-semibold text-slate-400">' + t + '</div><div class="text-lg font-extrabold ' + (c || 'text-slate-800') + '">' + v + '</div><div class="text-[11px] text-slate-400 mt-0.5">' + sub + '</div></div>'; };
+    var card = function (t, v, sub, c) { return '<div class="stat-t"><small>' + t + '</small><b class="' + (c || '') + '">' + v + '</b><span>' + sub + '</span></div>'; };
     var penNow = p.aPen + p.bPen, repl = p.cost > 0 ? penNow / p.cost * 100 : 0;
     var sc = [-1, 0, 1].map(function (d) {
       var q = Object.assign({}, p, { pre: p.pre + d, post: p.post + d }), r = R.sim(q, q.save);
@@ -5458,10 +5546,10 @@ window.App = window.App || {};
     var ev = events(p).map(function (e) { var bal = e.y === 0 ? p.assets : (s.rows[e.y - 1] || {}).n; return '<tr class="border-t border-slate-100"><td class="p-2">' + (Y + e.y) + '년</td><td class="p-2 text-center">' + (p.aAge + e.y) + ' / ' + (p.bAge + e.y) + '</td><td class="p-2">' + u.esc(e.label) + '</td><td class="p-2 text-right">' + u.K(bal) + '</td></tr>'; }).join('');
     out.innerHTML = '<div class="p-4 rounded-xl border text-sm font-bold ' + (ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800') + '">'
       + (ok ? '현재 계획이면 두 사람 모두 기대수명(' + A + ' ' + p.aLife + '세 · ' + B + ' ' + p.bLife + '세)까지 자금이 유지돼요.' : '현재 계획이면 ' + A + ' ' + s.depl.aA + '세 · ' + B + ' ' + s.depl.bA + '세 무렵 자금이 고갈돼요.') + '</div>'
-      + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">' + card('두 사람 모두 은퇴할 때 자산', u.K(s.atR), (Y + rY) + '년 · 현재가치 ' + u.K(s.atR / inf)) + card('필요 은퇴자산', u.K(nd), '현재가치 ' + u.K(nd / inf))
+      + '<div class="stat-grid">' + card('은퇴할 때 자산', u.KS(s.atR), (Y + rY) + '년 · 지금 돈으로 ' + u.KS(s.atR / inf)) + card('필요 은퇴자산', u.KS(nd), '지금 돈으로 ' + u.KS(nd / inf))
       + card('자금 충족률', ratio.toFixed(0) + '%', '예상 ÷ 필요', ratio >= 100 ? 'text-emerald-600' : ratio >= 70 ? 'text-amber-600' : 'text-red-600')
-      + card('필요 월 저축', req == null ? '산출 불가' : req === 0 ? '추가 불필요' : u.K(req), '현재 ' + u.K(p.save) + (req > p.save ? ' · 월 ' + u.K(req - p.save) + ' 부족' : ''), req == null || req > p.save ? 'text-red-600' : 'text-emerald-600')
-      + card('공적연금 소득대체율', repl.toFixed(0) + '%', '부부 연금 ' + u.K(penNow) + ' ÷ 생활비 ' + u.K(p.cost), repl >= 50 ? 'text-emerald-600' : 'text-amber-600') + '</div>'
+      + card('필요 월 저축', req == null ? '산출 불가' : req === 0 ? '추가 불필요' : u.KS(req), '지금 ' + u.KS(p.save) + (req > p.save ? ' · 월 ' + u.KS(req - p.save) + ' 부족' : ''), req == null || req > p.save ? 'text-red-600' : 'text-emerald-600')
+      + card('공적연금 소득대체율', repl.toFixed(0) + '%', '연금 ' + u.KS(penNow) + ' ÷ 생활비 ' + u.KS(p.cost), repl >= 50 ? 'text-emerald-600' : 'text-amber-600') + '</div>'
       + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><div class="text-xs font-bold text-slate-700 mb-2">연도별 자산 추이 <span class="font-normal text-slate-400">(가로축: ' + A + ' 나이 / ' + B + ' 나이)</span></div><div style="height:260px"><canvas id="q-chart"></canvas></div></div>'
       + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">부부 생애 이벤트</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">연도</th><th class="p-2">' + A + ' / ' + B + '</th><th class="p-2 text-left">이벤트</th><th class="p-2 text-right">그 시점 자산</th></tr></thead><tbody>' + ev + '</tbody></table></div>'
       + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">수익률 시나리오</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">시나리오</th><th class="p-2 text-right">은퇴 시점 자산</th><th class="p-2 text-left">결과</th></tr></thead><tbody>' + sc + '</tbody></table></div></div>'
@@ -5469,7 +5557,7 @@ window.App = window.App || {};
     var cv = u.$('q-chart');
     if (window.Chart && cv) {
       if (chartInst) { try { chartInst.destroy(); } catch (e) {} }
-      chartInst = new Chart(cv, { type: 'line', data: { labels: s.rows.map(function (r) { return r.aA + '/' + r.bA; }), datasets: [{ label: '명목 자산', data: s.rows.map(function (r) { return Math.round(r.n); }), borderColor: '#2E6F40', tension: .2, pointRadius: 0 }, { label: '현재가치', data: s.rows.map(function (r) { return Math.round(r.r); }), borderColor: '#F59E0B', borderDash: [4, 4], tension: .2, pointRadius: 0 }] },
+      chartInst = new Chart(cv, { type: 'line', data: { labels: s.rows.map(function (r) { return r.aA + '/' + r.bA; }), datasets: [{ label: '명목 자산', data: s.rows.map(function (r) { return Math.round(r.n); }), borderColor: '#3A8FD0', borderWidth: 2.5, tension: .2, pointRadius: 0 }, { label: '현재가치', data: s.rows.map(function (r) { return Math.round(r.r); }), borderColor: '#FF8A3D', borderWidth: 2, borderDash: [4, 4], tension: .2, pointRadius: 0 }] },
         options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + u.K(c.parsed.y); } } } }, scales: { y: { ticks: { callback: function (v) { return (v / 1e8).toFixed(1) + '억'; } } } } } });
     }
   };
@@ -5546,13 +5634,13 @@ window.App = window.App || {};
     var box = u.$('tax-result'); if (!box) return;
     var sal = Math.max(0, S.salary - S.nontax), c = X.cardDed(sal, { credit: S.credit, debit: S.debit + S.cash, market: S.market, transit: S.transit, culture: S.culture });
     var t0 = X.taxEst(sal, S.people, 0), t1 = X.taxEst(sal, S.people, c.ded), saved = Math.round((t0.det - t1.det) * 1.1);
-    var row = function (a, b) { return '<div class="flex justify-between gap-2"><span>' + a + '</span><b>' + b + '</b></div>'; };
-    box.innerHTML = '<div><div class="text-xs text-slate-400 font-semibold mb-1">카드 공제로 줄어드는 세금 (추정)</div><div id="tax-refund-result" class="text-2xl font-extrabold text-emerald-400">' + (sal > 0 ? '약 ' + u.K(saved) : '입력 대기') + '</div>'
-      + '<div class="text-xs text-slate-300 mt-1">' + (sal > 0 ? '카드 소득공제로 줄어드는 세금 추정치 (지방소득세 포함)' : '총급여와 카드 사용액을 입력해 주세요.') + '</div></div>'
-      + '<div class="space-y-1 border-t border-slate-800 pt-3 text-[11px] text-slate-300">' + row('총급여 (비과세 제외)', u.K(sal)) + row('카드 25% 문턱 금액', u.K(c.th)) + row('문턱 초과 사용액 (공제액 아님)', u.K(c.over))
-      + row('카드 소득공제액', u.K(c.ded)) + row('공제 한도 (기본 + 추가)', u.K(c.baseLim) + ' + ' + u.K(c.extraLim)) + (c.raw > c.ded ? row('한도를 넘어 버려지는 공제', u.K(c.raw - c.ded)) : '')
-      + row('과세표준 추정 (공제 후)', u.K(t1.base)) + row('한계세율', Math.round(t1.rate * 100) + '%') + row('결정세액 추정 (공제 전 → 후)', u.K(t0.det) + ' → ' + u.K(t1.det))
-      + '<div class="text-slate-400 pt-1 leading-relaxed">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았어요. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div></div>';
+    var row = function (a, b) { return '<div class="cr-row"><span>' + a + '</span><b>' + b + '</b></div>'; };
+    box.innerHTML = '<div><div class="cr-lb">카드 공제로 줄어드는 세금 (추정)</div><div id="tax-refund-result" class="cr-big">' + (sal > 0 ? '약 ' + u.K(saved) : '입력 대기') + '</div>'
+      + '<div class="cr-sub">' + (sal > 0 ? '카드 소득공제로 줄어드는 세금 추정치 (지방소득세 포함)' : '총급여와 카드 사용액을 입력해 주세요.') + '</div></div>'
+      + '<div class="cr-list">' + row('총급여 (비과세 제외)', u.K(sal)) + row('카드 25% 문턱 금액', u.K(c.th)) + row('문턱 초과 사용액 (공제액 아님)', u.K(c.over))
+      + row('카드 소득공제액', u.K(c.ded)) + row('공제 한도 (기본 + 추가)', u.KS(c.baseLim) + ' + ' + u.KS(c.extraLim)) + (c.raw > c.ded ? row('한도를 넘어 버려지는 공제', u.K(c.raw - c.ded)) : '')
+      + row('과세표준 추정 (공제 후)', u.K(t1.base)) + row('한계세율', Math.round(t1.rate * 100) + '%') + row('결정세액 (공제 전 → 후)', u.KS(t0.det) + ' → ' + u.KS(t1.det))
+      + '<div class="calc-help">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았어요. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div></div>';
   };
   X.sync = function () {
     var b = X.buckets(App.state.month.slice(0, 4));
@@ -5592,7 +5680,7 @@ window.App = window.App || {};
     var tp = db().taxPlan, sA = tp.salA != null ? tp.salA : (+db().settings.husbandAnnual || 0), sB = tp.salB != null ? tp.salB : (+db().settings.wifeAnnual || 0);
     var A = u.esc(C.short('H')), B = u.esc(C.short('W'));
     var inp = function (who, k, v) { return '<input type="text" data-money value="' + u.n0(v) + '" onchange="App.tax.planSet(\'' + who + '\',\'' + k + '\', this.value)" class="w-full border border-slate-300 rounded px-2 py-1 text-right">'; };
-    var head = '<div class="flex flex-wrap justify-between items-center gap-2"><div class="font-bold text-accent text-sm"><i class="fa-solid fa-scale-balanced text-amber-500 mr-1"></i>부부 공제 배분 시뮬레이터 (' + y + '년)</div>'
+    var head = '<div class="flex flex-wrap justify-between items-center gap-2"><h3 class="calc-h">부부 공제 배분 <span>(' + y + '년)</span></h3>'
       + '<button onclick="App.tax.planAuto()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-xs"><i class="fa-solid fa-rotate mr-1"></i>가계부에서 다시 불러오기</button></div>'
       + '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">항목 (연간, 원)</th><th class="p-2">' + A + '</th><th class="p-2">' + B + '</th></tr></thead><tbody>'
       + '<tr class="border-t border-slate-100"><td class="p-2 font-semibold">연간 총급여</td><td class="p-1">' + inp('S', 'salA', sA) + '</td><td class="p-1">' + inp('S', 'salB', sB) + '</td></tr>'
@@ -5642,7 +5730,7 @@ window.App = window.App || {};
         + '<div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3"><h4 class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1.5">2. 카드 / 체크카드 / 현금영수증 사용액</h4><div class="grid grid-cols-3 gap-3">' + f('credit', FIELDS[2][1]) + f('debit', FIELDS[3][1]) + f('cash', FIELDS[4][1]) + '</div>'
         + '<div class="grid grid-cols-3 gap-3">' + f('market', FIELDS[5][1]) + f('transit', FIELDS[6][1]) + f('culture', FIELDS[7][1]) + '</div>'
         + '<div class="text-[11px] text-slate-500">아래 3개 금액은 신용·체크·현금영수증 칸과 겹치지 않게 넣으세요. [가계부 카드실적 불러오기]는 대중교통·도서/공연 소분류와 메모의 \'전통시장\'을 자동으로 나눠요.</div></div></div>'
-        + '<div id="tax-result" class="col-span-12 lg:col-span-5 bg-slate-900 text-white p-5 rounded-xl flex flex-col justify-between space-y-4"></div></div></div>'
+        + '<div id="tax-result" class="col-span-12 lg:col-span-5 calc-result"></div></div></div>'
         + '<div id="tax-couple" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"></div>';
       X.calc(); renderCouple();
     }
@@ -6383,7 +6471,7 @@ window.App = window.App || {};
     var t = el.textContent; if (t.indexOf(' · ') < 0 || /[요다]\.?\s*$/.test(t)) return;
     var parts = t.split(' · '), frag = document.createDocumentFragment();
     parts.forEach(function (p, i) {
-      var s = document.createElement('span'); if (p.length <= 14) s.className = 'nw';
+      var s = document.createElement('span'); if (p.length <= 18) s.className = 'nw';
       s.textContent = p + (i < parts.length - 1 ? ' ·' : '');
       frag.appendChild(s); if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
     });

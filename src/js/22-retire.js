@@ -68,7 +68,7 @@
     var s = R.sim(p, p.save), nd = need(p), rY = retY(p), inf = Math.pow(1 + p.infl / 100, rY), ratio = nd > 0 ? s.atR / nd * 100 : 100, req = 0;
     if (s.depl) { if (R.sim(p, 5e7).depl) req = null; else { var lo = 0, hi = 5e7; for (var i = 0; i < 40; i++) { var m = (lo + hi) / 2; if (R.sim(p, m).depl) lo = m; else hi = m; } req = Math.ceil(hi / 1e4) * 1e4; } }
     var A = u.esc(C.short('H')), B = u.esc(C.short('W')), ok = !s.depl, Y = new Date().getFullYear();
-    var card = function (t, v, sub, c) { return '<div class="p-4 bg-white rounded-xl border border-slate-200 shadow-sm"><div class="text-[11px] font-semibold text-slate-400">' + t + '</div><div class="text-lg font-extrabold ' + (c || 'text-slate-800') + '">' + v + '</div><div class="text-[11px] text-slate-400 mt-0.5">' + sub + '</div></div>'; };
+    var card = function (t, v, sub, c) { return '<div class="stat-t"><small>' + t + '</small><b class="' + (c || '') + '">' + v + '</b><span>' + sub + '</span></div>'; };
     var penNow = p.aPen + p.bPen, repl = p.cost > 0 ? penNow / p.cost * 100 : 0;
     var sc = [-1, 0, 1].map(function (d) {
       var q = Object.assign({}, p, { pre: p.pre + d, post: p.post + d }), r = R.sim(q, q.save);
@@ -77,10 +77,10 @@
     var ev = events(p).map(function (e) { var bal = e.y === 0 ? p.assets : (s.rows[e.y - 1] || {}).n; return '<tr class="border-t border-slate-100"><td class="p-2">' + (Y + e.y) + '년</td><td class="p-2 text-center">' + (p.aAge + e.y) + ' / ' + (p.bAge + e.y) + '</td><td class="p-2">' + u.esc(e.label) + '</td><td class="p-2 text-right">' + u.K(bal) + '</td></tr>'; }).join('');
     out.innerHTML = '<div class="p-4 rounded-xl border text-sm font-bold ' + (ok ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800') + '">'
       + (ok ? '현재 계획이면 두 사람 모두 기대수명(' + A + ' ' + p.aLife + '세 · ' + B + ' ' + p.bLife + '세)까지 자금이 유지돼요.' : '현재 계획이면 ' + A + ' ' + s.depl.aA + '세 · ' + B + ' ' + s.depl.bA + '세 무렵 자금이 고갈돼요.') + '</div>'
-      + '<div class="grid grid-cols-2 lg:grid-cols-5 gap-4">' + card('두 사람 모두 은퇴할 때 자산', u.K(s.atR), (Y + rY) + '년 · 현재가치 ' + u.K(s.atR / inf)) + card('필요 은퇴자산', u.K(nd), '현재가치 ' + u.K(nd / inf))
+      + '<div class="stat-grid">' + card('은퇴할 때 자산', u.KS(s.atR), (Y + rY) + '년 · 지금 돈으로 ' + u.KS(s.atR / inf)) + card('필요 은퇴자산', u.KS(nd), '지금 돈으로 ' + u.KS(nd / inf))
       + card('자금 충족률', ratio.toFixed(0) + '%', '예상 ÷ 필요', ratio >= 100 ? 'text-emerald-600' : ratio >= 70 ? 'text-amber-600' : 'text-red-600')
-      + card('필요 월 저축', req == null ? '산출 불가' : req === 0 ? '추가 불필요' : u.K(req), '현재 ' + u.K(p.save) + (req > p.save ? ' · 월 ' + u.K(req - p.save) + ' 부족' : ''), req == null || req > p.save ? 'text-red-600' : 'text-emerald-600')
-      + card('공적연금 소득대체율', repl.toFixed(0) + '%', '부부 연금 ' + u.K(penNow) + ' ÷ 생활비 ' + u.K(p.cost), repl >= 50 ? 'text-emerald-600' : 'text-amber-600') + '</div>'
+      + card('필요 월 저축', req == null ? '산출 불가' : req === 0 ? '추가 불필요' : u.KS(req), '지금 ' + u.KS(p.save) + (req > p.save ? ' · 월 ' + u.KS(req - p.save) + ' 부족' : ''), req == null || req > p.save ? 'text-red-600' : 'text-emerald-600')
+      + card('공적연금 소득대체율', repl.toFixed(0) + '%', '연금 ' + u.KS(penNow) + ' ÷ 생활비 ' + u.KS(p.cost), repl >= 50 ? 'text-emerald-600' : 'text-amber-600') + '</div>'
       + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm"><div class="text-xs font-bold text-slate-700 mb-2">연도별 자산 추이 <span class="font-normal text-slate-400">(가로축: ' + A + ' 나이 / ' + B + ' 나이)</span></div><div style="height:260px"><canvas id="q-chart"></canvas></div></div>'
       + '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">부부 생애 이벤트</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">연도</th><th class="p-2">' + A + ' / ' + B + '</th><th class="p-2 text-left">이벤트</th><th class="p-2 text-right">그 시점 자산</th></tr></thead><tbody>' + ev + '</tbody></table></div>'
       + '<div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto"><div class="text-xs font-bold text-slate-700 mb-2">수익률 시나리오</div><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">시나리오</th><th class="p-2 text-right">은퇴 시점 자산</th><th class="p-2 text-left">결과</th></tr></thead><tbody>' + sc + '</tbody></table></div></div>'
@@ -88,7 +88,7 @@
     var cv = u.$('q-chart');
     if (window.Chart && cv) {
       if (chartInst) { try { chartInst.destroy(); } catch (e) {} }
-      chartInst = new Chart(cv, { type: 'line', data: { labels: s.rows.map(function (r) { return r.aA + '/' + r.bA; }), datasets: [{ label: '명목 자산', data: s.rows.map(function (r) { return Math.round(r.n); }), borderColor: '#2E6F40', tension: .2, pointRadius: 0 }, { label: '현재가치', data: s.rows.map(function (r) { return Math.round(r.r); }), borderColor: '#F59E0B', borderDash: [4, 4], tension: .2, pointRadius: 0 }] },
+      chartInst = new Chart(cv, { type: 'line', data: { labels: s.rows.map(function (r) { return r.aA + '/' + r.bA; }), datasets: [{ label: '명목 자산', data: s.rows.map(function (r) { return Math.round(r.n); }), borderColor: '#3A8FD0', borderWidth: 2.5, tension: .2, pointRadius: 0 }, { label: '현재가치', data: s.rows.map(function (r) { return Math.round(r.r); }), borderColor: '#FF8A3D', borderWidth: 2, borderDash: [4, 4], tension: .2, pointRadius: 0 }] },
         options: { maintainAspectRatio: false, plugins: { tooltip: { callbacks: { label: function (c) { return c.dataset.label + ': ' + u.K(c.parsed.y); } } } }, scales: { y: { ticks: { callback: function (v) { return (v / 1e8).toFixed(1) + '억'; } } } } } });
     }
   };

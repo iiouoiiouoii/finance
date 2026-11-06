@@ -1163,3 +1163,91 @@ body:not(.fc-m) #content { scrollbar-gutter: stable both-edges; padding-left: 32
 .mb-tab span, .pill, .card-h .more { font-size: 14px !important; -webkit-font-smoothing: auto; }
 .txn-day > span:first-child { font-size: 17px !important; -webkit-font-smoothing: auto; }
 @media (max-width: 360px) { body.fc-m .cy-count, body.fc-m .cy-count b { font-size: 13px !important; } }
+
+/* =====================================================================
+   머리 : 하위 화면(계산기)의 뒤로 버튼과 제목을 한 줄에
+   ===================================================================== */
+#page-title { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 2px; }
+#page-title .cy-count { grid-column: 1 / -1; }
+#page-title .cy-count + .pt-t { grid-column: 1 / -1; }
+#page-title .back-btn { width: 30px; height: 30px; margin: 0 0 0 -8px !important; display: inline-flex; align-items: center; justify-content: center; color: var(--cy-d) !important; font-size: 16px; }
+
+/* =====================================================================
+   목표 화면
+   ===================================================================== */
+.goal-note { color: var(--ink3) !important; }
+.goal-note .bad { color: var(--red); font-weight: 600; }
+.it-act { margin-top: 4px; gap: 8px !important; }
+.act-in { height: 40px; width: 148px; min-width: 0; flex: 0 1 148px; border: 1px solid #D5E2EB; background: #fff; border-radius: 12px; padding: 0 12px; text-align: right; font-size: 16px; font-weight: 600; color: var(--ink); }
+.act-in::placeholder { color: #B5C2CC; font-weight: 500; }
+.it-act .it-btn { height: 40px !important; min-height: 40px; padding: 0 16px !important; border-radius: 12px !important; font-size: 14px !important; }
+.save-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.save-lb { font-size: 15px; font-weight: 600; color: var(--ink); }
+.save-in { display: flex; gap: 8px; margin-bottom: 16px; }
+.save-in .fc-in { flex: 1 1 auto; min-width: 0; height: 48px !important; text-align: right; font-size: 16px !important; font-weight: 600; border-radius: 12px !important; }
+.save-in .btn { height: 48px !important; flex: 0 0 auto; padding: 0 22px !important; }
+.save-prog { margin-top: 16px; font-size: 14px; }
+.save-notes { margin-top: 16px; font-size: 14px; line-height: 1.6; color: var(--ink2); }
+.save-notes p + p { margin-top: 6px; }
+.calc-help { font-size: 13px !important; line-height: 1.6 !important; color: var(--ink3) !important; margin-top: 12px; }
+.calc-form { margin: 4px 0 16px; padding: 16px; border: 1.5px dotted var(--cyline); border-radius: 14px; background: #F7FBFE; }
+.calc-form .flex.justify-end { margin-top: 16px !important; gap: 8px !important; }
+.calc-form .btn { height: 44px !important; }
+
+/* =====================================================================
+   계산기(대출 · 연말정산 · 은퇴) + 목표 입력 : 다른 화면과 같은 입력 · 글자 · 여백
+   이름표 13/600 · 입력칸 48 높이 16/600 · 칸 사이 12 · 줄 사이 16 · 숫자는 오른쪽 정렬
+   ===================================================================== */
+:is(#view-loan, #view-tax, #view-retire, #goal-form) .grid { column-gap: 12px !important; row-gap: 16px !important; }
+body.fc-m :is(#view-loan, #view-tax, #view-retire) .grid-cols-3,
+body.fc-m :is(#view-loan, #view-tax, #view-retire) .grid-cols-12 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+body.fc-m :is(#view-loan, #view-tax, #view-retire) .grid-cols-12 > * { grid-column: 1 / -1 !important; }
+/* 이름표가 두 줄이어도 입력칸은 아래 줄에 나란히 */
+:is(#view-loan, #view-tax, #view-retire, #goal-form) .grid > div:has(> label) { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+:is(#view-loan, #view-tax, #view-retire, #goal-form) label { font-size: 13px !important; font-weight: 600 !important; color: var(--ink2) !important; margin-bottom: 6px !important; line-height: 1.35 !important; }
+:is(#view-loan, #view-tax, #view-retire, #goal-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]), select) {
+  height: 48px !important; font-size: 16px !important; font-weight: 600 !important; color: var(--ink) !important; border: 1px solid #D5E2EB !important; background: #fff !important; border-radius: 12px !important; padding: 0 14px !important; }
+:is(#view-loan, #view-tax, #view-retire) input[type=text], :is(#view-loan, #view-tax, #view-retire, #goal-form) :is(input[data-money], input[type=number], input[inputmode=numeric], input[inputmode=decimal]) { text-align: right !important; }
+:is(#view-loan, #view-tax, #view-retire, #goal-form) input:focus, :is(#view-loan, #view-tax, #view-retire, #goal-form) select:focus { border-color: var(--cy) !important; outline: none; box-shadow: 0 0 0 3px rgba(58, 143, 208, .15) !important; }
+/* 소제목(1. 근로 소득 정보 등) */
+:is(#view-loan, #view-tax, #view-retire) h4 { font-family: 'Pretendard', sans-serif !important; font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; margin: 8px 0 12px !important; padding: 0 !important; border: 0 !important; }
+:is(#view-loan, #view-tax, #view-retire) h3.font-bold + p, :is(#view-loan, #view-tax, #view-retire) h3 + p { font-size: 14px !important; color: var(--ink2) !important; line-height: 1.6 !important; margin-top: 4px !important; }
+/* 초록 버튼 → 다른 화면의 보조 버튼과 같게 */
+:is(#view-loan, #view-tax, #view-retire) button[class*="bg-emerald-7"] { background: #fff !important; color: var(--cy-d) !important; border: 1px solid #C9D9E4 !important; box-shadow: 0 2px 0 #D9E5EE !important; height: 36px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; padding: 0 12px !important; display: inline-flex !important; align-items: center; gap: 6px; }
+/* 결과 상자 : 한 가지 모양 (옅은 하늘 바탕 + 점선) */
+:is(#view-loan, #view-tax, #view-retire) div:is(.rounded-lg, .rounded-xl):is(.p-3, .p-3\.5, .p-4) {
+  background: #F7FBFE !important; border: 1.5px dotted var(--cyline) !important; border-radius: 14px !important; padding: 14px 16px !important; }
+:is(#view-loan, #view-tax, #view-retire) div:is(.rounded-lg, .rounded-xl):is(.p-3, .p-3\.5, .p-4) div:is(.rounded-lg, .rounded-xl):is(.p-3, .p-3\.5, .p-4) { background: #fff !important; }
+/* 표 */
+:is(#view-loan, #view-tax, #view-retire, #view-cards) th { font-size: 12px !important; font-weight: 600 !important; color: var(--ink3) !important; padding: 10px 8px !important; background: transparent !important; }
+:is(#view-loan, #view-tax, #view-retire, #view-cards) td { font-size: 14px !important; padding: 10px 8px !important; }
+:is(#view-loan, #view-tax, #view-retire) .space-y-4 > * + *, :is(#view-loan, #view-tax, #view-retire) .space-y-3 > * + * { margin-top: 16px !important; }
+/* 계산 결과 상자 : 밝은 상자 + 큰 숫자 + 이름 왼쪽 / 금액 오른쪽 */
+.calc-result { background: #F7FBFE; border: 1.5px dotted var(--cyline); border-radius: 14px; padding: 18px 16px; display: flex; flex-direction: column; gap: 14px; }
+.cr-lb { font-size: 13px; font-weight: 600; color: var(--ink3); }
+.cr-big { font-family: 'TtukttakGamja', 'Pretendard', sans-serif; font-size: 30px; line-height: 1.2; color: var(--green); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.cr-sub { font-size: 13px; color: var(--ink3); margin-top: 4px; line-height: 1.5; }
+.cr-list { border-top: 1px solid #E3ECF2; padding-top: 10px; }
+.cr-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 0; font-size: 14px; }
+.cr-row > span { color: var(--ink2); min-width: 0; }
+.cr-row > b { color: var(--ink); font-weight: 700; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.calc-h { font-family: 'Hippie', 'Pretendard', sans-serif !important; font-weight: 400 !important; font-size: 20px !important; color: var(--cy-d) !important; line-height: 1.25; }
+.calc-h::before { content: "♥"; font-family: 'Pretendard', sans-serif; font-size: 12px; color: var(--cy-o); margin-right: 6px; vertical-align: 3px; }
+.calc-h span { font-family: 'Pretendard', sans-serif; font-size: 13px; color: var(--ink3); }
+/* 표 줄 바탕은 비우고, 선택된 줄만 옅은 하늘색 */
+:is(#view-loan, #view-tax, #view-retire) :is(thead, tr, th, td) { background: transparent !important; }
+:is(#view-loan, #view-tax, #view-retire) tr[class*="bg-amber-50"] td { background: var(--cy-l) !important; }
+:is(#view-loan, #view-tax, #view-retire) tr { border-color: #EDF2F6 !important; }
+/* 은퇴 결과 숫자 칸 : 2칸씩, 같은 높이, 마지막 홀수 칸은 한 줄 전체 */
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1.5px dotted var(--cyline); border-radius: 14px; background: #F7FBFE; overflow: hidden; }
+body:not(.fc-m) .stat-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.stat-t { padding: 14px; min-width: 0; border-top: 1px solid #E3ECF2; border-left: 1px solid #E3ECF2; margin: -1px 0 0 -1px; }
+.stat-t small { display: block; font-size: 12px; font-weight: 600; color: var(--ink3); }
+.stat-t b { display: block; font-size: 18px; font-weight: 700; color: var(--ink); margin-top: 4px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.stat-t span { display: block; font-size: 12px; color: var(--ink3); margin-top: 4px; line-height: 1.45; }
+body.fc-m .stat-t:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* 은퇴 화면 안 상자 · 소제목 */
+#view-retire .bg-white.rounded-xl { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+#view-retire .text-xs.font-bold.text-slate-700 { font-size: 15px !important; font-weight: 700 !important; color: var(--ink) !important; margin-bottom: 12px !important; }
+#view-retire .text-xs.font-bold.text-slate-700 span { font-size: 13px !important; color: var(--ink3) !important; }
+:is(#view-loan, #view-tax, #view-retire) td:first-child, :is(#view-loan, #view-tax, #view-retire) th { white-space: nowrap; }

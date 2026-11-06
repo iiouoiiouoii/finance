@@ -51,13 +51,13 @@
     var box = u.$('tax-result'); if (!box) return;
     var sal = Math.max(0, S.salary - S.nontax), c = X.cardDed(sal, { credit: S.credit, debit: S.debit + S.cash, market: S.market, transit: S.transit, culture: S.culture });
     var t0 = X.taxEst(sal, S.people, 0), t1 = X.taxEst(sal, S.people, c.ded), saved = Math.round((t0.det - t1.det) * 1.1);
-    var row = function (a, b) { return '<div class="flex justify-between gap-2"><span>' + a + '</span><b>' + b + '</b></div>'; };
-    box.innerHTML = '<div><div class="text-xs text-slate-400 font-semibold mb-1">카드 공제로 줄어드는 세금 (추정)</div><div id="tax-refund-result" class="text-2xl font-extrabold text-emerald-400">' + (sal > 0 ? '약 ' + u.K(saved) : '입력 대기') + '</div>'
-      + '<div class="text-xs text-slate-300 mt-1">' + (sal > 0 ? '카드 소득공제로 줄어드는 세금 추정치 (지방소득세 포함)' : '총급여와 카드 사용액을 입력해 주세요.') + '</div></div>'
-      + '<div class="space-y-1 border-t border-slate-800 pt-3 text-[11px] text-slate-300">' + row('총급여 (비과세 제외)', u.K(sal)) + row('카드 25% 문턱 금액', u.K(c.th)) + row('문턱 초과 사용액 (공제액 아님)', u.K(c.over))
-      + row('카드 소득공제액', u.K(c.ded)) + row('공제 한도 (기본 + 추가)', u.K(c.baseLim) + ' + ' + u.K(c.extraLim)) + (c.raw > c.ded ? row('한도를 넘어 버려지는 공제', u.K(c.raw - c.ded)) : '')
-      + row('과세표준 추정 (공제 후)', u.K(t1.base)) + row('한계세율', Math.round(t1.rate * 100) + '%') + row('결정세액 추정 (공제 전 → 후)', u.K(t0.det) + ' → ' + u.K(t1.det))
-      + '<div class="text-slate-400 pt-1 leading-relaxed">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았어요. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div></div>';
+    var row = function (a, b) { return '<div class="cr-row"><span>' + a + '</span><b>' + b + '</b></div>'; };
+    box.innerHTML = '<div><div class="cr-lb">카드 공제로 줄어드는 세금 (추정)</div><div id="tax-refund-result" class="cr-big">' + (sal > 0 ? '약 ' + u.K(saved) : '입력 대기') + '</div>'
+      + '<div class="cr-sub">' + (sal > 0 ? '카드 소득공제로 줄어드는 세금 추정치 (지방소득세 포함)' : '총급여와 카드 사용액을 입력해 주세요.') + '</div></div>'
+      + '<div class="cr-list">' + row('총급여 (비과세 제외)', u.K(sal)) + row('카드 25% 문턱 금액', u.K(c.th)) + row('문턱 초과 사용액 (공제액 아님)', u.K(c.over))
+      + row('카드 소득공제액', u.K(c.ded)) + row('공제 한도 (기본 + 추가)', u.KS(c.baseLim) + ' + ' + u.KS(c.extraLim)) + (c.raw > c.ded ? row('한도를 넘어 버려지는 공제', u.K(c.raw - c.ded)) : '')
+      + row('과세표준 추정 (공제 후)', u.K(t1.base)) + row('한계세율', Math.round(t1.rate * 100) + '%') + row('결정세액 (공제 전 → 후)', u.KS(t0.det) + ' → ' + u.KS(t1.det))
+      + '<div class="calc-help">※ 2024년 귀속 이후 기준: 기본한도 총급여 7천만 원 이하 300만·초과 250만, 추가한도(전통시장·대중교통·문화) 300만/200만. 근로소득공제·4대보험은 근사치이며 다른 소득·세액공제는 반영하지 않았어요. 세법은 해마다 바뀌므로 홈택스 모의계산으로 확인하세요.</div></div>';
   };
   X.sync = function () {
     var b = X.buckets(App.state.month.slice(0, 4));
@@ -97,7 +97,7 @@
     var tp = db().taxPlan, sA = tp.salA != null ? tp.salA : (+db().settings.husbandAnnual || 0), sB = tp.salB != null ? tp.salB : (+db().settings.wifeAnnual || 0);
     var A = u.esc(C.short('H')), B = u.esc(C.short('W'));
     var inp = function (who, k, v) { return '<input type="text" data-money value="' + u.n0(v) + '" onchange="App.tax.planSet(\'' + who + '\',\'' + k + '\', this.value)" class="w-full border border-slate-300 rounded px-2 py-1 text-right">'; };
-    var head = '<div class="flex flex-wrap justify-between items-center gap-2"><div class="font-bold text-accent text-sm"><i class="fa-solid fa-scale-balanced text-amber-500 mr-1"></i>부부 공제 배분 시뮬레이터 (' + y + '년)</div>'
+    var head = '<div class="flex flex-wrap justify-between items-center gap-2"><h3 class="calc-h">부부 공제 배분 <span>(' + y + '년)</span></h3>'
       + '<button onclick="App.tax.planAuto()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-xs"><i class="fa-solid fa-rotate mr-1"></i>가계부에서 다시 불러오기</button></div>'
       + '<div class="overflow-x-auto"><table class="w-full text-xs"><thead><tr class="text-slate-500 bg-slate-50"><th class="p-2 text-left">항목 (연간, 원)</th><th class="p-2">' + A + '</th><th class="p-2">' + B + '</th></tr></thead><tbody>'
       + '<tr class="border-t border-slate-100"><td class="p-2 font-semibold">연간 총급여</td><td class="p-1">' + inp('S', 'salA', sA) + '</td><td class="p-1">' + inp('S', 'salB', sB) + '</td></tr>'
@@ -147,7 +147,7 @@
         + '<div class="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3"><h4 class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1.5">2. 카드 / 체크카드 / 현금영수증 사용액</h4><div class="grid grid-cols-3 gap-3">' + f('credit', FIELDS[2][1]) + f('debit', FIELDS[3][1]) + f('cash', FIELDS[4][1]) + '</div>'
         + '<div class="grid grid-cols-3 gap-3">' + f('market', FIELDS[5][1]) + f('transit', FIELDS[6][1]) + f('culture', FIELDS[7][1]) + '</div>'
         + '<div class="text-[11px] text-slate-500">아래 3개 금액은 신용·체크·현금영수증 칸과 겹치지 않게 넣으세요. [가계부 카드실적 불러오기]는 대중교통·도서/공연 소분류와 메모의 \'전통시장\'을 자동으로 나눠요.</div></div></div>'
-        + '<div id="tax-result" class="col-span-12 lg:col-span-5 bg-slate-900 text-white p-5 rounded-xl flex flex-col justify-between space-y-4"></div></div></div>'
+        + '<div id="tax-result" class="col-span-12 lg:col-span-5 calc-result"></div></div></div>'
         + '<div id="tax-couple" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4"></div>';
       X.calc(); renderCouple();
     }
