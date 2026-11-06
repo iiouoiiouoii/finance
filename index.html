@@ -12,7 +12,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <!-- 우리집 가계부 · build 2026-11-06 08:54 · 소스: app/src -->
+  <!-- 우리집 가계부 · build 2026-11-06 09:10 · 소스: app/src -->
   <title>우리집 가계부</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -988,6 +988,42 @@ body.fc-m #mobile-bar { height: calc(66px + env(safe-area-inset-bottom, 0px)) !i
 .mb-tab i { font-size: 19px !important; height: 20px; line-height: 20px; }
 .mb-tab span { font-size: 13px !important; line-height: 1; }
 .mb-add { width: 52px !important; height: 52px !important; margin-top: -1px !important; font-size: 21px !important; }
+
+/* =====================================================================
+   잘림 없애기 · 스프링 구멍 제거
+   ===================================================================== */
+/* 스프링 구멍 : 테두리 점선과 겹쳐서 없앤다 → 좌우 여백을 같게 */
+#content { background-image: none !important; }
+body.fc-m #content { padding-left: 18px !important; padding-right: 18px !important; }
+body:not(.fc-m) #content { padding-left: 32px !important; }
+
+/* 금액 칸(돈 흐름 등) : 폰에서는 조금 작게 + 안쪽 여백 줄이기, 그래도 넘치면 글씨를 줄여 맞춤(29-fit.js) */
+body.fc-m .kv > div { padding: 10px 8px !important; }
+body.fc-m .kv > div:first-child { padding-left: 10px !important; }
+body.fc-m .kv b, body.fc-m .rp-kv b { font-size: 16px !important; letter-spacing: -.02em; }
+body.fc-m .kv small { white-space: nowrap; overflow: visible; letter-spacing: -.02em; }
+body.fc-m .kv small i { margin-right: 3px; }
+.kv b, .big, .rp-kv b { text-overflow: clip !important; }
+
+/* 글자 : 폰에서는 말줄임(…) 대신 줄바꿈 */
+body.fc-m .row .t b, body.fc-m .it-t b, body.fc-m .it-t small, body.fc-m .txn-row .t b, body.fc-m .txn-row .t small, body.fc-m .foot-row b,
+body.fc-m .bud-row b, body.fc-m #content .truncate, body.fc-m .modal-box .truncate {
+  white-space: normal !important; overflow: visible !important; text-overflow: clip !important; word-break: keep-all; overflow-wrap: anywhere; }
+/* 오른쪽 금액은 줄지 않고, 왼쪽 글자가 줄바꿈된다 */
+.row .v, .it-v, .txn-row .v { flex-shrink: 0; }
+.row .t, .it-t, .txn-row .t { min-width: 0; }
+/* 머리 : 좁은 폰에서 카운터 · 제목이 꺾이거나 잘리지 않게 오른쪽 도구를 조금 줄인다 */
+.cy-count { white-space: nowrap; }
+@media (max-width: 400px) {
+  body.fc-m #app-header { padding-left: 16px !important; padding-right: 12px !important; }
+  body.fc-m #header-tools { gap: 6px !important; }
+  body.fc-m .mon-sw > button { width: 26px !important; }
+  body.fc-m .hdr-chip { padding: 0 9px !important; }
+  body.fc-m .cy-count { font-size: 11px !important; letter-spacing: 0; }
+  body.fc-m .cy-count i { margin: 0 4px; }
+}
+/* 아주 좁은 폰(≤360) : '이번 달' 칩은 숨긴다 (가운데 달 글씨를 눌러도 고를 수 있어요) */
+@media (max-width: 360px) { body.fc-m .hdr-chip { display: none !important; } }
 
   </style>
 </head>
@@ -6122,6 +6158,65 @@ window.App = window.App || {};
     }
   });
 })(window.App);
+
+/* ===== 29-fit.js ===== */
+/* =====================================================================
+   글씨 잘림 막기 — 칸보다 긴 글씨를 찾아서
+   · 숫자(금액 · %)는 글씨 크기를 줄여 한 줄에 맞춘다 (최소 11px)
+   · 글자는 줄바꿈을 허용한다
+   화면이 다시 그려지거나 창 크기가 바뀔 때마다 돈다.
+   ===================================================================== */
+(function () {
+  var NUM = /^[\s+\-−]*[\d,.]+\s*(원|만원|억원|만|억|%|개월|회|건|일|년)?[\s\/\d,.원만억%회개월]*$/;
+  var ROOTS = '#content, .modal-box, #app-header, #mobile-bar';
+  var busy = false, queued = false, late = 0;
+
+  function clipping(el, cs) {
+    var ox = cs.overflowX;
+    return (ox === 'hidden' || ox === 'clip') && el.scrollWidth > el.clientWidth + 1;
+  }
+  function fit(el) {
+    el.style.fontSize = '';
+    var cs = getComputedStyle(el);
+    if (!clipping(el, cs)) return;
+    var txt = (el.textContent || '').trim();
+    var shrink = el.id === 'page-title' || el.classList.contains('fit-shrink');
+    if (txt && (shrink || (txt.length <= 24 && NUM.test(txt)))) {
+      var size = parseFloat(cs.fontSize), min = shrink ? 16 : 11;
+      var s = Math.max(min, Math.floor(size * el.clientWidth / el.scrollWidth * 10) / 10);
+      el.style.setProperty('font-size', s + 'px', 'important');
+      while (s > min && el.scrollWidth > el.clientWidth + 1) { s -= .5; el.style.setProperty('font-size', s + 'px', 'important'); }
+    } else if (el.childElementCount <= 4 && txt.length <= 120) {
+      el.style.setProperty('white-space', 'normal', 'important');
+      el.style.setProperty('text-overflow', 'clip', 'important');
+      el.style.setProperty('overflow-wrap', 'anywhere');
+      el.style.setProperty('word-break', 'keep-all');
+    }
+  }
+  function run() {
+    queued = false; busy = true;
+    try {
+      document.querySelectorAll(ROOTS).forEach(function (root) {
+        root.querySelectorAll('*').forEach(function (el) {
+          var tn = el.tagName;
+          if (tn === 'INPUT' || tn === 'SELECT' || tn === 'TEXTAREA' || tn === 'CANVAS' || tn === 'svg' || tn === 'I') return;
+          if (el.style.fontSize && el.dataset.fit) el.style.fontSize = '';
+          if (el.scrollWidth > el.clientWidth + 1 || el.dataset.fit) { el.dataset.fit = '1'; fit(el); }
+        });
+      });
+    } catch (e) { console.warn('[fit]', e); }
+    busy = false;
+  }
+  function queue() { if (queued || busy) return; queued = true; requestAnimationFrame(function () { requestAnimationFrame(run); }); clearTimeout(late); late = setTimeout(run, 600); }
+  App.fit = queue;
+  App.on('rendered', queue);
+  window.addEventListener('resize', queue);
+  /* 내용 칸 너비가 바뀔 때(스크롤바 · 차트 등)도 다시 맞춘다 */
+  if (window.ResizeObserver) { var lastW = 0; new ResizeObserver(function (es) { var w = Math.round(es[0].contentRect.width); if (w !== lastW) { lastW = w; queue(); } }).observe(document.getElementById('content') || document.body); }
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(queue);
+  new MutationObserver(function (ms) { if (busy) return; for (var i = 0; i < ms.length; i++) if (ms[i].type === 'childList') return queue(); })
+    .observe(document.body, { childList: true, subtree: true });
+})();
 
 /* ===== 30-settings.js ===== */
 /* 설정 : 부부 프로필 · 부부 재무 규칙(출생연도·용돈) · 재분류/백업 도구 · 카테고리 */
